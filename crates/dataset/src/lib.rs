@@ -2,7 +2,9 @@
 //! Canonical cross-source dataset construction, causal feature materialization, and persistence.
 
 mod canonical;
+#[allow(unused_imports)]
 mod features;
+#[allow(unused_imports)]
 mod persistence;
 mod tabular;
 
