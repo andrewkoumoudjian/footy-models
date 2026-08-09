@@ -8,6 +8,9 @@ members = [
     "crates/source-transfermarkt",
     "crates/source-fbref",
     "crates/source-salary",
+    "crates/performance",
+    "crates/models",
+    "crates/state",
 ]
 
 [workspace.package]
@@ -23,3 +26,6 @@ footy-source-fm = { path = "crates/source-fm" }
 footy-source-transfermarkt = { path = "crates/source-transfermarkt" }
 footy-source-fbref = { path = "crates/source-fbref" }
 footy-source-salary = { path = "crates/source-salary" }
+footy-performance = { path = "crates/performance" }
+footy-models = { path = "crates/models" }
+footy-state = { path = "crates/state" }

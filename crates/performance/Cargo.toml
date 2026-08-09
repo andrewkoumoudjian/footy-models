@@ -1,0 +1,8 @@
+[package]
+name = "footy-performance"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+footy-core.workspace = true
