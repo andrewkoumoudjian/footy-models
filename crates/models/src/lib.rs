@@ -127,6 +127,8 @@ pub struct HuberFit {
     pub residual_scale: f64,
 }
 
+/// Huber IRLS is robust to response/residual outliers. It is not a high-leverage
+/// robust-regression method; callers should validate feature leverage separately.
 pub fn fit_huber(
     x: &DenseMatrix,
     y: &[f64],
@@ -147,11 +149,13 @@ pub fn fit_huber(
 
     for iteration in 1..=config.max_iterations.max(1) {
         let residuals = residuals(x, y, &model)?;
-        let absolute: Vec<f64> = residuals.iter().map(|value| value.abs()).collect();
-        scale = (1.4826 * median(&absolute).unwrap_or(0.0)).max(1e-9);
+        let center = median(&residuals).unwrap_or(0.0);
+        let deviations: Vec<f64> = residuals.iter().map(|value| (value - center).abs()).collect();
+        scale = (1.4826 * median(&deviations).unwrap_or(0.0)).max(1e-9);
         let threshold = config.delta * scale;
         for (index, residual) in residuals.iter().enumerate() {
-            let robust_weight = if residual.abs() <= threshold { 1.0 } else { threshold / residual.abs() };
+            let centered = (residual - center).abs();
+            let robust_weight = if centered <= threshold { 1.0 } else { threshold / centered };
             weights[index] = base[index] * robust_weight;
         }
         let next = fit_weighted_linear(x, y, Some(&weights), config.ridge)?;
@@ -320,10 +324,10 @@ mod tests {
     }
 
     #[test]
-    fn huber_reduces_outlier_influence() {
+    fn huber_reduces_response_outlier_influence() {
         let x = DenseMatrix::new(5, 1, vec![0.0, 1.0, 2.0, 3.0, 4.0]).unwrap();
-        let fit = fit_huber(&x, &[1.0, 3.0, 5.0, 7.0, 100.0], None, HuberConfig::default()).unwrap();
-        assert!(fit.model.coefficients[1] < 10.0);
+        let fit = fit_huber(&x, &[1.0, 3.0, 100.0, 7.0, 9.0], None, HuberConfig::default()).unwrap();
+        assert!((fit.model.coefficients[1] - 2.0).abs() < 0.5);
     }
 
     #[test]
