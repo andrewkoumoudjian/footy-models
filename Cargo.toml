@@ -4,6 +4,10 @@ members = [
     "crates/core",
     "crates/entities",
     "crates/temporal",
+    "crates/source-fm",
+    "crates/source-transfermarkt",
+    "crates/source-fbref",
+    "crates/source-salary",
 ]
 
 [workspace.package]
@@ -15,3 +19,7 @@ rust-version = "1.75"
 footy-core = { path = "crates/core" }
 footy-entities = { path = "crates/entities" }
 footy-temporal = { path = "crates/temporal" }
+footy-source-fm = { path = "crates/source-fm" }
+footy-source-transfermarkt = { path = "crates/source-transfermarkt" }
+footy-source-fbref = { path = "crates/source-fbref" }
+footy-source-salary = { path = "crates/source-salary" }
