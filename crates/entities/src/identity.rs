@@ -154,6 +154,17 @@ pub fn resolve_candidates(
     minimum_score: f32,
     ambiguity_margin: f32,
 ) -> Resolution {
+    let minimum_score = if minimum_score.is_finite() {
+        minimum_score.clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+    let ambiguity_margin = if ambiguity_margin.is_finite() {
+        ambiguity_margin.clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+
     candidates.sort_by(|left, right| {
         right
             .score
@@ -172,7 +183,7 @@ pub fn resolve_candidates(
     }
 
     if let Some(second) = candidates.get(1) {
-        if best.score.get() - second.score.get() < ambiguity_margin.max(0.0) {
+        if best.score.get() - second.score.get() < ambiguity_margin {
             return Resolution::Ambiguous(candidates);
         }
     }

@@ -7,6 +7,10 @@ pub fn normalize_name(input: &str) -> String {
     let mut pending_space = false;
 
     for ch in input.chars() {
+        if is_combining_mark(ch) {
+            continue;
+        }
+
         if let Some(folded) = fold_latin(ch) {
             if pending_space && !out.is_empty() {
                 out.push(' ');
@@ -81,6 +85,10 @@ fn levenshtein(left: &[char], right: &[char]) -> usize {
     previous[left.len()]
 }
 
+const fn is_combining_mark(ch: char) -> bool {
+    matches!(ch as u32, 0x0300..=0x036F | 0x1AB0..=0x1AFF | 0x1DC0..=0x1DFF)
+}
+
 fn fold_latin(ch: char) -> Option<&'static str> {
     match ch {
         'À' | 'Á' | 'Â' | 'Ã' | 'Ä' | 'Å' | 'à' | 'á' | 'â' | 'ã' | 'ä' | 'å' => Some("a"),
@@ -112,6 +120,7 @@ mod tests {
     fn folds_common_diacritics_and_punctuation() {
         assert_eq!(normalize_name("  João  Félix-Séqueira "), "joao felix sequeira");
         assert_eq!(normalize_name("MARTIN ØDEGAARD"), "martin odegaard");
+        assert_eq!(normalize_name("Joa\u{0303}o Felix"), "joao felix");
     }
 
     #[test]
