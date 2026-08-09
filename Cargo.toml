@@ -13,6 +13,8 @@ members = [
     "crates/state",
     "crates/market",
     "crates/forecast",
+    "crates/recruitment",
+    "crates/backtest",
 ]
 
 [workspace.package]
@@ -33,3 +35,5 @@ footy-models = { path = "crates/models" }
 footy-state = { path = "crates/state" }
 footy-market = { path = "crates/market" }
 footy-forecast = { path = "crates/forecast" }
+footy-recruitment = { path = "crates/recruitment" }
+footy-backtest = { path = "crates/backtest" }

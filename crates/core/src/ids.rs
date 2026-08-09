@@ -37,3 +37,4 @@ id_type!(ProvenanceId, u64);
 id_type!(ModelVersion, u64);
 id_type!(DatasetVersion, u64);
 id_type!(FeatureSetVersion, u64);
+id_type!(CalibrationVersion, u64);

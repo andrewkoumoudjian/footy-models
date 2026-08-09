@@ -1,0 +1,10 @@
+[package]
+name = "footy-backtest"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+footy-core.workspace = true
+footy-market.workspace = true
+footy-models.workspace = true
