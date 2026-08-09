@@ -1,0 +1,2 @@
+ref/GameAssembly.dll filter=lfs diff=lfs merge=lfs -text
+ref/game_plugin.dll filter=lfs diff=lfs merge=lfs -text
