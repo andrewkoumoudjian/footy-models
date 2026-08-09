@@ -1,5 +1,5 @@
-use crate::{canonical::stable_hash64, CanonicalDataset, CanonicalFmSnapshot, DatasetError};
-use footy_core::{Date, FeatureId, FeatureSetVersion, ObservationState, PlayerId};
+use crate::{canonical::stable_hash64, CanonicalDataset, CanonicalFmSnapshot, CanonicalProvenance, DatasetError};
+use footy_core::{Date, FeatureId, FeatureSetVersion, PlayerId};
 use footy_market::{
     align_paid_transfers, fit_market_calibration, CalibrationConfig, MarketPerceivedValue,
     MarketValueObservation, PriceTargetKind, TransferEvent,
@@ -105,26 +105,10 @@ pub fn materialize_training_features(
             PriceTargetKind::ActualTransfer => actual_target_rows = actual_target_rows.saturating_add(1),
             PriceTargetKind::CalibratedMarketValue => calibrated_target_rows = calibrated_target_rows.saturating_add(1),
         }
-        rows.push(DatasetFeatureRow {
-            player,
-            as_of: target_date,
-            features,
-            target_log_price: Some(target_log_price),
-            target_kind: Some(target.kind),
-            target_variance_log: Some(target.variance_log),
-            weight,
-        });
+        rows.push(DatasetFeatureRow { player, as_of: target_date, features, target_log_price: Some(target_log_price), target_kind: Some(target.kind), target_variance_log: Some(target.variance_log), weight });
     }
     rows.sort_by_key(|row| (row.as_of, row.player));
-    Ok(FeatureMaterialization {
-        feature_set_version: config.feature_set_version,
-        feature_ids,
-        rows,
-        actual_target_rows,
-        calibrated_target_rows,
-        skipped_targets_without_state,
-        skipped_uncalibrated_market_values: targets.skipped_uncalibrated_market_values,
-    })
+    Ok(FeatureMaterialization { feature_set_version: config.feature_set_version, feature_ids, rows, actual_target_rows, calibrated_target_rows, skipped_targets_without_state, skipped_uncalibrated_market_values: targets.skipped_uncalibrated_market_values })
 }
 
 pub fn materialize_scoring_features(
@@ -134,7 +118,7 @@ pub fn materialize_scoring_features(
     expected_feature_ids: Option<&[FeatureId]>,
 ) -> Result<FeatureMaterialization, DatasetError> {
     dataset.validate()?;
-    let default_config = MaterializationConfig { feature_set_version, through: Some(as_of), ..MaterializationConfig::default() };
+    let config = MaterializationConfig { feature_set_version, through: Some(as_of), ..MaterializationConfig::default() };
     let generated = build_feature_registry(dataset)?;
     let feature_ids = expected_feature_ids.map_or(generated, |ids| ids.to_vec());
     if feature_ids.is_empty() { return Err(DatasetError::new("scoring feature registry cannot be empty")); }
@@ -143,7 +127,7 @@ pub fn materialize_scoring_features(
     let indexes = FeatureIndexes::new(dataset);
     let mut rows = Vec::new();
     for player in &dataset.players {
-        if let Some(features) = build_player_features(dataset, &indexes, player.player, as_of, as_of, &feature_ids, default_config)? {
+        if let Some(features) = build_player_features(dataset, &indexes, player.player, as_of, as_of, &feature_ids, config)? {
             rows.push(DatasetFeatureRow { player: player.player, as_of, features, target_log_price: None, target_kind: None, target_variance_log: None, weight: 1.0 });
         }
     }
@@ -195,27 +179,15 @@ impl PerformanceStatistic {
 }
 
 fn validate_config(config: MaterializationConfig) -> Result<(), DatasetError> {
-    if config.performance_half_life_days.iter().any(|value| !value.is_finite() || *value <= 0.0) {
-        return Err(DatasetError::new("performance half lives must be positive and finite"));
-    }
+    if config.performance_half_life_days.iter().any(|value| !value.is_finite() || *value <= 0.0) { return Err(DatasetError::new("performance half lives must be positive and finite")); }
     Ok(())
 }
 
 fn build_feature_registry(dataset: &CanonicalDataset) -> Result<Vec<FeatureId>, DatasetError> {
     let mut ids = BTreeSet::new();
-    for fixed in [
-        FEATURE_AGE_YEARS, FEATURE_AGE_OBSERVED, FEATURE_CA_VALUE, FEATURE_CA_OBSERVED,
-        FEATURE_PA_VALUE, FEATURE_PA_OBSERVED, FEATURE_REPUTATION_VALUE, FEATURE_REPUTATION_OBSERVED,
-        FEATURE_FM_AGE_DAYS, FEATURE_FM_PRESENT, FEATURE_CA_VELOCITY, FEATURE_CA_VELOCITY_OBSERVED,
-        FEATURE_CA_REALIZATION, FEATURE_CA_REALIZATION_OBSERVED, FEATURE_ATTRIBUTE_MEAN_VELOCITY,
-        FEATURE_ATTRIBUTE_MEAN_VELOCITY_OBSERVED, FEATURE_MINUTES_30, FEATURE_MINUTES_30_OBSERVED,
-        FEATURE_MINUTES_90, FEATURE_MINUTES_90_OBSERVED, FEATURE_MINUTES_365, FEATURE_MINUTES_365_OBSERVED,
-    ] { ids.insert(fixed.0); }
+    for fixed in [FEATURE_AGE_YEARS, FEATURE_AGE_OBSERVED, FEATURE_CA_VALUE, FEATURE_CA_OBSERVED, FEATURE_PA_VALUE, FEATURE_PA_OBSERVED, FEATURE_REPUTATION_VALUE, FEATURE_REPUTATION_OBSERVED, FEATURE_FM_AGE_DAYS, FEATURE_FM_PRESENT, FEATURE_CA_VELOCITY, FEATURE_CA_VELOCITY_OBSERVED, FEATURE_CA_REALIZATION, FEATURE_CA_REALIZATION_OBSERVED, FEATURE_ATTRIBUTE_MEAN_VELOCITY, FEATURE_ATTRIBUTE_MEAN_VELOCITY_OBSERVED, FEATURE_MINUTES_30, FEATURE_MINUTES_30_OBSERVED, FEATURE_MINUTES_90, FEATURE_MINUTES_90_OBSERVED, FEATURE_MINUTES_365, FEATURE_MINUTES_365_OBSERVED] { ids.insert(fixed.0); }
     let attribute_ids: BTreeSet<u16> = dataset.fm_snapshots.iter().flat_map(|snapshot| snapshot.attributes.iter().map(|attribute| attribute.id.0)).collect();
-    for attribute in attribute_ids {
-        ids.insert(fm_attribute_feature(attribute, false).0);
-        ids.insert(fm_attribute_feature(attribute, true).0);
-    }
+    for attribute in attribute_ids { ids.insert(fm_attribute_feature(attribute, false).0); ids.insert(fm_attribute_feature(attribute, true).0); }
     for metric in &dataset.metric_registry {
         for horizon in [30_u16, 90, 365] {
             for statistic in [PerformanceStatistic::Per90, PerformanceStatistic::EwmaPer90, PerformanceStatistic::TrendPer90] {
@@ -229,9 +201,7 @@ fn build_feature_registry(dataset: &CanonicalDataset) -> Result<Vec<FeatureId>, 
     Ok(ids.into_iter().map(FeatureId).collect())
 }
 
-fn fm_attribute_feature(attribute: u16, observed: bool) -> FeatureId {
-    FeatureId(FM_ATTRIBUTE_BASE + u32::from(attribute) * 2 + u32::from(observed))
-}
+fn fm_attribute_feature(attribute: u16, observed: bool) -> FeatureId { FeatureId(FM_ATTRIBUTE_BASE + u32::from(attribute) * 2 + u32::from(observed)) }
 
 fn performance_feature_id(name: &str, horizon: u16, statistic: PerformanceStatistic, observed: bool) -> FeatureId {
     let descriptor = format!("{name}:{horizon}:{}:{}", statistic.value_name(), if observed { 1 } else { 0 });
@@ -260,49 +230,27 @@ impl<'a> FeatureIndexes<'a> {
     }
 }
 
-fn build_player_features(
-    dataset: &CanonicalDataset,
-    indexes: &FeatureIndexes<'_>,
-    player: PlayerId,
-    state_date: Date,
-    data_cutoff: Date,
-    feature_ids: &[FeatureId],
-    config: MaterializationConfig,
-) -> Result<Option<Vec<f32>>, DatasetError> {
+fn build_player_features(dataset: &CanonicalDataset, indexes: &FeatureIndexes<'_>, player: PlayerId, state_date: Date, data_cutoff: Date, feature_ids: &[FeatureId], config: MaterializationConfig) -> Result<Option<Vec<f32>>, DatasetError> {
     let Some(snapshots) = indexes.fm.get(&player) else { return Ok(None); };
     let Some((latest_index, latest)) = snapshots.iter().enumerate().rev().find(|(_, snapshot)| snapshot.snapshot_date <= data_cutoff) else { return Ok(None); };
     let canonical_player = dataset.player(player).ok_or_else(|| DatasetError::new("feature player missing from canonical registry"))?;
     let mut values = HashMap::<FeatureId, f32>::new();
     values.insert(FEATURE_FM_PRESENT, 1.0);
     values.insert(FEATURE_FM_AGE_DAYS, state_date.days_since(latest.snapshot_date).max(0) as f32);
-    if let Some(birth_date) = canonical_player.birth_date {
-        values.insert(FEATURE_AGE_YEARS, (state_date.days_since(birth_date) as f32 / 365.2425).max(0.0));
-        values.insert(FEATURE_AGE_OBSERVED, 1.0);
-    }
+    if let Some(birth_date) = canonical_player.birth_date { values.insert(FEATURE_AGE_YEARS, (state_date.days_since(birth_date) as f32 / 365.2425).max(0.0)); values.insert(FEATURE_AGE_OBSERVED, 1.0); }
     if let Some(ca) = latest.current_ability { values.insert(FEATURE_CA_VALUE, ca as f32); values.insert(FEATURE_CA_OBSERVED, 1.0); }
     if let Some(pa) = latest.potential_ability { values.insert(FEATURE_PA_VALUE, pa as f32); values.insert(FEATURE_PA_OBSERVED, 1.0); }
     if let Some(reputation) = latest.reputation { values.insert(FEATURE_REPUTATION_VALUE, reputation as f32); values.insert(FEATURE_REPUTATION_OBSERVED, 1.0); }
-    if let (Some(ca), Some(pa)) = (latest.current_ability, latest.potential_ability) {
-        if pa > 0 { values.insert(FEATURE_CA_REALIZATION, ca as f32 / pa as f32); values.insert(FEATURE_CA_REALIZATION_OBSERVED, 1.0); }
-    }
-    for attribute in &latest.attributes {
-        values.insert(fm_attribute_feature(attribute.id.0, false), attribute.value as f32);
-        values.insert(fm_attribute_feature(attribute.id.0, true), 1.0);
-    }
+    if let (Some(ca), Some(pa)) = (latest.current_ability, latest.potential_ability) { if pa > 0 { values.insert(FEATURE_CA_REALIZATION, ca as f32 / pa as f32); values.insert(FEATURE_CA_REALIZATION_OBSERVED, 1.0); } }
+    for attribute in &latest.attributes { values.insert(fm_attribute_feature(attribute.id.0, false), attribute.value as f32); values.insert(fm_attribute_feature(attribute.id.0, true), 1.0); }
     if latest_index > 0 {
         let previous = snapshots[latest_index - 1];
         let years = latest.snapshot_date.days_since(previous.snapshot_date) as f32 / 365.2425;
         if years > 0.0 {
-            if let (Some(current), Some(prior)) = (latest.current_ability, previous.current_ability) {
-                values.insert(FEATURE_CA_VELOCITY, (current as f32 - prior as f32) / years);
-                values.insert(FEATURE_CA_VELOCITY_OBSERVED, 1.0);
-            }
+            if let (Some(current), Some(prior)) = (latest.current_ability, previous.current_ability) { values.insert(FEATURE_CA_VELOCITY, (current as f32 - prior as f32) / years); values.insert(FEATURE_CA_VELOCITY_OBSERVED, 1.0); }
             let prior_attributes: HashMap<u16, u8> = previous.attributes.iter().map(|attribute| (attribute.id.0, attribute.value)).collect();
             let deltas: Vec<f32> = latest.attributes.iter().filter_map(|attribute| prior_attributes.get(&attribute.id.0).map(|prior| attribute.value as f32 - *prior as f32)).collect();
-            if !deltas.is_empty() {
-                values.insert(FEATURE_ATTRIBUTE_MEAN_VELOCITY, deltas.iter().sum::<f32>() / deltas.len() as f32 / years);
-                values.insert(FEATURE_ATTRIBUTE_MEAN_VELOCITY_OBSERVED, 1.0);
-            }
+            if !deltas.is_empty() { values.insert(FEATURE_ATTRIBUTE_MEAN_VELOCITY, deltas.iter().sum::<f32>() / deltas.len() as f32 / years); values.insert(FEATURE_ATTRIBUTE_MEAN_VELOCITY_OBSERVED, 1.0); }
         }
     }
 
@@ -310,22 +258,15 @@ fn build_player_features(
     let horizons = [(30_u16, config.performance_half_life_days[0], FEATURE_MINUTES_30, FEATURE_MINUTES_30_OBSERVED), (90, config.performance_half_life_days[1], FEATURE_MINUTES_90, FEATURE_MINUTES_90_OBSERVED), (365, config.performance_half_life_days[2], FEATURE_MINUTES_365, FEATURE_MINUTES_365_OBSERVED)];
     for (horizon, half_life, minutes_feature, minutes_observed) in horizons {
         let window = build_window(player_matches, player, data_cutoff, horizon, half_life, config.low_sample_minutes);
-        if window.coverage.matches > 0 {
-            values.insert(minutes_feature, window.coverage.minutes as f32);
-            values.insert(minutes_observed, 1.0);
-        }
+        if window.coverage.matches > 0 { values.insert(minutes_feature, window.coverage.minutes as f32); values.insert(minutes_observed, 1.0); }
         for metric in &window.metrics {
             let Some(name) = dataset.metric_name(metric.metric) else { continue; };
             for (statistic, value) in [(PerformanceStatistic::Per90, metric.per90), (PerformanceStatistic::EwmaPer90, metric.ewma_per90), (PerformanceStatistic::TrendPer90, metric.trend_per90)] {
-                if let Some(value) = value.filter(|value| value.is_finite()) {
-                    values.insert(performance_feature_id(name, horizon, statistic, false), value as f32);
-                    values.insert(performance_feature_id(name, horizon, statistic, true), 1.0);
-                }
+                if let Some(value) = value.filter(|value| value.is_finite()) { values.insert(performance_feature_id(name, horizon, statistic, false), value as f32); values.insert(performance_feature_id(name, horizon, statistic, true), 1.0); }
             }
         }
     }
-    let features = feature_ids.iter().map(|id| values.get(id).copied().unwrap_or(0.0)).collect();
-    Ok(Some(features))
+    Ok(Some(feature_ids.iter().map(|id| values.get(id).copied().unwrap_or(0.0)).collect()))
 }
 
 struct TargetValue { price_cents: i64, kind: PriceTargetKind, variance_log: f64 }
@@ -333,15 +274,11 @@ struct TargetBuild { targets: BTreeMap<(PlayerId, Date), TargetValue>, skipped_u
 
 fn build_targets(dataset: &CanonicalDataset, config: MaterializationConfig) -> Result<TargetBuild, DatasetError> {
     let values: Vec<MarketValueObservation> = dataset.market_values.iter().map(|value| MarketValueObservation { player: value.player, date: value.date, value: value.value, provenance_id: value.provenance_id }).collect();
-    let transfers: Vec<TransferEvent> = dataset.transfers.iter().map(|transfer| TransferEvent { id: transfer.id, player: transfer.player, date: transfer.date, from: transfer.from, to: transfer.to, kind: transfer.kind, fee: transfer.fee, loan_fee: transfer.loan_fee, provenance_id: transfer.provenance_id }).collect();
+    let transfers: Vec<TransferEvent> = dataset.transfers.iter().map(|value| TransferEvent { id: value.id, player: value.player, date: value.date, from: value.from, to: value.to, kind: value.kind, fee: value.fee, loan_fee: value.loan_fee, provenance_id: value.provenance_id }).collect();
     let aligned = align_paid_transfers(&transfers, &values);
     let mut targets = BTreeMap::new();
     for transfer in &transfers {
-        if transfer.kind.is_paid_permanent() {
-            if let Some(fee) = transfer.fee.filter(|fee| fee.cents() > 0) {
-                targets.insert((transfer.player, transfer.date), TargetValue { price_cents: fee.cents(), kind: PriceTargetKind::ActualTransfer, variance_log: 0.0 });
-            }
-        }
+        if transfer.kind.is_paid_permanent() { if let Some(fee) = transfer.fee.filter(|fee| fee.cents() > 0) { targets.insert((transfer.player, transfer.date), TargetValue { price_cents: fee.cents(), kind: PriceTargetKind::ActualTransfer, variance_log: 0.0 }); } }
     }
     let mut calibration_cache: HashMap<Date, Option<footy_market::MarketCalibration>> = HashMap::new();
     let mut skipped = 0_u64;
@@ -351,9 +288,7 @@ fn build_targets(dataset: &CanonicalDataset, config: MaterializationConfig) -> R
         let calibration = *calibration_cache.entry(calibration_date).or_insert_with(|| fit_market_calibration(&aligned, calibration_date, config.market_calibration).ok());
         let Some(calibration) = calibration else { skipped = skipped.saturating_add(1); continue; };
         let distribution = calibration.perceived_price(value.value).map_err(|_| DatasetError::new("market calibration produced invalid price"))?;
-        let perceived = MarketPerceivedValue(distribution);
-        let variance_log = calibration.residual_sigma.powi(2);
-        targets.insert((value.player, value.date), TargetValue { price_cents: perceived.0.p50.cents(), kind: PriceTargetKind::CalibratedMarketValue, variance_log });
+        targets.insert((value.player, value.date), TargetValue { price_cents: MarketPerceivedValue(distribution).0.p50.cents(), kind: PriceTargetKind::CalibratedMarketValue, variance_log: calibration.residual_sigma.powi(2) });
     }
     Ok(TargetBuild { targets, skipped_uncalibrated_market_values: skipped })
 }
@@ -362,13 +297,14 @@ fn build_targets(dataset: &CanonicalDataset, config: MaterializationConfig) -> R
 mod tests {
     use super::*;
     use crate::{CanonicalPlayer, CanonicalTransfer};
-    use footy_core::{Confidence, DatasetVersion, ProvenanceId};
+    use footy_core::{DatasetVersion, ProvenanceId, Source};
     use footy_source_fm::FmAttribute;
 
     fn dataset() -> CanonicalDataset {
         let player = PlayerId(1);
         CanonicalDataset {
-            dataset_version: DatasetVersion(1), source_manifest_checksum: 1, provenances: Vec::new(),
+            dataset_version: DatasetVersion(1), source_manifest_checksum: 1,
+            provenances: vec![CanonicalProvenance { id: ProvenanceId(1), source: Source::FootballManager, input_path: "fixture".into(), source_checksum: 1 }],
             players: vec![CanonicalPlayer { player, fm_external_id: "fm1".into(), name: "A".into(), birth_date: Some(Date(0)) }],
             identities: Vec::new(), unresolved_identities: Vec::new(), issues: Vec::new(),
             fm_snapshots: vec![
