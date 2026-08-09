@@ -6,3 +6,5 @@ rust-version.workspace = true
 
 [dependencies]
 footy-artifacts.workspace = true
+footy-core.workspace = true
+footy-dataset.workspace = true

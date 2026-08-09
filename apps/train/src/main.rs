@@ -4,7 +4,12 @@ use footy_artifacts::{
     checksum_file, read_dataset_manifest, read_feature_matrix, write_feature_matrix,
     write_linear_price_model, FeatureMatrixArtifact, FeatureRow, LinearPriceModelArtifact,
 };
-use footy_core::{CalibrationVersion, DatasetVersion, Date, FeatureId, FeatureSetVersion, ModelVersion, PlayerId};
+use footy_core::{
+    CalibrationVersion, DatasetVersion, Date, FeatureId, FeatureSetVersion, ModelVersion, PlayerId,
+};
+use footy_dataset::{
+    materialize_training_features, read_canonical_dataset, MaterializationConfig,
+};
 use footy_models::{fit_weighted_linear, ConformalCalibrator, DenseMatrix, ModelMetadata};
 use std::env;
 use std::error::Error;
@@ -14,13 +19,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
     match args.first().map(String::as_str) {
         Some("materialize") => materialize(&args[1..]),
+        Some("materialize-canonical") => materialize_canonical(&args[1..]),
         Some("fit") => fit(&args[1..]),
         _ => Err(usage().into()),
     }
 }
 
 fn usage() -> &'static str {
-    "usage:\n  footy-train materialize --input rows.tsv --dataset-manifest manifest.bin --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train fit --input matrix.bin --dataset-version N --feature-set-version N --training-cutoff YYYY-MM-DD --calibration-cutoff YYYY-MM-DD --model-version N --calibration-version N --ridge R --seed N --output model.bin\nmaterialize TSV columns: player_id, as_of, target_log_price, weight, feature:<id>..."
+    "usage:\n  footy-train materialize --input rows.tsv --dataset-manifest manifest.bin --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train materialize-canonical --canonical canonical.bin --feature-set-version N [--through YYYY-MM-DD] --output matrix.bin\n  footy-train fit --input matrix.bin --dataset-version N --feature-set-version N --training-cutoff YYYY-MM-DD --calibration-cutoff YYYY-MM-DD --model-version N --calibration-version N --ridge R --seed N --output model.bin\nmaterialize TSV columns: player_id, as_of, target_log_price, weight, feature:<id>..."
 }
 
 fn materialize(args: &[String]) -> Result<(), Box<dyn Error>> {
@@ -65,17 +71,44 @@ fn materialize(args: &[String]) -> Result<(), Box<dyn Error>> {
     }
     if rows.is_empty() { return Err("feature TSV contains no rows".into()); }
 
+    let artifact = FeatureMatrixArtifact { dataset_version, source_manifest_checksum, feature_set_version, feature_ids, rows };
+    write_feature_matrix(output, &artifact)?;
+    println!("materialized dataset={} feature_set={} features={} rows={} manifest_checksum={} output={}", dataset_version.0, feature_set_version.0, artifact.feature_ids.len(), artifact.rows.len(), source_manifest_checksum, output);
+    Ok(())
+}
+
+fn materialize_canonical(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let canonical_path = required_value(args, "--canonical")?;
+    let feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    let through = optional_value(args, "--through").map(parse_date).transpose()?;
+    let output = required_value(args, "--output")?;
+    let dataset = read_canonical_dataset(canonical_path)?;
+    let materialized = materialize_training_features(
+        &dataset,
+        MaterializationConfig { feature_set_version, through, ..MaterializationConfig::default() },
+    )?;
+    if materialized.rows.is_empty() {
+        return Err("canonical materialization produced no trainable price rows".into());
+    }
     let artifact = FeatureMatrixArtifact {
-        dataset_version,
-        source_manifest_checksum,
+        dataset_version: dataset.dataset_version,
+        source_manifest_checksum: dataset.source_manifest_checksum,
         feature_set_version,
-        feature_ids,
-        rows,
+        feature_ids: materialized.feature_ids,
+        rows: materialized.rows.into_iter().map(|row| FeatureRow { player: row.player, as_of: row.as_of, features: row.features, target_log_price: row.target_log_price, weight: row.weight }).collect(),
     };
     write_feature_matrix(output, &artifact)?;
     println!(
-        "materialized dataset={} feature_set={} features={} rows={} manifest_checksum={} output={}",
-        dataset_version.0, feature_set_version.0, artifact.feature_ids.len(), artifact.rows.len(), source_manifest_checksum, output
+        "materialized_canonical dataset={} feature_set={} features={} rows={} actual_targets={} calibrated_targets={} skipped_no_state={} skipped_uncalibrated_tm={} output={}",
+        artifact.dataset_version.0,
+        artifact.feature_set_version.0,
+        artifact.feature_ids.len(),
+        artifact.rows.len(),
+        materialized.actual_target_rows,
+        materialized.calibrated_target_rows,
+        materialized.skipped_targets_without_state,
+        materialized.skipped_uncalibrated_market_values,
+        output
     );
     Ok(())
 }
@@ -130,13 +163,7 @@ fn fit(args: &[String]) -> Result<(), Box<dyn Error>> {
     let p50_calibrator = ConformalCalibrator::fit(&calibration_residuals, 0.50)?;
     let p80_calibrator = ConformalCalibrator::fit(&calibration_residuals, 0.80)?;
     let artifact = LinearPriceModelArtifact {
-        metadata: ModelMetadata {
-            trained_through: training_cutoff,
-            model_version,
-            dataset_version: matrix.dataset_version,
-            feature_set_version: matrix.feature_set_version,
-            seed,
-        },
+        metadata: ModelMetadata { trained_through: training_cutoff, model_version, dataset_version: matrix.dataset_version, feature_set_version: matrix.feature_set_version, seed },
         source_manifest_checksum: matrix.source_manifest_checksum,
         calibration_version,
         calibration_cutoff,
@@ -147,18 +174,7 @@ fn fit(args: &[String]) -> Result<(), Box<dyn Error>> {
         p80_calibrator,
     };
     write_linear_price_model(output, &artifact)?;
-    println!(
-        "trained dataset={} feature_set={} model={} calibration={} training_rows={} calibration_rows={} cutoff={} calibration_cutoff={} output={}",
-        artifact.metadata.dataset_version.0,
-        artifact.metadata.feature_set_version.0,
-        artifact.metadata.model_version.0,
-        artifact.calibration_version.0,
-        train_targets.len(),
-        calibration_residuals.len(),
-        format_date(training_cutoff),
-        format_date(calibration_cutoff),
-        output
-    );
+    println!("trained dataset={} feature_set={} model={} calibration={} training_rows={} calibration_rows={} cutoff={} calibration_cutoff={} output={}", artifact.metadata.dataset_version.0, artifact.metadata.feature_set_version.0, artifact.metadata.model_version.0, artifact.calibration_version.0, train_targets.len(), calibration_residuals.len(), format_date(training_cutoff), format_date(calibration_cutoff), output);
     Ok(())
 }
 
@@ -177,10 +193,12 @@ fn format_date(date: Date) -> String {
 }
 
 fn required_value<'a>(args: &'a [String], flag: &str) -> Result<&'a str, Box<dyn Error>> {
-    let index = args.iter().position(|arg| arg == flag).ok_or_else(|| format!("missing {flag}"))?;
-    args.get(index + 1).map(String::as_str).ok_or_else(|| format!("missing value for {flag}").into())
+    optional_value(args, flag).ok_or_else(|| format!("missing {flag}").into())
 }
 
-fn required_u64(args: &[String], flag: &str) -> Result<u64, Box<dyn Error>> {
-    Ok(required_value(args, flag)?.parse::<u64>()?)
+fn optional_value<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
+    let index = args.iter().position(|arg| arg == flag)?;
+    args.get(index + 1).map(String::as_str)
 }
+
+fn required_u64(args: &[String], flag: &str) -> Result<u64, Box<dyn Error>> { Ok(required_value(args, flag)?.parse::<u64>()?) }

@@ -4,7 +4,8 @@ use footy_artifacts::{
     read_dataset_manifest, read_feature_matrix, read_header, read_linear_price_model,
     read_prediction_batch,
 };
-use footy_core::Date;
+use footy_core::{Date, PlayerId};
+use footy_dataset::{feature_name, read_canonical_dataset};
 use std::env;
 use std::error::Error;
 
@@ -13,10 +14,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     match args.first().map(String::as_str) {
         Some("header") => header(&args[1..]),
         Some("dataset") => dataset(&args[1..]),
+        Some("canonical") => canonical(&args[1..]),
         Some("matrix") => matrix(&args[1..]),
         Some("model") => model(&args[1..]),
         Some("predictions") => predictions(&args[1..]),
-        _ => Err("usage: footy-query <header|dataset|matrix|model|predictions> --input artifact.bin [--player ID] [--as-of YYYY-MM-DD]".into()),
+        _ => Err("usage: footy-query <header|dataset|canonical|matrix|model|predictions> --input artifact [--player ID] [--as-of YYYY-MM-DD]".into()),
     }
 }
 
@@ -46,6 +48,44 @@ fn dataset(args: &[String]) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn canonical(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let input = required_value(args, "--input")?;
+    let player_filter = optional_value(args, "--player").map(str::parse::<u64>).transpose()?.map(PlayerId);
+    let dataset = read_canonical_dataset(input)?;
+    println!("dataset_version={}", dataset.dataset_version.0);
+    println!("source_manifest_checksum={}", dataset.source_manifest_checksum);
+    println!("players={}", dataset.players.len());
+    println!("identities={}", dataset.identities.len());
+    println!("unresolved_identities={}", dataset.unresolved_identities.len());
+    println!("issues={}", dataset.issues.len());
+    println!("fm_snapshots={}", dataset.fm_snapshots.len());
+    println!("market_values={}", dataset.market_values.len());
+    println!("transfers={}", dataset.transfers.len());
+    println!("contracts={}", dataset.contracts.len());
+    println!("performance_observations={}", dataset.performance.len());
+    println!("salary_observations={}", dataset.salaries.len());
+    println!("metrics={}", dataset.metric_registry.len());
+    if let Some(player) = player_filter {
+        let canonical = dataset.player(player).ok_or("canonical player not found")?;
+        println!("player_id={} name={} fm_external_id={} birth_date={}", player.0, canonical.name, canonical.fm_external_id, canonical.birth_date.map(format_date).unwrap_or_else(|| "unknown".into()));
+        println!("source\texternal_id\tscore\tmethod\tverified");
+        for identity in dataset.identities.iter().filter(|identity| identity.player == player) {
+            println!("{:?}\t{}\t{}\t{:?}\t{}", identity.source, identity.external_id, identity.score.get(), identity.method, identity.verified);
+        }
+        println!("player_fm_snapshots={}", dataset.fm_snapshots.iter().filter(|value| value.player == player).count());
+        println!("player_market_values={}", dataset.market_values.iter().filter(|value| value.player == player).count());
+        println!("player_transfers={}", dataset.transfers.iter().filter(|value| value.player == player).count());
+        println!("player_performance={}", dataset.performance.iter().filter(|value| value.player == player).count());
+        println!("player_salaries={}", dataset.salaries.iter().filter(|value| value.player == player).count());
+    } else if !dataset.unresolved_identities.is_empty() {
+        println!("unresolved_source\texternal_id\tname\treason\tcandidates");
+        for unresolved in dataset.unresolved_identities.iter().take(100) {
+            println!("{:?}\t{}\t{}\t{:?}\t{}", unresolved.source, unresolved.external_id, unresolved.name, unresolved.reason, unresolved.candidates.len());
+        }
+    }
+    Ok(())
+}
+
 fn matrix(args: &[String]) -> Result<(), Box<dyn Error>> {
     let input = required_value(args, "--input")?;
     let matrix = read_feature_matrix(input)?;
@@ -61,10 +101,7 @@ fn matrix(args: &[String]) -> Result<(), Box<dyn Error>> {
     println!("min_as_of={}", min_date.map(format_date).unwrap_or_else(|| "none".into()));
     println!("max_as_of={}", max_date.map(format_date).unwrap_or_else(|| "none".into()));
     print!("feature_ids=");
-    for (index, id) in matrix.feature_ids.iter().enumerate() {
-        if index > 0 { print!(","); }
-        print!("{}", id.0);
-    }
+    for (index, id) in matrix.feature_ids.iter().enumerate() { if index > 0 { print!(","); } print!("{}", id.0); }
     println!();
     Ok(())
 }
@@ -125,4 +162,10 @@ fn required_value<'a>(args: &'a [String], flag: &str) -> Result<&'a str, Box<dyn
 fn optional_value<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
     let index = args.iter().position(|arg| arg == flag)?;
     args.get(index + 1).map(String::as_str)
+}
+
+#[allow(dead_code)]
+fn feature_label(canonical_path: &str, feature: footy_core::FeatureId) -> Result<String, Box<dyn Error>> {
+    let dataset = read_canonical_dataset(canonical_path)?;
+    Ok(feature_name(&dataset, feature).unwrap_or_else(|| format!("feature:{}", feature.0)))
 }

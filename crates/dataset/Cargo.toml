@@ -1,0 +1,15 @@
+[package]
+name = "footy-dataset"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+footy-core.workspace = true
+footy-entities.workspace = true
+footy-source-fm.workspace = true
+footy-source-transfermarkt.workspace = true
+footy-source-fbref.workspace = true
+footy-source-salary.workspace = true
+footy-performance.workspace = true
+footy-market.workspace = true

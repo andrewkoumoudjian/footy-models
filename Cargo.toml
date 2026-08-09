@@ -16,6 +16,7 @@ members = [
     "crates/recruitment",
     "crates/backtest",
     "crates/artifacts",
+    "crates/dataset",
     "apps/ingest",
     "apps/train",
     "apps/score",
@@ -43,3 +44,4 @@ footy-forecast = { path = "crates/forecast" }
 footy-recruitment = { path = "crates/recruitment" }
 footy-backtest = { path = "crates/backtest" }
 footy-artifacts = { path = "crates/artifacts" }
+footy-dataset = { path = "crates/dataset" }
