@@ -18,3 +18,7 @@ jobs:
         env:
           RUSTFLAGS: -D warnings
         run: cargo +1.75.0 test --workspace --all-targets
+      - name: End-to-end canonical pipeline
+        env:
+          RUSTFLAGS: -D warnings
+        run: bash scripts/e2e-smoke.sh
