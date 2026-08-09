@@ -1,0 +1,20 @@
+name: core-ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust 1.75
+        run: rustup toolchain install 1.75.0 --profile minimal
+      - name: Test workspace
+        env:
+          RUSTFLAGS: -D warnings
+        run: cargo +1.75.0 test --workspace --all-targets

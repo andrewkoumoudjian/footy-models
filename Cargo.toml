@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/entities",
+    "crates/temporal",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+
+[workspace.dependencies]
+footy-core = { path = "crates/core" }
+footy-entities = { path = "crates/entities" }
+footy-temporal = { path = "crates/temporal" }

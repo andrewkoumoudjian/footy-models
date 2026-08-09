@@ -1,0 +1,11 @@
+[package]
+name = "footy-temporal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+footy-core.workspace = true
+
+[lib]
+path = "src/lib.rs"
