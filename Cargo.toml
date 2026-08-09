@@ -16,6 +16,10 @@ members = [
     "crates/recruitment",
     "crates/backtest",
     "crates/artifacts",
+    "apps/ingest",
+    "apps/train",
+    "apps/score",
+    "apps/query",
 ]
 
 [workspace.package]
