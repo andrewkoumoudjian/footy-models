@@ -1,6 +1,9 @@
 #![forbid(unsafe_code)]
 //! Causal performance aggregation and robust normalization primitives.
 
+mod team;
+pub use team::*;
+
 use footy_core::{ClubId, CompetitionId, Date, MetricId, ObservationState, PlayerId, RoleId};
 use std::collections::HashMap;
 
