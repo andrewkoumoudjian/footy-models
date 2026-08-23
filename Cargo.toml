@@ -8,6 +8,7 @@ members = [
     "crates/source-transfermarkt",
     "crates/source-fbref",
     "crates/source-salary",
+    "crates/source-stats",
     "crates/performance",
     "crates/models",
     "crates/state",
@@ -36,6 +37,7 @@ footy-source-fm = { path = "crates/source-fm" }
 footy-source-transfermarkt = { path = "crates/source-transfermarkt" }
 footy-source-fbref = { path = "crates/source-fbref" }
 footy-source-salary = { path = "crates/source-salary" }
+footy-source-stats = { path = "crates/source-stats" }
 footy-performance = { path = "crates/performance" }
 footy-models = { path = "crates/models" }
 footy-state = { path = "crates/state" }
@@ -45,3 +47,4 @@ footy-recruitment = { path = "crates/recruitment" }
 footy-backtest = { path = "crates/backtest" }
 footy-artifacts = { path = "crates/artifacts" }
 footy-dataset = { path = "crates/dataset" }
+serde_json = "1.0"
