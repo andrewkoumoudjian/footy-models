@@ -1,7 +1,9 @@
 #![forbid(unsafe_code)]
 //! Deterministic Monte Carlo and market-factor volatility primitives.
 
+mod calibration;
 mod stats;
+pub use calibration::*;
 pub use stats::*;
 
 use footy_core::{Confidence, EuroCents, Probability};
