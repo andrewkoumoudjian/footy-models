@@ -10,10 +10,6 @@ pub enum Source {
     Fbref,
     Salary,
     Manual,
-    Sofascore,
-    StatsBomb,
-    OpenFootball,
-    FootballDataOrg,
     Other(StringId),
 }
 
