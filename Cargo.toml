@@ -14,6 +14,7 @@ members = [
     "crates/state",
     "crates/market",
     "crates/forecast",
+    "crates/match",
     "crates/recruitment",
     "crates/backtest",
     "crates/artifacts",
@@ -43,6 +44,7 @@ footy-models = { path = "crates/models" }
 footy-state = { path = "crates/state" }
 footy-market = { path = "crates/market" }
 footy-forecast = { path = "crates/forecast" }
+footy-match = { path = "crates/match" }
 footy-recruitment = { path = "crates/recruitment" }
 footy-backtest = { path = "crates/backtest" }
 footy-artifacts = { path = "crates/artifacts" }
