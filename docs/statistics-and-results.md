@@ -1,176 +1,276 @@
-# Player, team, and match statistics
+# Player, team, and specific-match simulation
 
-This extension applies the repository's existing causal/as-of and Monte Carlo methodology to sporting outputs as well as player prices.
+This extension applies the valuation stack's existing as-of, uncertainty, provenance, and deterministic Monte Carlo principles to football performance and match outcomes.
 
-## Model graph
+## Governing graph
+
+The preferred specific-match path is bottom-up. The match result is not an independent model sitting beside the player models.
 
 ```text
-FM / Transfermarkt / FBref
-StatsBomb Open Data / football-data.org / OpenFootball / optional Sofascore
-        |
-        v
-provider adapters (`source-*`)
-        |
-        v
-FM-anchored player links + provider-scoped club/competition/match IDs
-        |
-        +-----------------------------+
-        |                             |
-player match observations        team match observations + results
-        |                             |
-rolling per-90 state             rolling per-match state + form
-        |                             |
-        +-------------+---------------+
-                      |
-             generic `forecast`
-          rate/exposure/result primitives
-                      |
-                      v
-              specific `match` graph
-
-availability + selection history + formation history
-                      |
-                      v
-       stochastic XI / formation / role assignment
-                      |
-          +-----------+-----------+
-          |                       |
-   latent player state      exact sampled opponent XI
-          |                       |
-          +---- metric-specific player↔player edges
-          |         + teammate synergy
-          |         + tactical/system/environment factors
-          v
-        player event-rate distributions
-          |
-          v
-        realized player events
-          |
-          v
-        team attack / defence state
-          |
-          v
-        segmented score-state process
-          |
-          v
-       scorelines / W-D-L / expected points
+historical source payloads
+  FM / Transfermarkt / FBref / StatsBomb / results APIs / optional Sofascore
+                         |
+                         v
+              canonical sporting state
+                         |
+       +-----------------+------------------+
+       |                                    |
+player performance history             lineup / formation history
+raw FM attributes                      team fixture history
+role / ability state                   availability / fatigue inputs
+       |                                    |
+       +-----------------+------------------+
+                         |
+                         v
+          stochastic pre-match selection
+ availability -> formation -> XI -> slot/role -> starter-minute target
+                         |
+                         v
+                 active player graph
+ coarse matchup + raw AttributeId matchup + teammate synergy
+                         |
+                         v
+              segment player events
+ role + fatigue + system + environment + current score state
+                         |
+                         v
+            causal team-process DAG
+ possession/progression/... -> chance creation -> shots/quality/etc.
+                         |
+                         v
+                segment scoring rate
+                         |
+                         v
+              goal / red / injury / sub
+                         |
+                rebuild active graph
+                         |
+                        ...
+                         |
+                         v
+            scoreline / W-D-L / xPts
 ```
 
-`forecast` remains the generic deterministic Monte Carlo library. `match` is the higher-level causal graph for one fixture. It consumes canonical/source-neutral primitives and uses the same `Rng64`; it does not know provider JSON shapes or perform remote collection.
+`forecast` remains the generic distribution/Monte Carlo library. `match` owns fixture-specific composition. `source-*` owns provider payload shapes. No provider HTTP or JSON shape leaks into model scoring.
 
-## Data-source policy
+## Source policy
 
-- **Existing Football Manager, Transfermarkt, and FBref inputs stay first-class.** Transfermarkt continues to own market/transfer/contract observations and valuation targets; existing FBref performance observations are merged into the player-match surface rather than replaced.
-- **StatsBomb Open Data** is the preferred genuinely open event-level source where its competition coverage exists. Matches and events can produce results, team event totals, player event totals, and xG. Its lineup files can also supply historical starters/positions to upstream selection calibration.
-- **football-data.org** is useful for broad fixtures/results/table coverage. The adapter parses cached v4 `/matches` responses; authentication and throttling stay in orchestration.
-- **OpenFootball** is useful as a CC0 results fallback. Its team-name identifiers remain provider-scoped rather than being silently merged with clubs from another source.
-- **Sofascore** can materially improve current player/team/lineup coverage, but the useful API surface is unofficial. It is therefore an optional cached-payload adapter, never an architectural dependency and never called from model scoring.
+- Existing Football Manager, Transfermarkt, and FBref inputs remain first-class.
+- Transfermarkt remains a market/contract/transfer source rather than a scoring dependency.
+- Existing FBref match-level performance is merged into the source-neutral player-performance surface.
+- StatsBomb Open Data supplies open match/event/lineup history where covered. `parse_statsbomb_lineups` preserves starter status, position intervals, and minutes rather than collapsing a player to one position label.
+- football-data.org and OpenFootball supply broad fixture/result coverage. OpenFootball accepts both common `matches[]` and `rounds[].matches[]` shapes.
+- Sofascore can improve current lineup/player/team coverage, but the useful endpoint surface is unofficial. Its adapter is optional and cached; lineup records preserve the provider's `confirmed` flag so a projected lineup is never promoted to known truth.
 
-Remote HTTP collection, retries, credentials, caching, and provider-specific access policy belong outside the source-neutral model crates. Immutable historical payloads should be staged before canonicalization so a model run can always be reproduced.
+Remote collection, credentials, retries, rate limits, and cache policy live outside model crates.
 
-## Canonical sporting sidecar
+## Canonical sporting sidecars
 
-The base canonical dataset format is deliberately unchanged so existing valuation artifacts remain readable. `SportingDataset` binds itself to the exact base `dataset_version` and `source_manifest_checksum`, then extends it additively:
+The original canonical valuation artifact is intentionally not rewritten.
 
-- provider player IDs map to the same canonical `PlayerId` through the existing weighted metadata resolver; ambiguous links become explicit issues rather than guessed matches;
-- provider clubs and competitions receive deterministic IDs above the base ID ranges but remain provider-scoped, so a matching club name never implies cross-source identity;
-- the metric registry starts with all existing FBref metric IDs and only appends new names, preserving old feature semantics;
-- match IDs are deterministic hashes namespaced by provider;
-- provider provenance is explicit and checked against every source record.
+`SportingDataset` is additive and binds to the exact base `dataset_version` and `source_manifest_checksum`. It provides provider provenance, canonical player links, provider-scoped club/competition IDs, deterministic provider-namespaced match IDs, player/team stats, results, and a metric registry that preserves existing FBref IDs.
 
-`SportingDataset::player_matches` combines existing match-level FBref observations with new provider observations. Rows with unknown minutes remain available in the sidecar but are excluded from per-90 materialization instead of being coerced to zero. `SportingDataset::team_matches` joins team metrics to canonical results so team form and team statistics use the same match identity.
+`SportingLineupDataset` is a second additive sidecar for lineup history. It canonicalizes player/club/competition/match identity but deliberately retains provider position tokens and formation tokens. Provider position taxonomies are not assumed to be semantically identical; position-token -> canonical `RoleId` mapping is a versioned modeling decision upstream of match simulation.
 
-## Generic sporting Monte Carlo
+Missing or unresolved lineup players become explicit issues rather than guessed identities.
 
-### Player statistics
+## Causal historical state
 
-For each player/metric, the generic forecast separates:
+Player windows already provide:
 
-1. the estimated latent per-90 production rate;
-2. match-to-match production variance;
-3. expected minutes/exposure;
-4. uncertainty in minutes;
-5. epistemic uncertainty in the true rate.
+- total and per-90 production;
+- exponentially weighted recent per-90 production;
+- recent-vs-prior trend;
+- match-level variance;
+- coverage / low-sample state;
+- robust peer comparison;
+- causal competition translation.
 
-A path samples the latent rate, realized rate, and exposure independently, then produces either a non-negative continuous total or a count total. Outputs are distributions (`p10/p25/p50/p75/p90`, mean, standard error), not point estimates.
+Team windows provide per-match EWMA/trend/variance plus W/D/L, points, goals for, and goals against.
 
-### Team statistics
+Selection uses its own primitive. `build_selection_window` is calibrated against **team fixture dates**, not only rows where the player appeared. A club fixture with no player appearance is therefore evidence of non-selection without becoming a fake zero-performance observation. Start/appearance/minute estimates are exponentially weighted and shrunk to explicit priors.
 
-Team forecasts use the same structure at per-match resolution. Rolling team state stores totals, per-match rates, exponentially weighted recent form, recent-vs-prior trend, dispersion, W/D/L, points, and goals for/against.
+Formation history is calibrated the same way with `calibrate_formation_priors`.
 
-## Specific-match graph
+## Stochastic XI projection
 
-### 1. Selection is stochastic when the XI is unknown
+`LineupProjectionInput` contains:
 
-`LineupProjectionInput` accepts formation priors, a squad of candidates, optional confirmed starters, and explicit selection parameters. Every Monte Carlo path samples:
-
-- formation;
-- player availability;
-- eleven unique starters;
-- exact tactical slot/role for starters whose role is not confirmed;
-- starter minutes.
-
-A partial confirmed lineup collapses only the confirmed dimensions. If all eleven players and slots are known, start/role uncertainty collapses completely. If no XI is known, the complete XI is a path variable.
-
-`build_selection_window` calibrates start/appearance probabilities against **team fixture dates**, not only a player's appearances. A fixture with no appearance row therefore counts as evidence of non-selection without manufacturing a player-stat zero. It uses causal exponential decay plus an explicit empirical-Bayes prior. `calibrate_formation_priors` applies the same as-of/decay discipline to formation history.
-
-`lineup_candidate_from_state` combines this selection state with the canonical player's role vector and latent ability. Availability and fatigue remain separate inputs so an injury probability does not get confused with tactical selection probability.
-
-### 2. Exact X↔Y interactions
-
-The match graph uses normalized pitch coordinates from the sampled tactical slots. Opponent coordinates are mirrored into the attacking team's frame, producing an explicit spatial graph for all relevant player pairs.
-
-`MatchupRule` is metric-specific and compares source-neutral ability dimensions. For example, a dribble model can compare ball progression/technical ability against defending/physical ability, while an aerial model can use aerial/physical dimensions. There is no hard-coded winger-vs-full-back rule: the sampled formation and spatial overlap determine which opponents are relevant.
-
-`PairwiseSynergy` separately represents teammate relationships such as co-minutes/pass-network/overlap effects. The player metric process receives two distinct terms: opponent advantage and teammate support.
-
-`project_metric_matchups` repeatedly samples both XIs and reports each attacker/defender pair's interaction probability, mean spatial weight, mean ability advantage, and unconditional expected weighted advantage. Explanations can therefore say that Y is a major driver for X only on the paths where X and Y actually occupy interacting roles.
-
-### 3. Player event processes
-
-`PlayerMetricImpactModel` starts from the empirically calibrated per-90 distribution and applies separate multiplicative/log effects for:
-
-- direct opponent matchup;
-- teammate support;
-- role fit;
+- candidate squad;
+- causal start probability;
+- availability probability;
+- latent within-squad quality;
 - fatigue;
-- own tactical/system production;
-- opponent tactical suppression;
-- match environment.
+- role fits;
+- expected starter minutes and uncertainty;
+- substitute probability;
+- formation priors;
+- optional confirmed starters/slots.
 
-The model then samples the realized player metric on that path. Count metrics are sampled as counts; continuous non-negative metrics retain continuous totals. Each metric also has an explicit peer/league reference and calibrated attack/defence log-weight so the realized performance can affect team state without silently double-counting the team prior.
+Every path samples formation, availability, eleven unique starters, roles/slots for unknown assignments, and starter-minute targets. Scarce positions are assigned before flexible positions.
 
-`PlayerTeamImpactProfile` is the sparse-data backstop from the latent player state. `latent_team_impact_from_state` turns the FM-derived `AbilityVector` into attack/defence strength through versioned caller-supplied weights rather than hard-coded football assumptions. `fatigue_from_load` is a transparent load/rest primitive that can be replaced by a learned calibration later.
+Known information only collapses the uncertainty it actually resolves:
 
-### 4. Player state produces the result
+- no lineup known -> full XI is stochastic;
+- partial lineup known -> the remaining places are stochastic;
+- player confirmed but position unknown -> start is fixed, role remains stochastic;
+- player and slot confirmed -> both are fixed;
+- full XI/slots confirmed -> lineup uncertainty collapses.
 
-For each path the simulator performs, in order:
+`project_lineup` exposes marginal start probabilities, expected minutes, role distributions, and formation probabilities from the same sampling primitive used inside the match simulation.
+
+## Player state and exact matchup primitives
+
+There are two complementary player-state surfaces.
+
+### Coarse state
+
+`PlayerMatchupState` carries the source-neutral ability vector: technical, ball progression, creativity, finishing, defending, aerial, physical, decision making, mentality, and goalkeeping. Metric-specific `MatchupRule`s can compare different dimensions.
+
+### Fine FM attributes
+
+`PlayerAttributeState` carries raw canonical `AttributeId` values. `AttributeMatchupRule` can express exact mechanisms such as:
 
 ```text
-sample home XI
-sample away XI
-    -> build metric-specific matchup graph
-    -> sample every modeled starter metric
-    -> aggregate latent + realized player contributions
-    -> construct home/away attack and defence log state
-    -> apply team/environment residual context
-    -> construct scoring intensities
-    -> simulate score in equal time segments with score-state feedback
-    -> record score/W-D-L/expected points
+pace          vs recovery pace
+acceleration  vs agility
+ dribbling    vs tackling
+crossing      vs positioning / blocking
+strength      vs strength
+jumping/aerial vs aerial defending
+finishing     vs goalkeeper/defensive attributes
 ```
 
-There is no second independent result model that bypasses player performance. The generic team-form goal model remains useful as a baseline/calibration source, but the specific-match graph is the final path when lineup/player context is available.
+Rules are metric-specific. The repository does not hard-code which numeric `AttributeId` means pace, tackling, etc.; that mapping comes from the versioned FM schema already used by ingestion.
 
-The output includes unconditional player-stat distributions (including the probability of not starting), conditional-on-start distributions, start probabilities, minutes, and separate influence summaries for attack/defence contribution, matchup, teammate support, role fit, fatigue, and system/environment effects.
+`AttributeEventLoading` also allows an own attribute to modify an event process without pretending a specific defender is its counterpart, e.g. finishing affecting shot conversion.
 
-### 5. Counterfactuals
+Spatial relevance is determined from the sampled tactical slots. Opponent coordinates are mirrored into the attacking frame, so the direct-opponent graph emerges from the formation rather than a hard-coded "LW always plays RB" assumption.
 
-`simulate_player_absence` forces one player unavailable, removes any confirmed-starter lock, then re-runs the **entire** graph with the same seed. The replacement XI, roles, teammate links, direct matchups, player events, team state, and result are all allowed to change. This supports questions such as "what does X add to this exact fixture?" without subtracting a static player rating from the original result.
+Teammate synergy is a separate primitive. Co-minutes, pass-network links, progressive-pass/carry relationships, overlap/underlap effects, or learned pair interactions can therefore enter without being conflated with opponent matchup.
 
-## Remaining game-state extension boundary
+## Player event process
 
-The score process is already segmented and score-dependent. Red cards, injuries, tactical shifts, and substitutions should enter as additional state transitions inside those paths, not as pre-match features. The current selection object retains substitution probability for that extension; it is not yet used to create substitute minutes, so current player-stat/result simulation is starter-centric after the stochastic XI is chosen.
+`SpecificPlayerEventModel` is source-neutral and can represent any canonical metric: touches, passes, progressive passes, key passes, crosses, carries, progressive carries, dribbles, shots, shots on target, xG, xA, box touches, pressures, tackles, interceptions, blocks, clearances, duels, aerials, fouls, turnovers, recoveries, goals, assists, cards, or future metrics.
+
+For a player/metric/segment, the rate is conditioned on independent primitives:
+
+```text
+historical latent rate
+  x own raw-attribute effect
+  x aggregate opponent matchup
+  x raw-attribute opponent matchup
+  x teammate support
+  x exact sampled role fit
+  x fatigue
+  x own tactical/system modifier
+  x opponent suppression modifier
+  x match environment modifier
+  x current score-state modifier
+```
+
+Count metrics are sampled as counts; continuous non-negative metrics remain continuous. Missing required player-event models are not interpreted as zero: the preferred simulator validates that every selectable player has a calibrated event-model surface, which should be supplied from observed state plus explicit priors when samples are sparse.
+
+## Player metrics do not directly equal goals
+
+`CausalChannelGraph` is the result bridge. It is deliberately an acyclic graph:
+
+```text
+player metric deviation
+        |
+        v
+metric -> process-channel loading
+        |
+        v
+possession / retention / progression / width / central access /
+transition attack / chance creation / box entries / shot volume /
+shot quality / finishing / pressing / counterpress / transition defence /
+defensive suppression / aerial control / set pieces / goalkeeping
+        |
+        v
+channel -> channel causal edges
+        |
+        v
+terminal channel -> attack/defence scoring log-intensity
+```
+
+A metric with no channel loading can still be forecast and explained, but it cannot accidentally move W/D/L. The graph rejects cycles so causal order is explicit.
+
+Example:
+
+```text
+X progressive carries
+    -> Progression
+    -> ChanceCreation
+    -> ShotQuality
+    -> team scoring intensity
+```
+
+This is preferred over assigning a direct arbitrary "progressive carries -> goal rate" coefficient.
+
+## Dynamic in-match state
+
+`simulate_primitive_match` is the preferred fixture engine. Each Monte Carlo path:
+
+1. samples the two pre-match lineups;
+2. builds the active player graphs;
+3. recomputes matchups for the current active players;
+4. samples player events for the current time segment;
+5. evaluates the causal team-channel graph;
+6. samples segment goals;
+7. samples red-card and injury hazards;
+8. applies tactical substitutions from sampled starter-minute targets;
+9. chooses replacements by substitute probability, availability, role fit, and fatigue;
+10. rebuilds the active matchup/event graph for the next segment.
+
+Score state is not a pre-match feature. It is endogenous. Per-metric trailing/leading modifiers change subsequent player behavior, so a 1-0 state can change progression, pressing, shot volume, etc. before the next scoring intensity is produced.
+
+Red cards remove a player without replacement. Injuries can force a substitution subject to remaining substitutions/available replacements. Tactical substitutions preserve the outgoing tactical slot and re-evaluate replacement role fit; future work can add explicit score-triggered formation-template changes without changing the selection/matchup/event/channel boundaries.
+
+## Outputs and explanation
+
+`PrimitiveMatchForecast` contains:
+
+- W/D/L probabilities, score distributions, and expected points;
+- projected formation/XI/start probabilities;
+- player appearance probabilities and expected minutes;
+- unconditional player-stat distributions;
+- conditional-on-appearance player-stat distributions;
+- separate influence summaries for own attributes, aggregate matchup, raw-attribute matchup, teammate support, role fit, fatigue, system/environment, and score state;
+- player channel contributions;
+- team channel contributions;
+- red-card and injury-exit probabilities.
+
+This lets an explanation distinguish, for example:
+
+```text
+X's dribble rate moved because:
+  + raw pace-vs-recovery matchup
+  + teammate overlap support
+  - role-fit penalty
+  - opponent low-block suppression
+
+Those dribbles/progressive carries moved:
+  Progression -> ChanceCreation -> ShotQuality
+
+which changed Team A's scoring intensity and therefore W/D/L.
+```
+
+`project_metric_matchups` separately reports the probability that X and Y actually occupy interacting starting slots across projected-XI paths, so an opponent is not described as "the matchup" when that pairing only exists on a minority of lineup scenarios.
+
+## Counterfactuals
+
+`simulate_primitive_player_absence` uses common random numbers. It removes a player upstream, reprojects the starting XI, and reruns substitutions, roles, direct matchups, player events, team channels, and the result.
+
+Therefore:
+
+```text
+with X     -> projected XI A -> matchup graph A -> event graph A -> W/D/L A
+without X  -> projected XI B -> matchup graph B -> event graph B -> W/D/L B
+```
+
+The delta includes replacement quality, role reshuffling, teammate effects, changed opponent matchups, player-event changes, and result changes. It is not a static player-rating subtraction.
 
 ## Extension rule
 
-New providers should stop at generic source records and enter through the sporting sidecar. Do not add provider-specific schemas to `performance`, `forecast`, or `match`, and do not rewrite the base canonical artifact merely to add a data source. Cross-provider club identity should become a separate verified graph if the product needs it; provider-name similarity is not sufficient evidence.
+New providers stop at source-neutral source records and canonical sidecars. Do not add provider-specific schemas to `performance`, `forecast`, or `match`. New football mechanisms should normally become small primitives: a new state observation, a new rate modifier, a new matchup rule, a new process channel/edge, or a new game-state transition.
