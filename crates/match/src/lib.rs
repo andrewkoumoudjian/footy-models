@@ -6,6 +6,8 @@
 //! stochastic graph from lineup uncertainty through player interactions and match outcome.
 
 mod calibration;
+mod causal;
+mod channels;
 mod counterfactual;
 mod explain;
 mod lineup;
@@ -13,6 +15,8 @@ mod matchup;
 mod simulation;
 
 pub use calibration::*;
+pub use causal::*;
+pub use channels::*;
 pub use counterfactual::*;
 pub use explain::*;
 pub use lineup::*;
