@@ -14,8 +14,7 @@ pub use canonical::{
     CanonicalFmSnapshot, CanonicalIdentity, CanonicalIssue, CanonicalMarketValue,
     CanonicalPerformanceObservation, CanonicalPlayer, CanonicalProvenance, CanonicalSalaryObservation,
     CanonicalTransfer, CanonicalUnresolvedCandidate, CanonicalUnresolvedIdentity, ExternalPlayerRecord,
-    IdentityOverride, MetricDefinition, SourceClubRecord, SourceClubRef, SourceCompetitionRecord,
-    SourceCompetitionRef, UnresolvedReason,
+    IdentityOverride, MetricDefinition, SourceClubRef, SourceCompetitionRef, UnresolvedReason,
 };
 pub use features::{
     feature_name, materialize_scoring_features, materialize_training_features, DatasetFeatureRow,
@@ -27,8 +26,10 @@ pub use features::{
 };
 pub use persistence::{read_canonical_dataset, write_canonical_dataset};
 pub use sporting::{
-    build_sporting_dataset, provider_source, CanonicalMatchResult, CanonicalPlayerStatObservation,
-    CanonicalTeamStatObservation, SportingDataset, SportingIssue,
+    build_sporting_dataset, resolve_sporting_player_links, CanonicalMatchResult,
+    CanonicalPlayerStatObservation, CanonicalTeamStatObservation, SportingClubRecord,
+    SportingCompetitionRecord, SportingDataset, SportingExternalPlayer, SportingIdentityResolution,
+    SportingIssue, SportingPlayerLink, SportingProvenance,
 };
 pub use tabular::{
     infer_fm_schema, parse_external_players_tsv, parse_fbref_performance_tsv,
