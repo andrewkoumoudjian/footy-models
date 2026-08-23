@@ -13,6 +13,7 @@ mod lineup;
 mod matchup;
 mod simulation;
 mod specific;
+mod specific_explain;
 
 pub use calibration::*;
 pub use channels::*;
@@ -22,3 +23,4 @@ pub use lineup::*;
 pub use matchup::*;
 pub use simulation::*;
 pub use specific::*;
+pub use specific_explain::*;
