@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-//! Provider-boundary parsers for cached/open football statistics and match results.
+//! Provider-boundary parsers for cached/open football statistics, lineups, and match results.
 //!
 //! This crate deliberately owns JSON shape knowledge only. Canonical identity, feature
 //! construction, modeling, and remote collection belong elsewhere.
@@ -57,6 +57,39 @@ pub struct TeamStatSourceRecord {
     pub date: Date,
     pub is_home: bool,
     pub metrics: Vec<SourceMetric>,
+    pub provenance_id: ProvenanceId,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SourcePositionInterval {
+    pub position_external_id: String,
+    pub position_name: Option<String>,
+    /// Match clock in decimal minutes. Extra time is permitted.
+    pub from_minute: u16,
+    pub to_minute: Option<u16>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LineupPlayerSourceRecord {
+    pub player_external_id: String,
+    pub started: bool,
+    pub minutes: Option<u16>,
+    pub positions: Vec<SourcePositionInterval>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LineupSourceRecord {
+    pub provider: StatsProvider,
+    pub club_external_id: String,
+    pub competition_external_id: String,
+    pub season_external_id: String,
+    pub match_external_id: String,
+    pub date: Date,
+    /// Provider formation token such as `4-3-3`; absent when the provider does not supply one.
+    pub formation_external_id: Option<String>,
+    /// Some providers distinguish projected from confirmed lineups.
+    pub confirmed: Option<bool>,
+    pub players: Vec<LineupPlayerSourceRecord>,
     pub provenance_id: ProvenanceId,
 }
 
@@ -132,7 +165,6 @@ pub fn parse_sofascore_team_statistics(
     let mut home = BTreeMap::<String, f64>::new();
     let mut away = BTreeMap::<String, f64>::new();
 
-    // Prefer the ALL period when present to avoid summing period and match totals together.
     let selected = periods
         .iter()
         .find(|period| string_at(period, &["period"]).as_deref() == Some("ALL"))
@@ -207,6 +239,63 @@ pub fn parse_sofascore_player_statistics(
     })
 }
 
+/// Parse a cached Sofascore event lineup response. The useful surface is unofficial; this parser is
+/// intentionally tolerant of both `player.id` and direct `id`, and of `substitute`/`isSubstitute`.
+pub fn parse_sofascore_lineups(
+    input: &str,
+    context: &MatchContext,
+    provenance_id: ProvenanceId,
+) -> Result<Vec<LineupSourceRecord>, String> {
+    let root: Value = serde_json::from_str(input).map_err(json_error)?;
+    let confirmed = root.get("confirmed").and_then(Value::as_bool);
+    let mut out = Vec::with_capacity(2);
+    for (side, club_external_id) in [
+        ("home", context.home_club_external_id.as_str()),
+        ("away", context.away_club_external_id.as_str()),
+    ] {
+        let Some(side_value) = root.get(side) else { continue };
+        let formation_external_id = string_at(side_value, &["formation"]);
+        let players = side_value.get("players").and_then(Value::as_array).cloned().unwrap_or_default();
+        let mut player_rows = Vec::with_capacity(players.len());
+        for row in players {
+            let player_external_id = id_at(&row, &["player", "id"]).or_else(|| id_at(&row, &["id"]));
+            let Some(player_external_id) = player_external_id else { continue };
+            let substitute = value_at(&row, &["substitute"]).and_then(Value::as_bool)
+                .or_else(|| value_at(&row, &["isSubstitute"]).and_then(Value::as_bool));
+            let minutes = value_at(&row, &["statistics", "minutesPlayed"]).and_then(value_u16)
+                .or_else(|| value_at(&row, &["minutesPlayed"]).and_then(value_u16));
+            let position_name = string_at(&row, &["position"]).or_else(|| string_at(&row, &["player", "position"]));
+            let positions = position_name.map(|name| vec![SourcePositionInterval {
+                position_external_id: normalized_metric_name(&name),
+                position_name: Some(name),
+                from_minute: 0,
+                to_minute: minutes,
+            }]).unwrap_or_default();
+            player_rows.push(LineupPlayerSourceRecord {
+                player_external_id,
+                started: substitute.map(|value| !value).unwrap_or(false),
+                minutes,
+                positions,
+            });
+        }
+        if !player_rows.is_empty() {
+            out.push(LineupSourceRecord {
+                provider: StatsProvider::Sofascore,
+                club_external_id: club_external_id.to_owned(),
+                competition_external_id: context.competition_external_id.clone(),
+                season_external_id: context.season_external_id.clone(),
+                match_external_id: context.match_external_id.clone(),
+                date: context.date,
+                formation_external_id,
+                confirmed,
+                players: player_rows,
+                provenance_id,
+            });
+        }
+    }
+    Ok(out)
+}
+
 /// Parse StatsBomb Open Data `matches/<competition>/<season>.json`.
 pub fn parse_statsbomb_matches(
     input: &str,
@@ -227,6 +316,58 @@ pub fn parse_statsbomb_matches(
             home_goals: u8_at(value, &["home_score"]),
             away_goals: u8_at(value, &["away_score"]),
             status: MatchStatus::Finished,
+            provenance_id,
+        });
+    }
+    Ok(out)
+}
+
+/// Parse StatsBomb Open Data `lineups/<match>.json`. Position intervals are retained rather than
+/// reduced to one label so role changes and substitutions remain observable upstream.
+pub fn parse_statsbomb_lineups(
+    input: &str,
+    context: &MatchContext,
+    provenance_id: ProvenanceId,
+) -> Result<Vec<LineupSourceRecord>, String> {
+    let root: Value = serde_json::from_str(input).map_err(json_error)?;
+    let teams = root.as_array().ok_or_else(|| "StatsBomb lineups payload must be an array".to_owned())?;
+    let mut out = Vec::with_capacity(teams.len());
+    for team in teams {
+        let club_external_id = required_id(team, &["team_id"])?;
+        let player_values = team.get("lineup").and_then(Value::as_array).ok_or_else(|| "StatsBomb lineup array missing".to_owned())?;
+        let mut players = Vec::with_capacity(player_values.len());
+        for row in player_values {
+            let player_external_id = required_id(row, &["player_id"])?;
+            let mut positions = Vec::new();
+            let mut started = false;
+            if let Some(values) = row.get("positions").and_then(Value::as_array) {
+                for value in values {
+                    let from = string_at(value, &["from"]).and_then(|text| parse_match_clock_minutes(&text)).unwrap_or(0);
+                    let to = string_at(value, &["to"]).and_then(|text| parse_match_clock_minutes(&text));
+                    let start_reason = string_at(value, &["start_reason"]);
+                    if start_reason.as_deref() == Some("Starting XI") || from == 0 { started = true; }
+                    positions.push(SourcePositionInterval {
+                        position_external_id: id_at(value, &["position_id"]).unwrap_or_else(|| normalized_metric_name(&string_at(value, &["position"]).unwrap_or_else(|| "unknown".into()))),
+                        position_name: string_at(value, &["position"]),
+                        from_minute: from,
+                        to_minute: to,
+                    });
+                }
+            }
+            positions.sort_by_key(|value| (value.from_minute, value.to_minute.unwrap_or(u16::MAX), value.position_external_id.clone()));
+            let minutes = union_interval_minutes(&positions);
+            players.push(LineupPlayerSourceRecord { player_external_id, started, minutes, positions });
+        }
+        out.push(LineupSourceRecord {
+            provider: StatsProvider::StatsBomb,
+            club_external_id,
+            competition_external_id: context.competition_external_id.clone(),
+            season_external_id: context.season_external_id.clone(),
+            match_external_id: context.match_external_id.clone(),
+            date: context.date,
+            formation_external_id: None,
+            confirmed: Some(true),
+            players,
             provenance_id,
         });
     }
@@ -333,8 +474,8 @@ pub fn parse_football_data_matches(
     Ok(out)
 }
 
-/// Parse the common openfootball JSON shape (`rounds[].matches[]`). Team IDs fall back to names
-/// because many CC0 datasets intentionally contain no numeric team identifiers.
+/// Parse common OpenFootball shapes. Both generated `matches[]` files and nested
+/// `rounds[].matches[]` files are accepted.
 pub fn parse_openfootball_matches(
     input: &str,
     competition_external_id: &str,
@@ -342,35 +483,40 @@ pub fn parse_openfootball_matches(
     provenance_id: ProvenanceId,
 ) -> Result<Vec<MatchResultSourceRecord>, String> {
     let root: Value = serde_json::from_str(input).map_err(json_error)?;
-    let rounds = root
-        .get("rounds")
-        .and_then(Value::as_array)
-        .ok_or_else(|| "openfootball rounds array missing".to_owned())?;
-    let mut out = Vec::new();
-    for round in rounds {
-        let Some(matches) = round.get("matches").and_then(Value::as_array) else { continue };
-        for value in matches {
-            let home = team_token(value.get("team1")).ok_or_else(|| "openfootball team1 missing".to_owned())?;
-            let away = team_token(value.get("team2")).ok_or_else(|| "openfootball team2 missing".to_owned())?;
-            let date = parse_iso_date(required_str(value, &["date"] )?)?;
-            let (home_goals, away_goals) = openfootball_score(value);
-            let match_external_id = id_at(value, &["id"]).unwrap_or_else(|| {
-                format!("{}:{}:{}:{}", season_external_id, date.days_since_unix_epoch(), home, away)
-            });
-            out.push(MatchResultSourceRecord {
-                provider: StatsProvider::OpenFootball,
-                match_external_id,
-                competition_external_id: competition_external_id.to_owned(),
-                season_external_id: season_external_id.to_owned(),
-                date,
-                home_club_external_id: home,
-                away_club_external_id: away,
-                home_goals,
-                away_goals,
-                status: if home_goals.is_some() && away_goals.is_some() { MatchStatus::Finished } else { MatchStatus::Scheduled },
-                provenance_id,
-            });
+    let mut values = Vec::<&Value>::new();
+    if let Some(matches) = root.get("matches").and_then(Value::as_array) {
+        values.extend(matches.iter());
+    }
+    if let Some(rounds) = root.get("rounds").and_then(Value::as_array) {
+        for round in rounds {
+            if let Some(matches) = round.get("matches").and_then(Value::as_array) {
+                values.extend(matches.iter());
+            }
         }
+    }
+    if values.is_empty() { return Err("openfootball matches array missing".to_owned()); }
+    let mut out = Vec::with_capacity(values.len());
+    for value in values {
+        let home = team_token(value.get("team1")).ok_or_else(|| "openfootball team1 missing".to_owned())?;
+        let away = team_token(value.get("team2")).ok_or_else(|| "openfootball team2 missing".to_owned())?;
+        let date = parse_iso_date(required_str(value, &["date"] )?)?;
+        let (home_goals, away_goals) = openfootball_score(value);
+        let match_external_id = id_at(value, &["id"]).unwrap_or_else(|| {
+            format!("{}:{}:{}:{}", season_external_id, date.days_since_unix_epoch(), home, away)
+        });
+        out.push(MatchResultSourceRecord {
+            provider: StatsProvider::OpenFootball,
+            match_external_id,
+            competition_external_id: competition_external_id.to_owned(),
+            season_external_id: season_external_id.to_owned(),
+            date,
+            home_club_external_id: home,
+            away_club_external_id: away,
+            home_goals,
+            away_goals,
+            status: if home_goals.is_some() && away_goals.is_some() { MatchStatus::Finished } else { MatchStatus::Scheduled },
+            provenance_id,
+        });
     }
     Ok(out)
 }
@@ -394,20 +540,63 @@ fn metrics_from_map(values: BTreeMap<String, f64>) -> Vec<SourceMetric> {
         .collect()
 }
 
+/// Canonicalize provider metric names while preserving camel-case word boundaries.
 fn normalized_metric_name(value: &str) -> String {
-    let mut out = String::with_capacity(value.len());
+    let mut out = String::with_capacity(value.len() + 4);
+    let mut previous_alphanumeric = false;
+    let mut previous_lower_or_digit = false;
     let mut underscore = false;
     for ch in value.chars() {
         if ch.is_ascii_alphanumeric() {
+            if ch.is_ascii_uppercase() && previous_alphanumeric && previous_lower_or_digit && !underscore {
+                out.push('_');
+            }
             out.push(ch.to_ascii_lowercase());
+            previous_alphanumeric = true;
+            previous_lower_or_digit = ch.is_ascii_lowercase() || ch.is_ascii_digit();
             underscore = false;
-        } else if !out.is_empty() && !underscore {
-            out.push('_');
-            underscore = true;
+        } else {
+            if !out.is_empty() && !underscore {
+                out.push('_');
+                underscore = true;
+            }
+            previous_alphanumeric = false;
+            previous_lower_or_digit = false;
         }
     }
     while out.ends_with('_') { out.pop(); }
     out
+}
+
+fn parse_match_clock_minutes(value: &str) -> Option<u16> {
+    let text = value.trim();
+    if let Some((minute, second)) = text.split_once(':') {
+        let minute = minute.parse::<u16>().ok()?;
+        let seconds = second.parse::<u16>().ok()?;
+        return minute.checked_add((seconds >= 30) as u16);
+    }
+    let cleaned = text.trim_end_matches('\'').trim_start_matches('+');
+    cleaned.parse::<u16>().ok()
+}
+
+fn union_interval_minutes(intervals: &[SourcePositionInterval]) -> Option<u16> {
+    let mut ranges: Vec<(u16, u16)> = intervals.iter().filter_map(|value| {
+        value.to_minute.filter(|to| *to >= value.from_minute).map(|to| (value.from_minute, to))
+    }).collect();
+    if ranges.is_empty() { return None; }
+    ranges.sort_by_key(|value| (value.0, value.1));
+    let mut total = 0_u32;
+    let mut current = ranges[0];
+    for range in ranges.into_iter().skip(1) {
+        if range.0 <= current.1 {
+            current.1 = current.1.max(range.1);
+        } else {
+            total = total.saturating_add(u32::from(current.1.saturating_sub(current.0)));
+            current = range;
+        }
+    }
+    total = total.saturating_add(u32::from(current.1.saturating_sub(current.0)));
+    Some(total.min(u32::from(u16::MAX)) as u16)
 }
 
 fn json_error(error: serde_json::Error) -> String { format!("invalid JSON: {error}") }
@@ -554,7 +743,7 @@ mod tests {
     }
 
     #[test]
-    fn parses_statsbomb_match_and_events() {
+    fn parses_statsbomb_match_events_and_lineups() {
         let matches = r#"[{"match_id":1,"match_date":"2024-01-02","competition":{"competition_id":9},"season":{"season_id":10},"home_team":{"home_team_id":11},"away_team":{"away_team_id":12},"home_score":1,"away_score":0}]"#;
         let result = parse_statsbomb_matches(matches, ProvenanceId(1)).unwrap();
         assert_eq!(result[0].home_club_external_id, "11");
@@ -563,26 +752,45 @@ mod tests {
         let (players, teams) = parse_statsbomb_events(events, &context, ProvenanceId(2)).unwrap();
         assert_eq!(players[0].metrics.iter().find(|m| m.name == "xg").unwrap().value, 0.25);
         assert_eq!(teams[0].metrics.iter().find(|m| m.name == "event_pass").unwrap().value, 1.0);
+
+        let lineups = r#"[{"team_id":11,"lineup":[{"player_id":99,"positions":[{"position_id":17,"position":"Right Wing","from":"00:00","to":"60:00","start_reason":"Starting XI"},{"position_id":12,"position":"Right Midfield","from":"60:00","to":"90:00","start_reason":"Tactical Shift"}]}]},{"team_id":12,"lineup":[{"player_id":100,"positions":[{"position_id":2,"position":"Right Back","from":"00:00","to":"90:00","start_reason":"Starting XI"}]}]}]"#;
+        let parsed = parse_statsbomb_lineups(lineups, &context, ProvenanceId(3)).unwrap();
+        assert_eq!(parsed.len(), 2);
+        assert!(parsed[0].players[0].started);
+        assert_eq!(parsed[0].players[0].minutes, Some(90));
+        assert_eq!(parsed[0].players[0].positions.len(), 2);
     }
 
     #[test]
-    fn parses_football_data_and_openfootball_matches() {
+    fn parses_sofascore_lineups_without_making_unconfirmed_data_certain() {
+        let context = MatchContext { match_external_id: "42".into(), competition_external_id: "7".into(), season_external_id: "8".into(), date: Date(10), home_club_external_id: "10".into(), away_club_external_id: "20".into() };
+        let input = r#"{"confirmed":false,"home":{"formation":"4-3-3","players":[{"player":{"id":99},"substitute":false,"position":"F","statistics":{"minutesPlayed":90}},{"player":{"id":98},"substitute":true,"position":"M"}]},"away":{"formation":"4-2-3-1","players":[{"player":{"id":100},"substitute":false,"position":"D"}]}}"#;
+        let values = parse_sofascore_lineups(input, &context, ProvenanceId(1)).unwrap();
+        assert_eq!(values[0].confirmed, Some(false));
+        assert_eq!(values[0].formation_external_id.as_deref(), Some("4-3-3"));
+        assert!(values[0].players[0].started);
+        assert!(!values[0].players[1].started);
+    }
+
+    #[test]
+    fn parses_football_data_and_both_openfootball_shapes() {
         let football_data = r#"{"matches":[{"id":1,"utcDate":"2024-02-03T15:00:00Z","status":"FINISHED","competition":{"id":2},"season":{"id":3},"homeTeam":{"id":4},"awayTeam":{"id":5},"score":{"fullTime":{"home":3,"away":2}}}]}"#;
         assert_eq!(parse_football_data_matches(football_data, ProvenanceId(1)).unwrap()[0].home_goals, Some(3));
 
-        let open = r#"{"rounds":[{"matches":[{"date":"2024-02-03","team1":"A","team2":"B","score":{"ft":[2,2]}}]}]}"#;
-        let matches = parse_openfootball_matches(open, "epl", "2023-24", ProvenanceId(1)).unwrap();
+        let nested = r#"{"rounds":[{"matches":[{"date":"2024-02-03","team1":"A","team2":"B","score":{"ft":[2,2]}}]}]}"#;
+        let matches = parse_openfootball_matches(nested, "epl", "2023-24", ProvenanceId(1)).unwrap();
         assert_eq!(matches[0].away_goals, Some(2));
-        assert_eq!(matches[0].home_club_external_id, "A");
+        let flat = r#"{"matches":[{"date":"2024-02-04","team1":"C","team2":"D","score":{"ft":[1,0]}}]}"#;
+        assert_eq!(parse_openfootball_matches(flat, "epl", "2023-24", ProvenanceId(1)).unwrap().len(), 1);
     }
 
     #[test]
-    fn parses_sofascore_player_metrics_without_inventing_missing_values() {
+    fn parses_sofascore_player_metrics_and_splits_camel_case() {
         let match_context = MatchContext { match_external_id: "1".into(), competition_external_id: "2".into(), season_external_id: "3".into(), date: Date(10), home_club_external_id: "4".into(), away_club_external_id: "5".into() };
         let context = PlayerContext { match_context, player_external_id: "7".into(), club_external_id: "4".into() };
         let record = parse_sofascore_player_statistics(r#"{"statistics":{"minutesPlayed":90,"rating":7.4,"goals":1,"expectedGoals":0.61,"optionalMissing":null}}"#, &context, ProvenanceId(1)).unwrap();
         assert_eq!(record.minutes, Some(90));
-        assert!(record.metrics.iter().any(|metric| metric.name == "expectedgoals" && (metric.value - 0.61).abs() < 1e-9));
-        assert!(!record.metrics.iter().any(|metric| metric.name == "optionalmissing"));
+        assert!(record.metrics.iter().any(|metric| metric.name == "expected_goals" && (metric.value - 0.61).abs() < 1e-9));
+        assert!(!record.metrics.iter().any(|metric| metric.name == "optional_missing"));
     }
 }
