@@ -6,6 +6,7 @@ mod canonical;
 mod features;
 #[allow(unused_imports)]
 mod persistence;
+mod sporting;
 mod tabular;
 
 pub use canonical::{
@@ -13,7 +14,8 @@ pub use canonical::{
     CanonicalFmSnapshot, CanonicalIdentity, CanonicalIssue, CanonicalMarketValue,
     CanonicalPerformanceObservation, CanonicalPlayer, CanonicalProvenance, CanonicalSalaryObservation,
     CanonicalTransfer, CanonicalUnresolvedCandidate, CanonicalUnresolvedIdentity, ExternalPlayerRecord,
-    IdentityOverride, MetricDefinition, SourceClubRef, SourceCompetitionRef, UnresolvedReason,
+    IdentityOverride, MetricDefinition, SourceClubRecord, SourceClubRef, SourceCompetitionRecord,
+    SourceCompetitionRef, UnresolvedReason,
 };
 pub use features::{
     feature_name, materialize_scoring_features, materialize_training_features, DatasetFeatureRow,
@@ -24,6 +26,10 @@ pub use features::{
     FEATURE_REPUTATION_OBSERVED, FEATURE_REPUTATION_VALUE,
 };
 pub use persistence::{read_canonical_dataset, write_canonical_dataset};
+pub use sporting::{
+    build_sporting_dataset, provider_source, CanonicalMatchResult, CanonicalPlayerStatObservation,
+    CanonicalTeamStatObservation, SportingDataset, SportingIssue,
+};
 pub use tabular::{
     infer_fm_schema, parse_external_players_tsv, parse_fbref_performance_tsv,
     parse_identity_overrides_tsv, parse_salary_tsv, parse_tm_contracts_tsv,
