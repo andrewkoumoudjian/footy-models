@@ -1,0 +1,10 @@
+[package]
+name = "footy-match"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+footy-core.workspace = true
+footy-forecast.workspace = true
+footy-state.workspace = true
