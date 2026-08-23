@@ -5,10 +5,16 @@
 //! selection histories, tactical templates, matchup rules, and context factors; this crate owns the
 //! stochastic graph from lineup uncertainty through player interactions and match outcome.
 
+mod calibration;
+mod counterfactual;
+mod explain;
 mod lineup;
 mod matchup;
 mod simulation;
 
+pub use calibration::*;
+pub use counterfactual::*;
+pub use explain::*;
 pub use lineup::*;
 pub use matchup::*;
 pub use simulation::*;
