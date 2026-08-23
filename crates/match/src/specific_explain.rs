@@ -1,5 +1,5 @@
 use crate::lineup::{sample_lineup, LineupProjectionInput, SampledStarter};
-use crate::specific::{AttributeMatchupRule, PlayerAttributeState, SpecificPlayerEventModel};
+use crate::specific::{AttributeMatchupRule, PlayerAttributeState, PlayerAttributeValue, SpecificPlayerEventModel};
 use footy_core::{AttributeId, MetricId, PlayerId, Probability};
 use footy_forecast::Rng64;
 use std::collections::BTreeMap;
