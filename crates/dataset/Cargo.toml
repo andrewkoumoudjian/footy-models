@@ -11,5 +11,6 @@ footy-source-fm.workspace = true
 footy-source-transfermarkt.workspace = true
 footy-source-fbref.workspace = true
 footy-source-salary.workspace = true
+footy-source-stats.workspace = true
 footy-performance.workspace = true
 footy-market.workspace = true

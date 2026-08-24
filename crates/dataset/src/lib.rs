@@ -6,6 +6,8 @@ mod canonical;
 mod features;
 #[allow(unused_imports)]
 mod persistence;
+mod sporting;
+mod sporting_lineup;
 mod tabular;
 
 pub use canonical::{
@@ -24,6 +26,16 @@ pub use features::{
     FEATURE_REPUTATION_OBSERVED, FEATURE_REPUTATION_VALUE,
 };
 pub use persistence::{read_canonical_dataset, write_canonical_dataset};
+pub use sporting::{
+    build_sporting_dataset, resolve_sporting_player_links, CanonicalMatchResult,
+    CanonicalPlayerStatObservation, CanonicalTeamStatObservation, SportingClubRecord,
+    SportingCompetitionRecord, SportingDataset, SportingExternalPlayer, SportingIdentityResolution,
+    SportingIssue, SportingPlayerLink, SportingProvenance,
+};
+pub use sporting_lineup::{
+    canonicalize_sporting_lineups, CanonicalLineupObservation, CanonicalLineupPlayer,
+    CanonicalLineupPlayerObservation, CanonicalPositionInterval, SportingLineupDataset,
+};
 pub use tabular::{
     infer_fm_schema, parse_external_players_tsv, parse_fbref_performance_tsv,
     parse_identity_overrides_tsv, parse_salary_tsv, parse_tm_contracts_tsv,
