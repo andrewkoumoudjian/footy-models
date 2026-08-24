@@ -18,10 +18,13 @@ historical source payloads
 player performance history             lineup / formation history
 raw FM attributes                      team fixture history
 role / ability state                   availability / fatigue inputs
+psychology / morale / form             team mental state
        |                                    |
        +-----------------+------------------+
                          |
                          v
+       Monte Carlo path-specific kickoff state
+                         |
           stochastic pre-match selection
  availability -> formation -> XI -> slot/role -> starter-minute target
                          |
@@ -31,7 +34,7 @@ role / ability state                   availability / fatigue inputs
                          |
                          v
               segment player events
- role + fatigue + system + environment + current score state
+ role + fatigue + system + environment + score + mental state
                          |
                          v
             causal team-process DAG
@@ -43,6 +46,9 @@ role / ability state                   availability / fatigue inputs
                          v
               goal / red / injury / sub
                          |
+                         v
+      recursive player/team mental transition
+                         |
                 rebuild active graph
                          |
                         ...
@@ -52,6 +58,14 @@ role / ability state                   availability / fatigue inputs
 ```
 
 `forecast` remains the generic distribution/Monte Carlo library. `match` owns fixture-specific composition. `source-*` owns provider payload shapes. No provider HTTP or JSON shape leaks into model scoring.
+
+## A match is `n` complete Monte Carlo paths
+
+All fixture probabilities and distributions are generated from complete match histories. If the caller requests `n` paths, the engine executes exactly `n` independent paths.
+
+A path includes its own sampled kickoff latent mental state, formation/XI/roles/minutes, player↔player matchups, segment player events, team process channels, goals/cards/injuries/substitutions, recursive mental-state transitions, and final score.
+
+No sampled lineup, incident, score state, or psychological state is shared between paths. Fixed seed + identical inputs + identical path count is deterministic.
 
 ## Source policy
 
@@ -74,86 +88,41 @@ The original canonical valuation artifact is intentionally not rewritten.
 
 Missing or unresolved lineup players become explicit issues rather than guessed identities.
 
-## Causal historical state
+## Historical and inter-match state
 
-Player windows already provide:
+Player windows provide total/per-90 production, exponentially weighted recent production, recent-vs-prior trend, match variance, coverage, peer comparison, and competition translation. Team windows provide per-match EWMA/trend/variance plus W/D/L, points, goals for, and goals against.
 
-- total and per-90 production;
-- exponentially weighted recent per-90 production;
-- recent-vs-prior trend;
-- match-level variance;
-- coverage / low-sample state;
-- robust peer comparison;
-- causal competition translation.
+Selection uses its own primitive. `build_selection_window` is calibrated against **team fixture dates**, not only rows where the player appeared. A club fixture with no player appearance is evidence of non-selection without becoming a fake zero-performance observation. Start/appearance/minute estimates are exponentially weighted and shrunk to explicit priors. Formation history is calibrated similarly.
 
-Team windows provide per-match EWMA/trend/variance plus W/D/L, points, goals for, and goals against.
-
-Selection uses its own primitive. `build_selection_window` is calibrated against **team fixture dates**, not only rows where the player appeared. A club fixture with no player appearance is therefore evidence of non-selection without becoming a fake zero-performance observation. Start/appearance/minute estimates are exponentially weighted and shrunk to explicit priors.
-
-Formation history is calibrated the same way with `calibrate_formation_priors`.
+Form is separate again: it is a causal residual of historical realized player performance versus the expectation that existed before each historical match. It is an inter-match state and is held fixed during one simulated fixture. In-match success/error modifies transient self-belief or morale instead; the realized match can update form for the next fixture.
 
 ## Stochastic XI projection
 
-`LineupProjectionInput` contains:
+`LineupProjectionInput` contains candidate squad, causal start probability, availability, latent within-squad quality, fatigue, role fits, expected starter minutes/uncertainty, substitute probability, formation priors, and optional confirmed starters/slots.
 
-- candidate squad;
-- causal start probability;
-- availability probability;
-- latent within-squad quality;
-- fatigue;
-- role fits;
-- expected starter minutes and uncertainty;
-- substitute probability;
-- formation priors;
-- optional confirmed starters/slots.
+Every path samples formation, availability, eleven unique starters, roles/slots for unknown assignments, and starter-minute targets.
 
-Every path samples formation, availability, eleven unique starters, roles/slots for unknown assignments, and starter-minute targets. Scarce positions are assigned before flexible positions.
+Known information only collapses uncertainty it resolves:
 
-Known information only collapses the uncertainty it actually resolves:
-
-- no lineup known -> full XI is stochastic;
-- partial lineup known -> the remaining places are stochastic;
-- player confirmed but position unknown -> start is fixed, role remains stochastic;
-- player and slot confirmed -> both are fixed;
+- no lineup known -> full XI stochastic;
+- partial lineup known -> remaining places stochastic;
+- player confirmed but position unknown -> start fixed, role stochastic;
+- player and slot confirmed -> both fixed;
 - full XI/slots confirmed -> lineup uncertainty collapses.
 
-`project_lineup` exposes marginal start probabilities, expected minutes, role distributions, and formation probabilities from the same sampling primitive used inside the match simulation.
+Mental-state effects can adjust start/substitute probabilities in logit space before the path's XI is sampled. Exact probability boundaries remain exact: impossible remains impossible and certain remains certain.
 
 ## Player state and exact matchup primitives
 
-There are two complementary player-state surfaces.
+`PlayerMatchupState` carries source-neutral dimensions such as technical, ball progression, creativity, finishing, defending, aerial, physical, decision making, mentality, and goalkeeping. `PlayerAttributeState` carries raw canonical FM `AttributeId` values for fine mechanisms such as pace-vs-recovery, dribbling-vs-tackling, strength-vs-strength, or finishing-vs-goalkeeping.
 
-### Coarse state
+Rules are metric-specific. The repository does not hard-code which numeric `AttributeId` means one football concept; that mapping belongs to the versioned FM schema.
 
-`PlayerMatchupState` carries the source-neutral ability vector: technical, ball progression, creativity, finishing, defending, aerial, physical, decision making, mentality, and goalkeeping. Metric-specific `MatchupRule`s can compare different dimensions.
-
-### Fine FM attributes
-
-`PlayerAttributeState` carries raw canonical `AttributeId` values. `AttributeMatchupRule` can express exact mechanisms such as:
-
-```text
-pace          vs recovery pace
-acceleration  vs agility
- dribbling    vs tackling
-crossing      vs positioning / blocking
-strength      vs strength
-jumping/aerial vs aerial defending
-finishing     vs goalkeeper/defensive attributes
-```
-
-Rules are metric-specific. The repository does not hard-code which numeric `AttributeId` means pace, tackling, etc.; that mapping comes from the versioned FM schema already used by ingestion.
-
-`AttributeEventLoading` also allows an own attribute to modify an event process without pretending a specific defender is its counterpart, e.g. finishing affecting shot conversion.
-
-Spatial relevance is determined from the sampled tactical slots. Opponent coordinates are mirrored into the attacking frame, so the direct-opponent graph emerges from the formation rather than a hard-coded "LW always plays RB" assumption.
-
-Teammate synergy is a separate primitive. Co-minutes, pass-network links, progressive-pass/carry relationships, overlap/underlap effects, or learned pair interactions can therefore enter without being conflated with opponent matchup.
+Spatial relevance is determined from sampled tactical slots, so direct opponents emerge from the sampled formation rather than hard-coded position pairs. Teammate synergy is separate from opponent matchup.
 
 ## Player event process
 
-`SpecificPlayerEventModel` is source-neutral and can represent any canonical metric: touches, passes, progressive passes, key passes, crosses, carries, progressive carries, dribbles, shots, shots on target, xG, xA, box touches, pressures, tackles, interceptions, blocks, clearances, duels, aerials, fouls, turnovers, recoveries, goals, assists, cards, or future metrics.
-
-For a player/metric/segment, the rate is conditioned on independent primitives:
+A player/metric/segment rate is conditioned on independent primitives:
 
 ```text
 historical latent rate
@@ -167,36 +136,16 @@ historical latent rate
   x opponent suppression modifier
   x match environment modifier
   x current score-state modifier
+  x current path mental-state modifier
 ```
 
-Count metrics are sampled as counts; continuous non-negative metrics remain continuous. Missing required player-event models are not interpreted as zero: the preferred simulator validates that every selectable player has a calibrated event-model surface, which should be supplied from observed state plus explicit priors when samples are sparse.
+Mental effects can alter mean and variance separately. Missing psychological information creates latent path uncertainty rather than a zero observation. Count metrics are sampled as counts; non-negative continuous metrics remain continuous.
 
 ## Player metrics do not directly equal goals
 
-`CausalChannelGraph` is the result bridge. It is deliberately an acyclic graph:
+`CausalChannelGraph` is the result bridge. Metrics load into football-process channels, channels can cause downstream channels, and terminal channels alter attacking/defensive scoring intensity.
 
-```text
-player metric deviation
-        |
-        v
-metric -> process-channel loading
-        |
-        v
-possession / retention / progression / width / central access /
-transition attack / chance creation / box entries / shot volume /
-shot quality / finishing / pressing / counterpress / transition defence /
-defensive suppression / aerial control / set pieces / goalkeeping
-        |
-        v
-channel -> channel causal edges
-        |
-        v
-terminal channel -> attack/defence scoring log-intensity
-```
-
-A metric with no channel loading can still be forecast and explained, but it cannot accidentally move W/D/L. The graph rejects cycles so causal order is explicit.
-
-Example:
+A metric with no channel loading can still be forecast but cannot accidentally move W/D/L. For example:
 
 ```text
 X progressive carries
@@ -206,71 +155,61 @@ X progressive carries
     -> team scoring intensity
 ```
 
-This is preferred over assigning a direct arbitrary "progressive carries -> goal rate" coefficient.
+## Recursive game and mental state
 
-## Dynamic in-match state
+`simulate_dynamic_mental_match` is the preferred engine when recursive psychology is enabled.
 
-`simulate_primitive_match` is the preferred fixture engine. Each Monte Carlo path:
+Each path:
 
-1. samples the two pre-match lineups;
-2. builds the active player graphs;
-3. recomputes matchups for the current active players;
-4. samples player events for the current time segment;
-5. evaluates the causal team-channel graph;
+1. samples latent player/team kickoff mental state;
+2. adjusts path-specific selection probabilities and samples both starting XIs;
+3. builds the active player/matchup graph;
+4. samples player events for the current segment from current football + mental state;
+5. evaluates the causal team-process graph;
 6. samples segment goals;
-7. samples red-card and injury hazards;
-8. applies tactical substitutions from sampled starter-minute targets;
-9. chooses replacements by substitute probability, availability, role fit, and fatigue;
-10. rebuilds the active matchup/event graph for the next segment.
+7. samples red-card and injury hazards and applies tactical/forced substitutions;
+8. updates player/team transient mental state from goals, personal residual performance, own/teammate incidents, substitutions, score pressure, leadership/cohesion, innovation, and mean reversion;
+9. rebuilds active social/matchup/event state for the next segment.
 
-Score state is not a pre-match feature. It is endogenous. Per-metric trailing/leading modifiers change subsequent player behavior, so a 1-0 state can change progression, pressing, shot volume, etc. before the next scoring intensity is produced.
+The recursively evolving player dimensions are primarily morale, self-belief, motivation, and role satisfaction. Team collective morale, belief, cohesion, and active leadership evolve separately. Stable traits and inter-match form are not rewritten by one segment.
 
-Red cards remove a player without replacement. Injuries can force a substitution subject to remaining substitutions/available replacements. Tactical substitutions preserve the outgoing tactical slot and re-evaluate replacement role fit; future work can add explicit score-triggered formation-template changes without changing the selection/matchup/event/channel boundaries.
+Pressure resilience governs response to high-pressure/trailing states; active leadership/cohesion buffer negative shocks; professionalism strengthens reversion toward the path's kickoff equilibrium; consistency dampens psychological innovation variance; discipline/current morale/hostility can affect card risk.
+
+Substitute selection uses only the mental-state **change since kickoff** because the kickoff effect has already entered the path's projected lineup. This prevents double counting.
 
 ## Outputs and explanation
 
-`PrimitiveMatchForecast` contains:
+The forecast surface includes W/D/L, score distributions, expected points, formation/XI/start probabilities, appearance/minute distributions, player-stat distributions, ordinary player influence factors, player/team causal-channel contributions, incident probabilities, mental-state trajectories, and transition-driver decomposition.
 
-- W/D/L probabilities, score distributions, and expected points;
-- projected formation/XI/start probabilities;
-- player appearance probabilities and expected minutes;
-- unconditional player-stat distributions;
-- conditional-on-appearance player-stat distributions;
-- separate influence summaries for own attributes, aggregate matchup, raw-attribute matchup, teammate support, role fit, fatigue, system/environment, and score state;
-- player channel contributions;
-- team channel contributions;
-- red-card and injury-exit probabilities.
-
-This lets an explanation distinguish, for example:
+The model can therefore explain a path or an aggregate effect as:
 
 ```text
-X's dribble rate moved because:
-  + raw pace-vs-recovery matchup
-  + teammate overlap support
-  - role-fit penalty
-  - opponent low-block suppression
-
-Those dribbles/progressive carries moved:
-  Progression -> ChanceCreation -> ShotQuality
-
-which changed Team A's scoring intensity and therefore W/D/L.
+Team A concedes
+-> collective belief falls
+-> X pressure resilience absorbs part of the shock
+-> X self-belief decreases
+-> X next-segment progressive-carry distribution shifts
+-> Team A progression / chance creation weaken
+-> subsequent scoring intensity changes
 ```
 
-`project_metric_matchups` separately reports the probability that X and Y actually occupy interacting starting slots across projected-XI paths, so an opponent is not described as "the matchup" when that pairing only exists on a minority of lineup scenarios.
+Aggregate explanations are expectations across all `n` paths rather than claims that one representative path literally occurred. Pairwise explainers additionally expose the probability X and Y occupy interacting slots and the exact raw-attribute relationships contributing to the matchup effect.
 
 ## Counterfactuals
 
-`simulate_primitive_player_absence` uses common random numbers. It removes a player upstream, reprojects the starting XI, and reruns substitutions, roles, direct matchups, player events, team channels, and the result.
+Player-absence interventions remove a player upstream, reproject the XI, and rerun downstream roles, interactions, player events, channels, and results using common random numbers where supported. Recursive mental-state counterfactuals should follow the same rule: interventions occur upstream and the full path is resimulated rather than subtracting a static player rating.
 
-Therefore:
+## Invariants
 
-```text
-with X     -> projected XI A -> matchup graph A -> event graph A -> W/D/L A
-without X  -> projected XI B -> matchup graph B -> event graph B -> W/D/L B
-```
-
-The delta includes replacement quality, role reshuffling, teammate effects, changed opponent matchups, player-event changes, and result changes. It is not a static player-rating subtraction.
-
-## Extension rule
-
-New providers stop at source-neutral source records and canonical sidecars. Do not add provider-specific schemas to `performance`, `forecast`, or `match`. New football mechanisms should normally become small primitives: a new state observation, a new rate modifier, a new matchup rule, a new process channel/edge, or a new game-state transition.
+- no remote fetch during model scoring;
+- strict as-of historical state;
+- missing != zero;
+- unresolved identities are explicit;
+- no deterministic guessed XI when uncertainty exists;
+- exact selection probability boundaries remain exact;
+- stable psychology and inter-match form are distinct from transient in-match state;
+- mental shocks are squad-scoped and path-local;
+- kickoff selection effects are not double counted during substitutions;
+- metrics reach W/D/L only through the causal football-process graph;
+- a fixture runs exactly the requested `n` independent complete Monte Carlo paths;
+- fixed seed + same artifacts + same `n` reproduces the output.
