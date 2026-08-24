@@ -1514,8 +1514,9 @@ fn record_driver(
 fn unit_support(value: f64) -> f64 { ((value + 1.0) * 0.5).clamp(0.0, 1.0) }
 
 fn adjust_probability(probability: f64, logit_delta: f64) -> f64 {
-    let p = probability.clamp(1e-8, 1.0 - 1e-8);
-    let logit = (p / (1.0 - p)).ln() + logit_delta;
+    if probability <= 0.0 { return 0.0; }
+    if probability >= 1.0 { return 1.0; }
+    let logit = (probability / (1.0 - probability)).ln() + logit_delta;
     1.0 / (1.0 + (-logit).exp())
 }
 
@@ -1681,8 +1682,8 @@ mod tests {
         let away = lineup(2, 101);
         let all: Vec<PlayerId> = home.candidates.iter().chain(away.candidates.iter()).map(|value| value.player).collect();
         let metric = MetricId(1);
-        let pace = AttributeId(1);
-        let recovery = AttributeId(2);
+        let pace = footy_core::AttributeId(1);
+        let recovery = footy_core::AttributeId(2);
         let input = PrimitiveMatchSimulationInput {
             match_id: MatchId(9),
             home: ClubId(1),
@@ -1765,7 +1766,7 @@ mod tests {
                 club: ClubId(2), residual_attack_log_adjustment: 0.0,
                 residual_defense_log_adjustment: 0.0, metric_modifiers: Vec::new(),
             },
-            environment: SpecificMatchEnvironment {
+            environment: crate::specific::SpecificMatchEnvironment {
                 home_residual_attack_log_adjustment: 0.0,
                 away_residual_attack_log_adjustment: 0.0,
                 metric_modifiers: vec![SpecificEnvironmentMetricModifier {
@@ -1854,6 +1855,12 @@ mod tests {
         ).unwrap();
         assert_eq!(result.players.len(), input.home_lineup.candidates.len() + input.away_lineup.candidates.len());
         assert!(result.players.iter().any(|value| value.initial_morale_mean.abs() < 0.10 && value.mean_abs_morale_path_change > 0.0));
+    }
+
+    #[test]
+    fn probability_boundaries_are_exact_under_mental_adjustment() {
+        assert_eq!(adjust_probability(0.0, 10.0), 0.0);
+        assert_eq!(adjust_probability(1.0, -10.0), 1.0);
     }
 
     #[test]
