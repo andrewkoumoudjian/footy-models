@@ -46,20 +46,7 @@ Stable psychology and transient state are deliberately separate. A poor spell ca
 
 `simulate_dynamic_mental_match(input, mental_model, transition, paths, seed)` is the preferred mental-state fixture engine.
 
-`paths` means **complete independent match histories**, not repeated draws from a final score distribution. For every path the engine samples its own:
-
-```text
-latent kickoff psychology
--> formation / starting XI / roles / minutes
--> player-vs-player graph
--> segment player events
--> team process channels
--> goals / red cards / injuries / substitutions
--> updated player and team mental state
--> rebuilt next-segment graph
--> ...
--> final score
-```
+`paths` means **complete independent match histories**, not repeated draws from a final score distribution. For every path the engine samples its own latent kickoff psychology, formation/starting XI/roles/minutes, player-vs-player graph, segment player events, team process channels, goals/cards/injuries/substitutions, recursively updated mental state, and final score.
 
 No realized lineup, score, incident, or mental state from one path is shared with another. Fixed seed + identical inputs + identical path count is deterministic.
 
@@ -69,47 +56,21 @@ No realized lineup, score, incident, or mental state from one path is shared wit
 
 `PsychologyTraitScale` maps source scales into centered `[-1, 1]` state. The match engine does not hard-code a Football Manager scale or attribute identity.
 
-Stable traits have two jobs:
-
-1. they can affect metric-specific event distributions directly when calibrated;
-2. they govern how transient mental state evolves.
-
-Examples of the second role:
-
-```text
-pressure resilience -> response to trailing/high-stakes states
-leadership          -> buffers negative collective shocks
-teamwork            -> contributes to active-XI cohesion
-consistency         -> dampens segment mental-state innovation
-professionalism     -> strengthens reversion toward kickoff equilibrium
-discipline          -> card-risk mechanism
-```
+Stable traits can affect metric-specific event distributions when calibrated and can govern transient-state transitions. Pressure resilience controls response to trailing/high-stakes states; leadership buffers negative collective shocks; teamwork contributes to active-XI cohesion; consistency dampens segment mental-state innovation; professionalism strengthens mean reversion toward kickoff equilibrium; discipline contributes to card risk.
 
 ## Form is inter-match, not in-match momentum
 
 Form is not last-five W/D/L and is not simply recent goals.
 
-`FormObservation` stores observed player performance versus the **pre-match expectation** that existed before the historical fixture:
-
-```text
-observed player rate
-expected pre-match player rate
-residual scale
-minutes / exposure
-observation confidence
-```
+`FormObservation` stores observed player performance versus the **pre-match expectation** that existed before the historical fixture: observed rate, expected rate, residual scale, minutes/exposure, and observation confidence.
 
 `build_form_state` estimates an as-of EWMA residual with exposure weighting, shrinkage, and a separate recent-vs-prior trend.
 
 During one simulated fixture, `form` and `form_trend` remain fixed. A good 15-minute spell does **not** mutate the player's inter-match form state. Instead it can change transient self-belief/morale. After the real match is observed, the realized residual can become a new `FormObservation` for the next fixture.
 
-This prevents double counting ability, fixture strength, team quality, and random finishing.
-
 ## Pre-match morale and missing information
 
-`MoraleObservation` can represent explicit drivers such as direct signals, performance feedback, selection/role situation, team environment, career security, and social support.
-
-The model does not silently infer morale from a team win/loss. If results are used as morale evidence, that assumption is explicit and calibrated.
+`MoraleObservation` can represent explicit drivers such as direct signals, performance feedback, selection/role situation, team environment, career security, and social support. The model does not silently infer morale from a team win/loss.
 
 For the recursive simulator, every Monte Carlo path samples a **latent kickoff mental state**. Confidence determines how concentrated that draw is around the measured value.
 
@@ -126,7 +87,7 @@ historical start probability
 -> sampled XI
 ```
 
-Confirmed starters remain confirmed because confirmed lineup information is represented by lineup locks rather than guessed probabilities.
+Confirmed starters remain confirmed because confirmed lineup information is represented by lineup locks. Exact 0/1 selection probabilities remain exact under mental adjustment.
 
 Substitute selection is also mental-state aware. The kickoff mental effect is applied once; later substitution choices use only the **within-path change since kickoff**, preventing double counting.
 
@@ -155,33 +116,19 @@ MentalState_t+1
 next segment player-event distributions
 ```
 
-The recursively evolving player dimensions are primarily morale, self-belief, motivation, and role satisfaction. Stable traits and inter-match form are not rewritten by one segment.
+The recursively evolving player dimensions are primarily morale, self-belief, motivation, and role satisfaction. Stable traits and inter-match form are not rewritten by one segment. Team state evolves separately through collective morale, collective belief, cohesion, and leadership actually present on the pitch.
 
-Team state evolves separately through collective morale, collective belief, cohesion, and the leadership actually present on the pitch.
+The current engine is a **segment-boundary** state model. Events inside one segment are not assigned exact timestamps and micro-order. For example, a goal and a card generated in the same segment are both resolved at that segment boundary before `MentalState_t+1`. Increasing temporal granularity should use shorter segments or a future event-time primitive rather than pretending the current segment model knows an ordering it did not simulate.
 
 ## Event shocks are primitives
 
-`DynamicMentalTransitionParameters` exposes separate transition coefficients rather than one momentum number:
-
-- goal-for and goal-against morale/belief shocks;
-- personal success/error feedback;
-- own and teammate red-card shocks;
-- own and teammate injury shocks;
-- substituted-off role-satisfaction effects;
-- substituted-on activation/motivation;
-- trailing-pressure and leading-belief effects;
-- leadership and cohesion buffering;
-- motivation coupling;
-- professionalism-linked mean reversion;
-- consistency-linked innovation variance.
+`DynamicMentalTransitionParameters` exposes separate transition coefficients rather than one momentum number: goal-for/against morale and belief, personal success/error, own/teammate cards and injuries, substituted-off role satisfaction, substituted-on activation, score pressure, leadership/cohesion buffering, motivation coupling, professionalism-linked mean reversion, consistency-linked innovation variance, and active-lineup social-state blending.
 
 These defaults are transparent placeholders for calibration, not claims of universal football effect sizes.
 
 ## Personal success/error
 
-The segment engine already samples player metrics. Their reference-normalized deviations are aggregated into a bounded personal performance signal.
-
-Positive residual performance can raise transient self-belief/morale; negative residual performance can lower them. This is deliberately distinct from updating `form`.
+The segment engine already samples player metrics. Their reference-normalized deviations are aggregated into a bounded personal performance signal. Positive residual performance can raise transient self-belief/morale; negative residual performance can lower them. This is deliberately distinct from updating `form`.
 
 When richer event attribution is available, this primitive can be specialized into explicit goal, assist, missed-chance, error-leading-to-shot, penalty, or duel outcomes without changing the state-transition boundary.
 
@@ -193,63 +140,25 @@ Thus replacing a high-leadership captain can influence teammates even when the r
 
 ## Pressure and psychology
 
-`MatchMentalContext` separates pressure/stakes, environmental novelty, and hostility.
-
-Pressure resilience therefore changes the response to simulated score pressure rather than becoming a permanent generic performance multiplier. Adaptability remains linked to novelty. Discipline/hostility can affect dismissal risk.
+`MatchMentalContext` separates pressure/stakes, environmental novelty, and hostility. Pressure resilience therefore changes the response to simulated score pressure rather than becoming a permanent generic performance multiplier. Adaptability remains linked to novelty. Discipline/hostility can affect dismissal risk.
 
 ## Metric-specific mental effects
 
 `MentalMetricLoading` and `TeamMentalMetricLoading` map mental dimensions into canonical player-event processes with independent mean and variance coefficients.
 
-For example:
-
-```text
-self-belief -> shot/carry mean
-consistency -> event variance
-collective cohesion -> pressing/progression reliability
-pressure resilience x current pressure -> decision-heavy metrics
-```
-
 The recursive simulator recomputes these effects from `MentalState_t` before every segment. Mental mean/variance contributions are reported separately from system, fatigue, role, and matchup effects.
 
 ## Discipline and incidents
 
-Red-card probability can depend on stable discipline, current morale, and match hostility. Because current morale changes within the path, incident risk can also change between segments.
+Red-card probability can depend on stable discipline, current morale, and match hostility. Because current morale changes within the path, incident risk can change between segments.
 
-A simulated dismissal then changes the active lineup, teammate mental state, team cohesion/leadership, player-event processes, causal football channels, and therefore the eventual result.
+A simulated dismissal changes the active lineup, teammate mental state, team cohesion/leadership, player-event processes, causal football channels, and therefore the eventual result.
 
 ## Explainability
 
-`DynamicMentalMatchForecast` exposes:
+`DynamicMentalMatchForecast` exposes the normal sporting forecast plus initial/final player mental state, final team collective state, probability a player finishes above kickoff morale, mean absolute within-path morale change, mean mental event-rate and event-variance adjustments, transition-driver decomposition, and exact Monte Carlo path count.
 
-- the normal `PrimitiveMatchForecast` sporting outputs;
-- initial and final player morale/self-belief/motivation distributions;
-- final team collective state;
-- probability a player finishes above kickoff morale;
-- mean absolute within-path morale change;
-- mean mental event-rate and event-variance adjustments;
-- transition-driver decomposition;
-- exact Monte Carlo path count.
-
-`DynamicMentalDriverContribution` reports upstream effects per path for drivers such as goals, personal success/error, cards, injuries, substitutions, score pressure, mean reversion, and innovation.
-
-This allows explanations such as:
-
-```text
-Path 184:
-Team A concedes at 31'
--> collective belief falls
--> X's pressure resilience absorbs part of the shock
--> X self-belief -0.04
--> progressive-carry rate falls in the next segment
--> Team A progression/chance-creation channels weaken
-
-X is substituted at 64'
--> replacement Z enters
--> active leadership changes
--> teammate mental state and matchup graph are recomputed
--> remaining path develops differently
-```
+`DynamicMentalDriverContribution` reports upstream effects per path for goals, personal success/error, cards, injuries, substitutions, score pressure, mean reversion, innovation, and active social state.
 
 Aggregate forecast explanations are expectations over all `n` paths, not a claim that one representative path literally occurred.
 
@@ -257,7 +166,7 @@ Aggregate forecast explanations are expectations over all `n` paths, not a claim
 
 `apply_mental_model` / `simulate_mental_match` remain useful as simpler pre-match-only primitives and calibration/debugging surfaces.
 
-For a match where recursive psychology matters, use `simulate_dynamic_mental_match`. It does **not** first collapse mental uncertainty into the static adjusted input. It validates the same model, then samples mental state inside each Monte Carlo path and carries that state recursively through the fixture.
+For a match where recursive psychology matters, use `simulate_dynamic_mental_match`. It does **not** collapse mental uncertainty into the static adjusted input. It validates the same model, samples mental state inside each Monte Carlo path, and carries that state recursively through the fixture.
 
 ## Invariants
 
@@ -266,6 +175,7 @@ For a match where recursive psychology matters, use `simulate_dynamic_mental_mat
 - missing psychology is latent uncertainty, not a zero observation;
 - mental shocks are team-scoped and cannot leak to the opponent squad;
 - kickoff selection effects are not reapplied during substitution decisions;
+- exact 0/1 selection boundaries remain exact;
 - stable psychology is not overwritten by transient events;
 - player metrics still reach W/D/L only through the causal football-process graph;
 - each fixture uses exactly the requested `n` independent full-match paths;
