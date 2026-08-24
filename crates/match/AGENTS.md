@@ -19,7 +19,9 @@ Own the source-neutral causal graph for one specific fixture.
 - Recursive mental state is path-local. Goals, performance residuals, cards, injuries, substitutions, score pressure, leadership/cohesion, innovation, and reversion update `MentalState_t -> MentalState_t+1` before the next segment. Never share a mental realization between Monte Carlo paths.
 - Team mental shocks are team-scoped. They may affect active and bench players on that squad, but must never leak into the opponent squad.
 - Kickoff mental effects on selection are applied once. Later substitution decisions may use the within-path state **change since kickoff**; do not reapply the full kickoff effect and double count psychology.
+- Preserve exact selection-probability boundaries. Mental logit adjustments must never turn a true 0 into a tiny possibility or a true 1 into less than certainty.
 - Team cohesion/leadership/morale should follow the currently active players. Reproject active social state after red cards and substitutions.
+- The recursive engine is segment-boundary based. Do not claim exact event ordering inside one segment; if event micro-order matters, shorten segments or add an explicit event-time primitive.
 - Low-confidence psychology must widen the path distribution and/or reduce effect size; it must not create false certainty.
 - Teammate synergy, own attributes, opponent matchup, role fit, fatigue, morale/form/psychology, tactical/system effects, environment, score state, injuries, red cards, and substitutions remain separate causal factors so forecasts can expose attribution.
 - Recompute active lineups, player interactions, event rates, mental effects, channels, and scoring intensity after game-state transitions. Do not compute a full-match player box score first and bolt game state onto the result.
