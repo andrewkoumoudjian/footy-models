@@ -8,6 +8,7 @@
 mod calibration;
 mod channels;
 mod counterfactual;
+mod dynamic_mental;
 mod explain;
 mod lineup;
 mod matchup;
@@ -20,6 +21,7 @@ mod specific_explain;
 pub use calibration::*;
 pub use channels::*;
 pub use counterfactual::*;
+pub use dynamic_mental::*;
 pub use explain::*;
 pub use lineup::*;
 pub use matchup::*;
