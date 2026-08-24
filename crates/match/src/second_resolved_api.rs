@@ -32,8 +32,8 @@ pub fn simulate_second_resolved_dynamic_mental_match(
     }
 
     let mut normalized = transition;
-    normalized.personal_error_self_belief = -transition.personal_error_self_belief;
-    normalized.personal_error_morale = -transition.personal_error_morale;
+    normalized.personal_error_self_belief = transition.personal_error_self_belief.abs();
+    normalized.personal_error_morale = transition.personal_error_morale.abs();
     second_resolved_mc::simulate_second_resolved_dynamic_mental_match(
         input,
         mental_model,
