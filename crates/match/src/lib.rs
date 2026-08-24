@@ -4,6 +4,8 @@
 //! The crate is intentionally source-neutral. Upstream adapters/calibration construct player state,
 //! selection histories, tactical templates, matchup rules, mental state, and context factors; this
 //! crate owns the stochastic graph from lineup uncertainty through player interactions and outcome.
+//! A fixture forecast is produced from complete independent Monte Carlo match paths; recursive
+//! mental/game state belongs to each path and is never shared between paths.
 
 mod calibration;
 mod channels;
