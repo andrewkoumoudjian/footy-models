@@ -1,0 +1,253 @@
+{
+  "contract": "matched_frozen_2026_liverpool_mechanism_ablation_v1",
+  "sources": [
+    "data/ml/frozen-liv-baseline-20261011-r1",
+    "data/ml/frozen-liv-no-tactics-20261011-r1",
+    "data/ml/frozen-liv-no-red-20261011-r1"
+  ],
+  "shared_input_and_exact_executable_sha256": {
+    "binary": "2916eeee1735c5d6f5e5a8b9ef1050e2fe48a191607eef21015b045ce3e23321",
+    "results": "205a39774fcc46d5f8093643aef5c9c4d0472640b12fc32d91785109de289a96",
+    "players": "1da0330903e33a0fc7dca0a4696d9e55cff4844202d6912407fa8b85cc7edfd3",
+    "baseline": "c4c67b014b510cc0d00814f597fa77c9d4af90ca1f06ee7d480aeea2716809ec"
+  },
+  "cutoff": "2026-10-10",
+  "paths_per_variant": 12,
+  "seed": 42,
+  "variants": [
+    {
+      "variant": "default",
+      "research_flags": {
+        "no_tactical_subs": false,
+        "red_probability_per90": null
+      },
+      "fixture": [
+        "Liverpool",
+        "Man City"
+      ],
+      "paths": 12,
+      "home_win": 0.4166666567325592,
+      "draw": 0.3333333432674408,
+      "away_win": 0.25,
+      "home_expected_goals": 1.25,
+      "away_expected_goals": 1.5,
+      "peak_relative_city_pressure_bin": 4,
+      "peak_absolute_city_goal_bin": 2,
+      "pressure_index": [
+        -5.2631578947368425,
+        -17.142857142857135,
+        -12.359550561797745,
+        6.32911392405063,
+        -17.777777777777768,
+        14.70588235294118
+      ],
+      "window_expected_home_shots": [
+        2.0,
+        1.9166666666666667,
+        2.25,
+        2.75,
+        2.5833333333333335,
+        2.5
+      ],
+      "window_expected_away_shots": [
+        2.0,
+        2.6666666666666665,
+        2.6666666666666665,
+        2.5833333333333335,
+        3.4166666666666665,
+        2.1666666666666665
+      ],
+      "window_expected_home_goals": [
+        0.08333333333333333,
+        0.16666666666666666,
+        0.3333333333333333,
+        0.25,
+        0.16666666666666666,
+        0.25
+      ],
+      "window_expected_away_goals": [
+        0.16666666666666666,
+        0.25,
+        0.5,
+        0.16666666666666666,
+        0.3333333333333333,
+        0.08333333333333333
+      ],
+      "probability_any_red": [
+        0.08333333333333333,
+        0.16666666666666666,
+        0.08333333333333333,
+        0.0,
+        0.0,
+        0.25
+      ],
+      "probability_substitution_trigger": [
+        0.0,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.5833333333333334,
+        1.0,
+        0.8333333333333334
+      ]
+    },
+    {
+      "variant": "no_tactical_subs",
+      "research_flags": {
+        "no_tactical_subs": true,
+        "red_probability_per90": null
+      },
+      "fixture": [
+        "Liverpool",
+        "Man City"
+      ],
+      "paths": 12,
+      "home_win": 0.1666666716337204,
+      "draw": 0.25,
+      "away_win": 0.5833333134651184,
+      "home_expected_goals": 1.1666666666666667,
+      "away_expected_goals": 1.75,
+      "peak_relative_city_pressure_bin": 2,
+      "peak_absolute_city_goal_bin": 3,
+      "pressure_index": [
+        11.428571428571434,
+        13.513513513513516,
+        -19.29824561403509,
+        -16.666666666666657,
+        5.882352941176475,
+        -12.0
+      ],
+      "window_expected_home_shots": [
+        2.25,
+        2.75,
+        1.6666666666666667,
+        2.8333333333333335,
+        2.5,
+        2.25
+      ],
+      "window_expected_away_shots": [
+        1.8333333333333333,
+        2.1666666666666665,
+        2.3333333333333335,
+        2.6666666666666665,
+        2.1666666666666665,
+        2.5
+      ],
+      "window_expected_home_goals": [
+        0.3333333333333333,
+        0.25,
+        0.08333333333333333,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666
+      ],
+      "window_expected_away_goals": [
+        0.25,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.6666666666666666,
+        0.16666666666666666,
+        0.3333333333333333
+      ],
+      "probability_any_red": [
+        0.08333333333333333,
+        0.0,
+        0.08333333333333333,
+        0.16666666666666666,
+        0.08333333333333333,
+        0.0
+      ],
+      "probability_substitution_trigger": [
+        0.0,
+        0.08333333333333333,
+        0.0,
+        0.0,
+        0.0,
+        0.08333333333333333
+      ]
+    },
+    {
+      "variant": "red_prior_only",
+      "research_flags": {
+        "no_tactical_subs": false,
+        "red_probability_per90": 0.0
+      },
+      "fixture": [
+        "Liverpool",
+        "Man City"
+      ],
+      "paths": 12,
+      "home_win": 0.25,
+      "draw": 0.0833333358168602,
+      "away_win": 0.6666666865348816,
+      "home_expected_goals": 0.8333333333333334,
+      "away_expected_goals": 1.75,
+      "peak_relative_city_pressure_bin": 0,
+      "peak_absolute_city_goal_bin": 0,
+      "pressure_index": [
+        -34.285714285714285,
+        0.0,
+        5.660377358490567,
+        -23.943661971830988,
+        11.428571428571434,
+        0.0
+      ],
+      "window_expected_home_shots": [
+        1.6666666666666667,
+        2.25,
+        1.8333333333333333,
+        2.25,
+        2.75,
+        2.4166666666666665
+      ],
+      "window_expected_away_shots": [
+        2.4166666666666665,
+        2.25,
+        1.8333333333333333,
+        2.4166666666666665,
+        1.8333333333333333,
+        2.1666666666666665
+      ],
+      "window_expected_home_goals": [
+        0.08333333333333333,
+        0.25,
+        0.16666666666666666,
+        0.0,
+        0.16666666666666666,
+        0.16666666666666666
+      ],
+      "window_expected_away_goals": [
+        0.5,
+        0.25,
+        0.08333333333333333,
+        0.4166666666666667,
+        0.25,
+        0.25
+      ],
+      "probability_any_red": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "probability_substitution_trigger": [
+        0.25,
+        0.16666666666666666,
+        0.08333333333333333,
+        0.6666666666666666,
+        1.0,
+        0.8333333333333334
+      ]
+    }
+  ],
+  "limitations": [
+    "These are post-result mechanism diagnostics, not previously unseen match predictions.",
+    "Changing flags alters stochastic event sequencing; same seed is not a coupled causal path comparison.",
+    "A few paths cannot establish stability, predictive power or goal-time calibration.",
+    "The 60\u201375 pressure ratio is descriptive and substitutions are scheduled from expected player minutes.",
+    "Disabling scheduled tactical substitutions leaves injury-forced substitutions enabled.",
+    "Setting red probability zero disables red events, not an observed targeted 62-minute dismissal.",
+    "Never select any final model or parameters from this already-known Liverpool result."
+  ]
+}

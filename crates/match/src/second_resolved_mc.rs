@@ -1867,6 +1867,32 @@ mod tests {
     }
 
     #[test]
+    fn minute_90_tactical_cutoff_disables_scheduled_subs_but_not_other_incidents() {
+        let mut input = test_input();
+        let mut rng = Rng64::new(14);
+        let home_lineup = sample_lineup(&input.home_lineup, &mut rng).expect("home XI");
+        let away_lineup = sample_lineup(&input.away_lineup, &mut rng).expect("away XI");
+        let mut home = ActiveTeam::from_start(home_lineup);
+        let mut away = ActiveTeam::from_start(away_lineup);
+        let minute = MatchSecond(60 * 60);
+        home.players[0].planned_exit_second = minute;
+        for player in home.players.iter_mut().skip(1).chain(away.players.iter_mut()) {
+            player.planned_exit_second = MatchSecond::REGULATION_END;
+        }
+        assert_eq!(
+            scheduled_substitutions_for_second(minute, &home, &away, &input, &mut rng).len(),
+            1,
+        );
+        input.in_match.minimum_tactical_substitution_minute = 90.0;
+        assert!(input.validate(), "the intervention must remain a valid model input");
+        assert!(
+            scheduled_substitutions_for_second(minute, &home, &away, &input, &mut rng).is_empty(),
+            "disable scheduled tactical substitutions while retaining incident hazards",
+        );
+        assert!(input.in_match.injury_probability_per90 > 0.0);
+    }
+
+    #[test]
     fn assisted_goal_calibration_parameter_requires_valid_probability() {
         let prior=SecondResolvedSimulationParameters::default();
         assert_eq!(prior.assisted_goal_probability, 0.68);

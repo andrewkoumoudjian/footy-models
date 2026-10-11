@@ -984,6 +984,10 @@ pub fn run_premier_league() {
     let mut results_path = "data/pl/asof_team_stats.csv".to_string();
     let mut players_path = "data/pl/player_fm_join.csv".to_string();
     let mut baseline_path = "data/pl/forecasts.json".to_string();
+    // Research-only mechanism probes; production defaults and published
+    // pre-match snapshots do not enable these options.
+    let mut research_no_tactical_subs = false;
+    let mut research_red_probability_per90: Option<f64> = None;
     let mut iter = std::env::args().skip(1);
     while let Some(flag) = iter.next() {
         match flag.as_str() {
@@ -996,6 +1000,14 @@ pub fn run_premier_league() {
             "--results" => results_path = iter.next().expect("--results input"),
             "--players" => players_path = iter.next().expect("--players input"),
             "--baseline" => baseline_path = iter.next().expect("--baseline JSON"),
+            "--research-no-tactical-subs" => research_no_tactical_subs = true,
+            "--research-red-probability-per90" => {
+                let p: f64 = iter.next().expect("red probability value").parse()
+                    .expect("valid red probability");
+                assert!(p.is_finite() && (0.0..=0.2).contains(&p),
+                    "research red probability must be within [0, 0.2]");
+                research_red_probability_per90 = Some(p);
+            },
             _ => panic!("unknown argument: {flag}"),
         }
     }
@@ -1024,6 +1036,14 @@ pub fn run_premier_league() {
         assert!(home_count >= 14 && away_count >= 14,
             "insufficient matched FM26 players {home_name}={home_count} {away_name}={away_count}");
         let mut input = build_input(MatchId(1_000_000 + idx as u64), &home, &away, &players, None, None);
+        if research_no_tactical_subs {
+            // Regulation ends at minute 90, so no tactical event is
+            // scheduled. Forced injury replacements stay enabled.
+            input.in_match.minimum_tactical_substitution_minute = 90.0;
+        }
+        if let Some(p) = research_red_probability_per90 {
+            input.in_match.red_card_probability_per90 = p;
+        }
         // The existing result model contributes a pre-match intensity anchor,
         // not the W/D/L result; the engine still simulates goals through the
         // player/team event graph and game-state feedback for every path.
@@ -1092,7 +1112,7 @@ pub fn run_premier_league() {
         let o=&prediction.outcome;
         println!("{home_name} vs {away_name}: {} paths | H {:.3} D {:.3} A {:.3} | goals {:.2}-{:.2}",
             prediction.paths,o.home_win.get(),o.draw.get(),o.away_win.get(),o.home_goals.mean,o.away_goals.mean);
-        out.push(json!({"date":fixture["date"],"home":home_name,"away":away_name,
+        let mut fixture_output = json!({"date":fixture["date"],"home":home_name,"away":away_name,
             "paths":prediction.paths,"seed":seed+idx as u64,
             "registered_fm_players":{"home":home_count,"away":away_count},
             "home_win":o.home_win.get(),"draw":o.draw.get(),"away_win":o.away_win.get(),
@@ -1107,7 +1127,14 @@ pub fn run_premier_league() {
             "player_assist_occurrence":assist_occurrence,
             "players":player_info,
             "comparison_results_fm_model":{"home_win":fixture["home_win"],
-                "draw":fixture["draw"],"away_win":fixture["away_win"]}}));
+                "draw":fixture["draw"],"away_win":fixture["away_win"]}});
+        if research_no_tactical_subs || research_red_probability_per90.is_some() {
+            fixture_output["research_overrides"] = json!({
+                "no_tactical_substitutions": research_no_tactical_subs,
+                "red_card_probability_per90": research_red_probability_per90,
+            });
+        }
+        out.push(fixture_output);
     }
     let artifact=json!({"as_of":snapshot_as_of,"model":"simulate_second_resolved_dynamic_mental_match",
         "status":"exploratory player-level pre-match scenario; not a statistically validated EPL event forecast",
