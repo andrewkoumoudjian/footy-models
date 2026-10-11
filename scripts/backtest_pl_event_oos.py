@@ -11,7 +11,7 @@ Observed: StatsBomb shots, scored shots, registered goal-assist passes and
 Future/current squads and FM26 are forbidden for this historical test.
 """
 from __future__ import annotations
-import argparse,csv,json,math,statistics
+import argparse,json,math,random
 from collections import defaultdict,Counter
 from datetime import date
 from pathlib import Path
@@ -91,9 +91,13 @@ def score_game(game,state):
     out={'id':game['id'],'date':game['date'],'home':game['home'],'away':game['away'],
          'actual_score':game['score'],'observed_goals':game['observed_scores_from_goals'],
          'predicted_goals':[],'prior_games':{},'covered_players':{},'unseen_player_actual_goals':0,
-         'unseen_player_actual_assists':0,'player_count':0,'player_loss':Counter(),
+         'unseen_player_actual_assists':0,'player_count':0,
+         'expected_goal_by_minute':[0.]*90,'actual_goal_by_minute':[0]*90,
+         'expected_assist_by_minute':[0.]*90,'actual_assist_by_minute':[0]*90,
+         'player_loss':Counter(),
          'player_reference_loss':Counter(),'goal_minute_loss':0.,'goal_minute_baseline_loss':0.,
-         'goal_15min_loss':0.,'goal_15min_baseline_loss':0.,'shot_loss':0.,'shot_baseline_loss':0.,
+         'goal_15min_loss':0.,'goal_15min_baseline_loss':0.,
+         'assist_minute_loss':0.,'assist_minute_baseline_loss':0.,'shot_loss':0.,'shot_baseline_loss':0.,
          'score_goal_abs_error':0.,'goal_event_times':[],'player_scorers':[],'player_assisters':[]}
     league_rates={k:league[k]/max(n_team_matches,1) for k in KINDS}
     minute_distribution=[(mins['goals'][i]+1)/(sum(mins['goals'])+90) for i in range(90)]
@@ -127,13 +131,23 @@ def score_game(game,state):
         for k in KINDS:
             out['shot_loss']+=abs(means[k]-game['teams'][team]['counts'].get(k,0)) if k=='shots' else 0.
             out['shot_baseline_loss']+=abs(league_rates[k]-game['teams'][team]['counts'].get(k,0)) if k=='shots' else 0.
+        assist_distribution=[(mins['assists'][i]+1)/(sum(mins['assists'])+90) for i in range(90)]
         for minute in range(90):
             lam=means['goals']*minute_distribution[minute]
             forecast=-math.expm1(-lam)
             simple=-math.expm1(-league_rates['goals']/90)
+            out['expected_goal_by_minute'][minute]+=lam
+            out['actual_goal_by_minute'][minute]+=game['teams'][team]['minutes']['goals'][minute]
             truth=game['teams'][team]['minutes']['goals'][minute]>0
             out['goal_minute_loss']+=brier(forecast,truth)
             out['goal_minute_baseline_loss']+=brier(simple,truth)
+            assister=-math.expm1(-means['assists']*assist_distribution[minute])
+            basic_assist=-math.expm1(-league_rates['assists']/90)
+            out['expected_assist_by_minute'][minute]+=means['assists']*assist_distribution[minute]
+            out['actual_assist_by_minute'][minute]+=game['teams'][team]['minutes']['assists'][minute]
+            actual_assist=game['teams'][team]['minutes']['assists'][minute]>0
+            out['assist_minute_loss']+=brier(assister,actual_assist)
+            out['assist_minute_baseline_loss']+=brier(basic_assist,actual_assist)
         for start in range(0,90,15):
             lam=means['goals']*sum(minute_distribution[start:start+15])
             forecast=-math.expm1(-lam)
@@ -179,12 +193,33 @@ def main():
         'reference_team_shot_mae':metric('shot_baseline_loss')/(2*n),
         'minute_goal_brier':metric('goal_minute_loss')/(180*n),
         'reference_minute_goal_brier':metric('goal_minute_baseline_loss')/(180*n),
+        'minute_assist_brier':metric('assist_minute_loss')/(180*n),
+        'reference_minute_assist_brier':metric('assist_minute_baseline_loss')/(180*n),
         'window15_goal_brier':metric('goal_15min_loss')/(12*n),
         'reference_window15_goal_brier':metric('goal_15min_baseline_loss')/(12*n),
         'team_goal_mae':metric('score_goal_abs_error')/(2*n),
         'prior_known_players_per_match':np/n,
         'unseen_player_actual_goals':metric('unseen_player_actual_goals'),
         'unseen_player_actual_assists':metric('unseen_player_actual_assists')}
+    # Paired match-block uncertainty: outcomes within a fixture are correlated.
+    # A negative delta favors the historical-rate model. No tuning on holdout.
+    rng=random.Random(42)
+    confidence={}
+    comparisons={
+        'minute_goal':('goal_minute_loss','goal_minute_baseline_loss',180),
+        '15minute_goal':('goal_15min_loss','goal_15min_baseline_loss',12),
+        'minute_assist':('assist_minute_loss','assist_minute_baseline_loss',180),
+        'team_shots':('shot_loss','shot_baseline_loss',2),
+    }
+    for label,(a,b,denom) in comparisons.items():
+        differences=[(r[a]-r[b])/denom for r in results]
+        bootstrap=[]
+        for _ in range(2000):
+            bootstrap.append(sum(differences[rng.randrange(n)] for _ in range(n))/n)
+        bootstrap.sort()
+        confidence[label]={'model_minus_reference_mean':round(sum(differences)/n,7),
+            'paired_fixture_bootstrap_95':[round(bootstrap[49],7),round(bootstrap[1949],7)],
+            'clear_improvement_at_95':bootstrap[1949]<0}
     out={'source':'StatsBomb open data, English Premier League 2015/16 season, local event JSON',
        'dataset_matches_with_events':len(data),'metadata_matches_without_event_files':missing,
        'split':{'type':'chronological last-N matches; same-day excluded from prior fit',
@@ -193,11 +228,14 @@ def main():
        'method':'causal, naive team/player rate hazard baseline fit only on games before each kickoff date',
        'IMPORTANT':'The match simulation from 2026 FM26 is NOT validated here. This is a real-data OOS benchmark and event-label pipeline; player OOS calibration of the Rust FM model remains open.',
        'metrics':{k:round(v,6) for k,v in metrics.items()},
+       'paired_matchday_uncertainty_note':'Paired match bootstrap is illustrative; same-day dependency remains and data cover only 74/380 matches.',
+       'paired_fixture_bootstrap':confidence,
        'games':results}
     target=ROOT/args.output;target.parent.mkdir(parents=True,exist_ok=True)
     target.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n')
     print('OOS',n,'games:',results[0]['date'],'to',results[-1]['date'],'prior games strict < date')
     for key,value in out['metrics'].items():print(key, value)
+    print('paired deltas',confidence)
     print('saved',target)
 
 if __name__=='__main__':main()

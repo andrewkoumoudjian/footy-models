@@ -1,0 +1,35 @@
+uid,name,team,expected_goals,expected_assists_proxy,expected_shots
+29194724,Antoine Serlom Semenyo,Man City,0.75,0.25,2.875
+24060473,Joško Gvardiol,Man City,0.375,0.0,1.0
+2000011147,Miloš Kerkez,Liverpool,0.375,0.0,1.375
+49047581,Rayan Aït-Nouri,Man City,0.25,0.125,1.875
+29179241,Erling Braut Haaland,Man City,0.25,0.125,1.25
+14229525,Enzo Jeremías Fernández,Man City,0.25,0.0,2.625
+37024025,Virgil van Dijk,Liverpool,0.125,0.125,1.125
+16202373,Dominik Szoboszlai,Liverpool,0.125,0.0,1.625
+49056282,Bradley Barcola,Liverpool,0.125,0.0,1.0
+2000191846,Jayden Alexander Danns,Liverpool,0.125,0.0,1.0
+91193048,Florian Richard Wirtz,Liverpool,0.125,0.0,1.75
+2000098727,Rico Mark Lewis,Man City,0.125,0.0,0.5
+2000168014,Abdukodir Khusanov,Man City,0.125,0.0,1.0
+2000101285,Nico O'Reilly,Man City,0.0,0.25,0.375
+28127254,Elliot Anderson,Man City,0.0,0.25,0.375
+55070299,Rúben Santos Gato Alves Dias,Man City,0.0,0.25,1.0
+2000415453,Kaden Elliot Braithwaite,Man City,0.0,0.25,0.125
+37071197,Ryan Jiro Gravenberch,Liverpool,0.0,0.125,1.5
+2000108376,Isaac Angus Mabaya,Liverpool,0.0,0.125,0.125
+2000108364,James William McConnell,Liverpool,0.0,0.0,0.25
+28108033,Addji Keaninkin Marc-Israel Guéhi,Man City,0.0,0.0,1.125
+2000126470,Víctor Muñoz Villanueva,Liverpool,0.0,0.0,1.125
+82082339,Joseph Gómez,Liverpool,0.0,0.0,0.625
+2000094886,Jérémy Jacquet,Liverpool,0.0,0.0,0.75
+2000094152,Claudio Jeremías Echeverri,Man City,0.0,0.0,0.625
+28116414,Vítězslav Jaroš,Liverpool,0.0,0.0,0.125
+78085068,Ronald Federico Araujo Da Silva,Liverpool,0.0,0.0,0.5
+2000049215,Luke Chambers,Liverpool,0.0,0.0,0.5
+59138294,Giorgi Mamardashvili,Liverpool,0.0,0.0,0.125
+2000416598,Ryan Kelly McAidoo,Man City,0.0,0.0,0.375
+2000381365,Ayyoub Bouaddi,Man City,0.0,0.0,0.25
+14030119,Gerónimo Rulli,Man City,0.0,0.0,0.125
+28091347,Frederick John Woodman,Liverpool,0.0,0.0,0.125
+2000191802,Lewis Terence Koumas,Liverpool,0.0,0.0,0.375

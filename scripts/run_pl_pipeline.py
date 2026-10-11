@@ -63,6 +63,8 @@ def main():
     ap.add_argument('--images-dir',help='override assets/predictions/<matchweek>')
     ap.add_argument('--report',help='override docs/premier-league-player-forecasts-<date>.md')
     ap.add_argument('--render-only',action='store_true',help='no FM/raw results necessary; use saved player_paths.json')
+    ap.add_argument('--historical-event-oos',action='store_true',
+                    help='also score separate 2015/16 StatsBomb event-rate baseline on held-out matches')
     ap.add_argument('--dry-run',action='store_true',help='show plan; change nothing')
     opt=ap.parse_args()
     config=json.loads((ROOT/opt.fixtures).read_text())
@@ -133,6 +135,23 @@ def main():
     report=opt.report or f'docs/premier-league-player-forecasts-{stamp}.md'
     run([python,script/'write_pl_timeline_report.py','--source',source,'--derived',images/'momentum_15min.json',
          '--output',report])
+    if opt.dry_run or (not opt.dry_run and (ROOT/source).is_file()):
+        # 1-minute player-level events are native to the upgraded Rust engine.
+        # Frozen 2026-10-10 72-path snapshots predate this addition; never
+        # interpolate missing minute/assists from the six older 15-minute bins.
+        minute_ready=not opt.render_only
+        if opt.render_only and not opt.dry_run:
+            minute_ready='minutes_1min' in json.loads((ROOT/source).read_text())['fixtures'][0]
+        if minute_ready:
+            run([python,script/'render_pl_player_minute.py','--source',source,
+                 '--out-dir',images/'minute-level'])
+        elif opt.render_only:
+            print('SKIP player minute charts: source snapshot predates native 90-minute output (no interpolation)')
+    if opt.historical_event_oos:
+        # This is a distinct past-season event-rate benchmark, never fit the
+        # future FM26 player model on or label it as FM26 calibration.
+        run([python,script/'backtest_pl_event_oos.py','--holdout-matches','24'])
+        run([python,script/'write_pl_oos_report.py'])
     print(f'SNAPSHOT {source} | IMAGES {images} | REPORT {report}')
 
 if __name__=='__main__':main()

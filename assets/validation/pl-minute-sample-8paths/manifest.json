@@ -1,0 +1,30 @@
+{
+  "source": "artifacts/validation/pl-player-minute-fourfixture-8paths.json",
+  "status": "provisional scorer and uncalibrated assists; do not interpret as OOS-validated",
+  "fixtures": [
+    {
+      "fixture": "Crystal Palace vs Nott'm Forest",
+      "paths": 8,
+      "expected_goals": 1.875,
+      "unattributed_goals": 0.0
+    },
+    {
+      "fixture": "Hull vs Everton",
+      "paths": 8,
+      "expected_goals": 1.25,
+      "unattributed_goals": 0.0
+    },
+    {
+      "fixture": "Liverpool vs Man City",
+      "paths": 8,
+      "expected_goals": 3.125,
+      "unattributed_goals": 0.0
+    },
+    {
+      "fixture": "Coventry vs Newcastle",
+      "paths": 8,
+      "expected_goals": 2.875,
+      "unattributed_goals": 0.0
+    }
+  ]
+}
