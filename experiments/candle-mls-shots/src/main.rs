@@ -4,6 +4,9 @@
 //! never a forecast-time feature. The strictly earlier-match prior is supplied by the dated
 //! Python materializer. This binary does not modify any production forecast.
 
+#[cfg(test)]
+mod set_transformer;
+
 use candle_core::{Device, Tensor, Var};
 use candle_nn::{AdamW, Optimizer, ParamsAdamW};
 use serde::{Deserialize, Serialize};

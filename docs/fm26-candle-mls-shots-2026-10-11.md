@@ -97,3 +97,56 @@ snapshots joined to event and lineup records over multiple seasons**.
 
 This experiment does not touch the match-simulator calibration, path engine
 or any parallel Dixon–Coles/shared-tempo work.
+
+### Follow-up: Candle player-set attention
+
+An isolated Candle self-attention module now has tested permutation
+equivariance, masking invariance and automatic differentiation on CPU.
+Its trainable parameters and outputs have the same per-player residual
+interpretation as the MLP but process the *complete set* of candidate players.
+It is currently a test-only prototype; the prior pilot cannot train this
+legitimately because its input only contains players known **after** the match
+to have appeared. Before fitting attention, create as-of complete candidate
+rosters (both teams, absences, uncertain starters, prior role/minutes), and
+test conditional event likelihoods without leaked final lineups.
+
+The local FM22/FM23 archives are still in binary blocks with only 12/0
+decoded name records in their current manifests. They require a separate
+vintage-specific, verified extractor and identity audit before they become
+additional historical training features.
+
+### Follow-up implemented: as-of attention and matching GLM
+
+The candidate-set materializer uses only previously observed appearances for
+each side, never the actual target fixture's complete observed player list.
+Across 113 cached MLS fixtures, 66 yield an as-of candidate context,
+with 39/10/17 fixtures in train/July-validation/August-exploratory periods
+and 285/95/139 verifiably FM-matched player-shot labels.
+
+The trained Candle set-attention model is a one-head 16-wide masked
+transformer, processing both team's candidate players (mean ~42 per match).
+July validation selected epoch 1, and its Poisson log loss was 0.8956437,
+worse than the baseline 0.8949784. Its August exploratory log loss was
+1.0323424 versus 1.0340338 for the baseline. July match-bootstrap
+95% difference interval was [-0.0002657, +0.0018611]; August's was
+[-0.0028292, -0.0004804]. The August period had already been inspected
+in the prior MLP work and must not be treated as a pristine test.
+
+A separate small ridge-Poisson GLM using exactly these candidate examples
+also competed with the baseline. Validation comparison of four penalties
+(0.1, 1, 10, 100) selected the unchanged identity-rate model. Neither
+ML challenger passes the predictive validation promotion gate.
+
+### FBref / soccerdata input path
+
+The new soccerdata importer supports FBref schedules and per-match
+player-summary data, with bounded opt-in network collection or explicit
+offline CSV inputs. It requires real source match IDs, complete match
+dates, matched teams and finite shot/minutes labels. It keeps names as
+unverified person identities and records hashes and missing-data counts.
+Do not use those labels as pre-match features for their own fixture.
+Historical football ratings require independently verified period-correct
+FM edition player identifiers before supervised football-attribute fitting.
+The local FBref cache was empty when inspected, and an older soccerdata
+browser initialization attempt failed. Fresh data must be visibly acquired
+and validated before being reported as collected.
