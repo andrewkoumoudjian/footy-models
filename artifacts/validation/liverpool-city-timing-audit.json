@@ -1,0 +1,198 @@
+{
+  "contract": "locked_2026_epl_prematch_goal_timing_audit_v1",
+  "pre_match_as_of": "2026-10-10",
+  "result_date": "2026-10-11",
+  "fixture": "Liverpool vs Man City",
+  "paths": 72,
+  "seed": 44,
+  "actual_away_goal_minutes": [
+    65,
+    68,
+    78
+  ],
+  "actual_home_red_card_minutes": [
+    62
+  ],
+  "actual_goal_windows": [
+    4,
+    4,
+    5
+  ],
+  "actual_red_card_windows": [
+    4
+  ],
+  "pressure_peak_window": 4,
+  "pressure_peak_minutes": [
+    60,
+    75
+  ],
+  "peak_pressure_index": -13.151364764267997,
+  "actual_goals_in_pressure_peak": 2,
+  "peak_absolute_away_goal_rate_window": 3,
+  "peak_absolute_away_shot_rate_window": 4,
+  "goal_multiplier_pressure_peak_sensitivity": {
+    "0": 4,
+    "1": 4,
+    "3": 4,
+    "5": 4,
+    "10": 4
+  },
+  "pressure_peak_decomposition_vs_previous_window": {
+    "home_shot_change": -0.6249999999999998,
+    "away_shot_change": 0.16666666666666696,
+    "home_goal_rate_change": -0.013888888888888867,
+    "away_goal_rate_change": -0.09722222222222221
+  },
+  "conditional_away_goal_window_probabilities": [
+    0.10169491525423728,
+    0.11864406779661017,
+    0.20338983050847456,
+    0.2288135593220339,
+    0.16949152542372883,
+    0.17796610169491528
+  ],
+  "peak_window_goal_probability_model": 0.16949152542372883,
+  "goal_clock_independence_assumption": "Multinomial goal-minute likelihood and 2-of-3 bin probabilities condition on realized goal count and assume independent goal-time draws; they are diagnostics, not a complete joint-path likelihood.",
+  "peak_window_goal_probability_flat": 0.16666666666666666,
+  "probability_at_least_two_of_three_goals_in_predeclared_peak": {
+    "model": 0.07644403760851891,
+    "flat": 0.07407407407407407
+  },
+  "any_of_six_windows_has_two_or_more_goals_under_flat_iid_timing": 0.4444444444444444,
+  "conditional_away_goal_time_negative_log_loss": {
+    "model": 5.276066888565589,
+    "flat": 5.375278407684165,
+    "model_improvement_nats_three_goals": 0.09921151911857606,
+    "model_improvement_nats_per_goal": 0.03307050637285869
+  },
+  "simulated_red_card_probability_in_actual_card_bin_any_team": 0.041666666666666664,
+  "simulated_substitution_trigger_probability_in_peak_any_team": 1.0,
+  "windows": [
+    {
+      "start": 0,
+      "end": 15,
+      "relative_city_momentum_index": 8.18858560794044,
+      "expected_city_shots": 2.0694444444444446,
+      "expected_city_goals": 0.16666666666666666,
+      "city_goal_probability_given_an_eventual_city_goal": 0.10169491525423728,
+      "any_team_red_card_probability": 0.08333333333333333,
+      "substitution_trigger_probability": 0.027777777777777776
+    },
+    {
+      "start": 15,
+      "end": 30,
+      "relative_city_momentum_index": 7.1065989847715745,
+      "expected_city_shots": 1.9583333333333333,
+      "expected_city_goals": 0.19444444444444445,
+      "city_goal_probability_given_an_eventual_city_goal": 0.11864406779661017,
+      "any_team_red_card_probability": 0.06944444444444445,
+      "substitution_trigger_probability": 0.06944444444444445
+    },
+    {
+      "start": 30,
+      "end": 45,
+      "relative_city_momentum_index": 0.696055684454754,
+      "expected_city_shots": 1.9722222222222223,
+      "expected_city_goals": 0.3333333333333333,
+      "city_goal_probability_given_an_eventual_city_goal": 0.20338983050847456,
+      "any_team_red_card_probability": 0.08333333333333333,
+      "substitution_trigger_probability": 0.1111111111111111
+    },
+    {
+      "start": 45,
+      "end": 60,
+      "relative_city_momentum_index": -3.0434782608695685,
+      "expected_city_shots": 2.1666666666666665,
+      "expected_city_goals": 0.375,
+      "city_goal_probability_given_an_eventual_city_goal": 0.2288135593220339,
+      "any_team_red_card_probability": 0.041666666666666664,
+      "substitution_trigger_probability": 0.6111111111111112
+    },
+    {
+      "start": 60,
+      "end": 75,
+      "relative_city_momentum_index": -13.151364764267997,
+      "expected_city_shots": 2.3333333333333335,
+      "expected_city_goals": 0.2777777777777778,
+      "city_goal_probability_given_an_eventual_city_goal": 0.16949152542372883,
+      "any_team_red_card_probability": 0.041666666666666664,
+      "substitution_trigger_probability": 1.0
+    },
+    {
+      "start": 75,
+      "end": 90,
+      "relative_city_momentum_index": 3.5532994923857903,
+      "expected_city_shots": 1.7638888888888888,
+      "expected_city_goals": 0.2916666666666667,
+      "city_goal_probability_given_an_eventual_city_goal": 0.17796610169491528,
+      "any_team_red_card_probability": 0.125,
+      "substitution_trigger_probability": 0.8472222222222222
+    }
+  ],
+  "interpretation": [
+    "The pre-match relative-pressure peak aligned with the red card and two of three City goals.",
+    "The third goal came in the following period. The peak of absolute City scoring RATE was different.",
+    "The goal timing likelihood has very little edge over a uniform-in-time conditional baseline.",
+    "The red-card probability is any-team incidence, not player-specific Gravenberch dismissal probability.",
+    "The pressure index mixes goals with shots, and the simulation's substitutions are scheduled around minute 60.",
+    "One fixture selected for apparent success is insufficient evidence of timing calibration."
+  ],
+  "source_pre_match_forecast_sha256": "09a7078b065ac36395954a05f5c136824eda0c0fb123c808850aec99f47cba7d",
+  "source_post_match_result_sha256": "61a9b880d46b95e7acd20ab660fd480ab15b13c2c0665fe67af210517110d141",
+  "source_pre_match_run_manifest_sha256": "1720536a763242b4716e42864d98640412357c523519cb8d190f7ad8b1e20804",
+  "pre_match_input_fingerprint_check_today": {
+    "matched_registration": {
+      "file_present": true,
+      "matches_snapshot": false,
+      "expected_sha256": "e6cc3db9a6042c36f655529f0717684a8b0806fa7ff309984c7d32ce10868b88",
+      "current_sha256": "f877ead44dcf9c3a80a9485441dc1b314eb4d2d7ad0d9415804327949bd080b9"
+    },
+    "dated_team_results": {
+      "file_present": true,
+      "matches_snapshot": true,
+      "expected_sha256": "205a39774fcc46d5f8093643aef5c9c4d0472640b12fc32d91785109de289a96",
+      "current_sha256": "205a39774fcc46d5f8093643aef5c9c4d0472640b12fc32d91785109de289a96"
+    },
+    "eligible_player_inputs": {
+      "file_present": true,
+      "matches_snapshot": true,
+      "expected_sha256": "1da0330903e33a0fc7dca0a4696d9e55cff4844202d6912407fa8b85cc7edfd3",
+      "current_sha256": "1da0330903e33a0fc7dca0a4696d9e55cff4844202d6912407fa8b85cc7edfd3"
+    },
+    "baseline_team_forecast": {
+      "file_present": true,
+      "matches_snapshot": true,
+      "expected_sha256": "c4c67b014b510cc0d00814f597fa77c9d4af90ca1f06ee7d480aeea2716809ec",
+      "current_sha256": "c4c67b014b510cc0d00814f597fa77c9d4af90ca1f06ee7d480aeea2716809ec"
+    },
+    "fm26_raw_local": {
+      "file_present": true,
+      "matches_snapshot": true,
+      "expected_sha256": "b91eaccd9be04278d863a80ef26473455932acdaf8f2b321196c50ada08b74cb",
+      "current_sha256": "b91eaccd9be04278d863a80ef26473455932acdaf8f2b321196c50ada08b74cb"
+    }
+  },
+  "same_seed_current_reproduction_check": {
+    "original_peak_window": 4,
+    "rerun_peak_window": 3,
+    "pressure_index_original": [
+      8.18858560794044,
+      7.1065989847715745,
+      0.696055684454754,
+      -3.0434782608695685,
+      -13.151364764267997,
+      3.5532994923857903
+    ],
+    "pressure_index_rerun": [
+      -12.072892938496585,
+      -6.334841628959275,
+      6.699751861042183,
+      -12.415349887133184,
+      -4.7008547008546975,
+      13.348946135831381
+    ],
+    "exact_equal_full_15_min_windows": false,
+    "maximum_absolute_pressure_index_difference": 20.261478546437026,
+    "warning": "Same-seed replay does not prove reproducibility unless full input hashes and binary revision are identical."
+  }
+}

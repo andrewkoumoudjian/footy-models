@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-11",
+  "home": "Liverpool",
+  "away": "Man City",
+  "home_goals": 0,
+  "away_goals": 3,
+  "away_goal_minutes": [65, 68, 78],
+  "home_red_card_minutes": [62],
+  "provenance": {
+    "actual_result_observed_after_match": true,
+    "primary_goals": "https://www.mancity.com/news/mens/liverpool-v-city-premier-league-match-report-october-2026-63927325",
+    "red_card_and_result": "https://www.reuters.com/sports/soccer/man-city-silence-hostile-anfield-with-3-0-win-over-liverpool-2026-10-11/",
+    "match_timeline": "https://www.sportsmole.co.uk/football/liverpool/result/man-city-stun-anfield-into-silence-with-crushing-win-over-liverpool_606689.html"
+  },
+  "warning": "Outcome-only evaluation labels: NEVER import these goals/red cards into pre-match features or model training for this fixture."
+}
