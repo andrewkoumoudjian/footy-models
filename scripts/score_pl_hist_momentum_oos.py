@@ -14,7 +14,10 @@ from pathlib import Path
 from audit_pl_momentum_timing import pressure_index
 
 
-def fit_only_goal_clock_prior(fit_fixtures, labels_dir, smoothing_per_bin=3.0):
+def fit_only_goal_clock_prior(
+    fit_fixtures, labels_dir, smoothing_per_bin=3.0,
+    *, source_elapsed=False, events_dir=None,
+):
     """Estimate a fixed time-of-goal reference using ONLY earlier fixtures.
 
     Each scored goal contributes to one of six bins. The predetermined
@@ -31,14 +34,27 @@ def fit_only_goal_clock_prior(fit_fixtures, labels_dir, smoothing_per_bin=3.0):
             f["date"], f["home"], f["away"]
         ):
             raise ValueError("fit-only goal-clock label mismatch")
-        for event in label["goals"]:
-            if event["team"] not in (f["home"], f["away"]):
-                raise ValueError("fit-only goal team mismatch")
-            minute = int(event["minute_index"])
-            if not 0 <= minute < 90:
-                raise ValueError("invalid historical goal minute")
-            counts[minute // 15] += 1
-            n_goals += 1
+        if source_elapsed:
+            if events_dir is None:
+                raise ValueError("elapsed-clock prior needs raw earlier events")
+            events = json.loads((events_dir / f"{f['match_id']}.json").read_text())
+            observed = observed_windows(f, events, label["goals"], source_elapsed=True)
+            actual = sum(w[side + "_goals"] for w in observed for side in ("home", "away"))
+            if actual != len(label["goals"]):
+                raise ValueError("fit-only source goal count mismatch")
+            for index, row in enumerate(observed):
+                n = row["home_goals"] + row["away_goals"]
+                counts[index] += n
+                n_goals += n
+        else:
+            for event in label["goals"]:
+                if event["team"] not in (f["home"], f["away"]):
+                    raise ValueError("fit-only goal team mismatch")
+                minute = int(event["minute_index"])
+                if not 0 <= minute < 90:
+                    raise ValueError("invalid historical goal minute")
+                counts[minute // 15] += 1
+                n_goals += 1
     total = sum(counts)
     return [x / total for x in counts], n_goals
 
@@ -55,7 +71,7 @@ def oos_split(fixtures, count):
     return ordered[:split], ordered[split:]
 
 
-def observed_windows(forecast, events, goals):
+def observed_windows(forecast, events, goals, *, source_elapsed=False):
     """StatsBomb shots and official parsed goals, six disjoint 15-minute bins."""
     home, away = forecast["home"], forecast["away"]
     data = [
@@ -63,30 +79,67 @@ def observed_windows(forecast, events, goals):
         for _ in range(6)
     ]
     for event in events:
-        if (event.get("type") or {}).get("name") != "Shot":
-            continue
+        kind = (event.get("type") or {}).get("name")
         club = (event.get("team") or {}).get("name")
         if club not in (home, away):
             continue
         minute = event.get("minute")
         if not isinstance(minute, int):
             continue
-        # The historical label builder uses event minute-1 as its 0-based
-        # regulation minute. Preserve this contract, including stoppage cap.
-        index = min(89, max(0, minute - 1)) // 15
-        data[index]["home_shots" if club == home else "away_shots"] += 1
-    for event in goals:
-        club = event["team"]
-        if club not in (home, away):
-            raise ValueError("unexpected scoring team in historical label")
-        minute = int(event["minute_index"])
-        if not 0 <= minute < 90:
-            raise ValueError("bad goal minute index")
-        data[minute // 15]["home_goals" if club == home else "away_goals"] += 1
+        # StatsBomb minute is elapsed-clock zero-based, e.g. a 45:00
+        # halftime substitution belongs to 45-60. Frozen historical
+        # label builder erroneously subtracts one; preserve the legacy
+        # mode ONLY for reproducing the earlier published v1 audit.
+        index = min(89, max(0, minute if source_elapsed else minute - 1)) // 15
+        if kind == "Shot":
+            data[index]["home_shots" if club == home else "away_shots"] += 1
+            if source_elapsed and (event.get("shot") or {}).get("outcome", {}).get("name") == "Goal":
+                data[index]["home_goals" if club == home else "away_goals"] += 1
+        elif source_elapsed and kind == "Own Goal Against":
+            data[index]["away_goals" if club == home else "home_goals"] += 1
+    if not source_elapsed:
+        for event in goals:
+            club = event["team"]
+            if club not in (home, away):
+                raise ValueError("unexpected scoring team in historical label")
+            minute = int(event["minute_index"])
+            if not 0 <= minute < 90:
+                raise ValueError("bad goal minute index")
+            data[minute // 15]["home_goals" if club == home else "away_goals"] += 1
     return data
 
 
-def score_fixture(forecast, label, events, *, fit_only_clock=None):
+def fit_only_substitution_clock(fit_fixtures, events_dir, pseudocount=2.0):
+    if pseudocount <= 0 or not fit_fixtures:
+        raise ValueError("positive smoothing and fit period required")
+    incidence = [float(pseudocount)] * 6
+    total = len(fit_fixtures) + 2 * pseudocount
+    for f in fit_fixtures:
+        events = json.loads((events_dir / f"{f['match_id']}.json").read_text())
+        any_bin = observed_substitution_bins(f, events)
+        for i, flag in enumerate(any_bin):
+            incidence[i] += flag
+    return [x / total for x in incidence]
+
+
+def observed_substitution_bins(forecast, events):
+    clubs = (forecast["home"], forecast["away"])
+    bins = [0] * 6
+    for event in events:
+        if (event.get("type") or {}).get("name") != "Substitution":
+            continue
+        if (event.get("team") or {}).get("name") not in clubs:
+            continue
+        minute = event.get("minute")
+        if isinstance(minute, int):
+            bins[min(89, max(0, minute)) // 15] = 1
+    return bins
+
+
+def score_fixture(
+    forecast, label, events, *, fit_only_clock=None,
+    source_elapsed=False, fit_only_sub_prior=None,
+):
     if (forecast["match_id"], forecast["date"], forecast["home"], forecast["away"]) != (
         label["match_id"], label["date"], label["home"], label["away"]
     ):
@@ -94,7 +147,9 @@ def score_fixture(forecast, label, events, *, fit_only_clock=None):
     expected = forecast["windows_15min"]
     if len(expected) != 6 or len(forecast["minutes_1min"]) != 90:
         raise ValueError("incompatible native engine event window contract")
-    observed = observed_windows(forecast, events, label["goals"])
+    observed = observed_windows(
+        forecast, events, label["goals"], source_elapsed=source_elapsed,
+    )
     for team, side in ((forecast["home"], "home"), (forecast["away"], "away")):
         observed_goals = sum(w[side + "_goals"] for w in observed)
         if observed_goals != label[side + "_goals"]:
@@ -168,7 +223,7 @@ def score_fixture(forecast, label, events, *, fit_only_clock=None):
             goal_time_flat -= n * math.log(1 / 6)
             goal_time_fit_only -= n * math.log(fit_only_clock[i])
             goal_count += n
-    return {
+    result = {
         "date": forecast["date"], "match_id": forecast["match_id"],
         "home": forecast["home"], "away": forecast["away"],
         "pressure_sq_error": sum(signed_errors),
@@ -189,6 +244,31 @@ def score_fixture(forecast, label, events, *, fit_only_clock=None):
         "fit_only_goal_time_log_loss": goal_time_fit_only,
         "goal_count": goal_count,
     }
+    if source_elapsed:
+        if fit_only_sub_prior is None or len(fit_only_sub_prior) != 6:
+            raise ValueError("raw elapsed-clock audit needs earlier-only substitution prior")
+        actual_subs = observed_substitution_bins(forecast, events)
+        if sum(
+            (event.get("type") or {}).get("name") == "Substitution"
+            and (event.get("team") or {}).get("name") in (forecast["home"], forecast["away"])
+            for event in events
+        ) != len(label["subs"]):
+            raise ValueError("raw source substitution label count mismatch")
+        predicted_subs = [float(w["p_substitution"]) for w in expected]
+        if any(not 0 <= p <= 1 for p in predicted_subs + fit_only_sub_prior):
+            raise ValueError("invalid event probability")
+        result.update({
+            "actual_completed_substitution_bins": actual_subs,
+            "expected_any_substitution_triggers": predicted_subs,
+            "substitution_proxy_brier_sum_engine": sum(
+                (p - float(y)) ** 2 for p, y in zip(predicted_subs, actual_subs)
+            ),
+            "substitution_proxy_brier_sum_fit_only": sum(
+                (p - float(y)) ** 2 for p, y in zip(fit_only_sub_prior, actual_subs)
+            ),
+            "substitution_bins": 6,
+        })
+    return result
 
 
 def summarize(rows):
@@ -198,7 +278,7 @@ def summarize(rows):
     direction = sums("directional_windows_evaluated")
     if not rows or windows <= 0 or goals <= 0 or direction <= 0:
         raise ValueError("no scoreable OOS pressure/goal-time samples")
-    return {
+    summary = {
         "fixtures": len(rows),
         "pressure_windows": int(windows),
         "fractional_pressure_mse_engine": sums("pressure_sq_error") / windows,
@@ -227,6 +307,19 @@ def summarize(rows):
             sums("goal_time_log_loss") - sums("fit_only_goal_time_log_loss")
         ) / goals,
     }
+    if "substitution_proxy_brier_sum_engine" in rows[0]:
+        bins = sums("substitution_bins")
+        summary["substitution_trigger_vs_completed_brier_engine"] = (
+            sums("substitution_proxy_brier_sum_engine") / bins
+        )
+        summary["substitution_trigger_vs_completed_brier_fit_only"] = (
+            sums("substitution_proxy_brier_sum_fit_only") / bins
+        )
+        summary["substitution_proxy_brier_delta_engine_minus_fit_only"] = (
+            sums("substitution_proxy_brier_sum_engine")
+            - sums("substitution_proxy_brier_sum_fit_only")
+        ) / bins
+    return summary
 
 
 def bootstrap(rows, draws=2000, seed=42):
@@ -234,6 +327,8 @@ def bootstrap(rows, draws=2000, seed=42):
     out = {"pressure_mse_improvement_engine_minus_baseline": [],
            "goal_time_loss_improvement_engine_minus_flat": [],
            "goal_time_loss_improvement_engine_minus_fit_only": []}
+    if "substitution_proxy_brier_sum_engine" in rows[0]:
+        out["substitution_proxy_brier_delta_engine_minus_fit_only"] = []
     for _ in range(draws):
         sample = [rows[rng.randrange(len(rows))] for _ in rows]
         item = summarize(sample)
@@ -255,6 +350,8 @@ def main():
     parser.add_argument("--labels", type=Path, default=Path("data/statsbomb/pl_hist/labels"))
     parser.add_argument("--events", type=Path, default=Path("data/statsbomb/events"))
     parser.add_argument("--oos", type=int, default=24)
+    parser.add_argument("--source-elapsed-clock", action="store_true",
+                        help="New v2 audit: use raw StatsBomb elapsed minute (NOT legacy minute-1)")
     parser.add_argument("--output", type=Path,
                         default=Path("artifacts/validation/pl-hist-momentum-oos.json"))
     args = parser.parse_args()
@@ -266,27 +363,47 @@ def main():
     fit, oos = oos_split(forecast["fixtures"], args.oos)
     if max(x["date"] for x in fit) >= min(x["date"] for x in oos):
         raise ValueError("chronological split failed")
-    fitted_goal_clock, fit_only_goals = fit_only_goal_clock_prior(fit, args.labels)
+    fitted_goal_clock, fit_only_goals = fit_only_goal_clock_prior(
+        fit, args.labels, source_elapsed=args.source_elapsed_clock,
+        events_dir=args.events,
+    )
+    fit_sub_prior = (
+        fit_only_substitution_clock(fit, args.events)
+        if args.source_elapsed_clock else None
+    )
     rows = []
     for f in oos:
         match_id = f["match_id"]
         label = json.loads((args.labels / f"{match_id}.json").read_text())
         events = json.loads((args.events / f"{match_id}.json").read_text())
-        rows.append(score_fixture(f, label, events, fit_only_clock=fitted_goal_clock))
+        rows.append(score_fixture(
+            f, label, events, fit_only_clock=fitted_goal_clock,
+            source_elapsed=args.source_elapsed_clock, fit_only_sub_prior=fit_sub_prior,
+        ))
     result = {
-        "contract": "statsbomb_2015_16_frozen_oos_momentum_timing_v1",
+        "contract": (
+            "statsbomb_2015_16_frozen_oos_elapsed_clock_v2"
+            if args.source_elapsed_clock
+            else "statsbomb_2015_16_frozen_oos_momentum_timing_v1"
+        ),
         "data_scope": "2015-16 StatsBomb EPL event-covered fixtures only",
         "source_forecast": str(args.predictions),
         "source_engine_paths": forecast["paths"],
         "fit_fixtures": len(fit),
         "fit_only_goals": fit_only_goals,
         "fit_only_clock_prior": fitted_goal_clock,
+        "fit_only_substitution_clock_prior": fit_sub_prior,
         "fit_only_clock_pseudocount_per_bin": 3.0,
         "oos_boundary_date": min(x["date"] for x in oos),
         "summary": summarize(rows),
         "bootstrap_95pct_engine_minus_reference": bootstrap(rows),
         "bootstrap_unit": "entire match, 2000 draws, deterministic seed 42",
         "target_definition": "Observed StatsBomb Shots and credited Goals per team per 15-minute window",
+        "event_clock": (
+            "source elapsed event minute, clamped stoppage into regulation minute 89"
+            if args.source_elapsed_clock
+            else "legacy historical label minute_index = source minute-1"
+        ),
         "pressure_definition": "shots + 3*goals, scaled to home/(home+away); descriptive, not calibrated event probability",
         "baseline_definition": "constant full-match simulated pressure share; uniform-in-time and earlier-fixture-only smoothed goal clock priors",
         "caveats": [
@@ -295,6 +412,7 @@ def main():
             "Flat timed-goal benchmark is deliberately simple; stronger as-of time priors are needed.",
             "Goal-weight 3 and the display index were already authored, not selected using these OOS goals.",
             "This evaluates observed-stat-only 2015/16 model, not FM26 in October 2026.",
+            "The optional substitution Brier compares ANY model substitution TRIGGER to recorded completed substitutions; these are not identical events or calibrated probability labels.",
         ],
         "oos_fixtures": rows,
     }

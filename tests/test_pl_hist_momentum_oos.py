@@ -6,7 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from score_pl_hist_momentum_oos import (
-    observed_windows, score_fixture, oos_split, fit_only_goal_clock_prior,
+    observed_windows, observed_substitution_bins, score_fixture, oos_split,
+    fit_only_goal_clock_prior,
 )
 import json
 import tempfile
@@ -22,6 +23,7 @@ def forecast():
                 "expected_away_shots": 2.0 if i == 4 else 1.0,
                 "expected_home_goals": 0.2,
                 "expected_away_goals": 0.3 if i == 4 else 0.2,
+                "p_substitution": 0.4,
             }
             for i in range(6)
         ],
@@ -66,6 +68,32 @@ class HistMomentumTest(unittest.TestCase):
         bad["teams"]["Away"]["shots"] = 3
         with self.assertRaisesRegex(ValueError, "ground truth shot count"):
             score_fixture(forecast(), bad, events())
+
+    def test_elapsed_clock_resolves_halftime_boundary_and_source_goals(self):
+        f, observed_label = forecast(), label()
+        raw = events() + [
+            {"type": {"name": "Substitution"}, "team": {"name": "Home"},
+             "minute": 45, "second": 0}
+        ]
+        raw[2]["shot"] = {"outcome": {"name": "Goal"}}
+        observed_label["subs"] = [{"team": "Home", "minute_index": 44}]
+        bins = observed_windows(f, raw, observed_label["goals"], source_elapsed=True)
+        self.assertEqual(bins[4]["away_goals"], 1)
+        self.assertEqual(observed_substitution_bins(f, raw), [0, 0, 0, 1, 0, 0])
+        scored = score_fixture(
+            f, observed_label, raw, source_elapsed=True,
+            fit_only_sub_prior=[0.2] * 6,
+        )
+        self.assertEqual(scored["goal_count"], 1)
+        self.assertEqual(scored["actual_completed_substitution_bins"][3], 1)
+        self.assertEqual(observed_label["subs"][0]["minute_index"] // 15, 2)
+
+    def test_corrected_source_audit_fails_closed_without_goal_event(self):
+        with self.assertRaisesRegex(ValueError, "ground truth goal count"):
+            score_fixture(
+                forecast(), label(), events(), source_elapsed=True,
+                fit_only_sub_prior=[0.2] * 6,
+            )
 
     def test_oos_never_splits_same_calendar_date(self):
         fixtures = [

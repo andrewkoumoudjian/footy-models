@@ -149,6 +149,21 @@ Reproduction:
 The full audit, bootstrap results and OOS fixture-level evidence
 are at artifacts/validation/pl-hist-momentum-oos.json.
 
+### Historical clock correction (supersedes the preceding v1 timing interpretation)
+
+A subsequent audit uncovered that the historical label builder
+subtracts one minute from each StatsBomb elapsed-minute timestamp.
+That shifts exact quarter-hour and half-time events into the
+previous 15-minute bin. Scoring **the identical frozen simulation**
+against raw elapsed-time goal and shot events instead gives
+goal-time NLL **1.79482 per goal**, versus **1.79176** for a
+uniform clock (model minus baseline **+0.00306**, 95% match-bootstrap
+interval **[-0.02278,+0.02970]**). The apparent small v1
+improvement no longer holds. See the
+[corrected-clock v2 report](historical-elapsed-clock-reassessment-2026-10-11.md).
+The original v1 files are preserved for reproducibility, not
+treated as the preferred goal-time evidence.
+
 ## What to do next
 
 1. Preserve the binary SHA256, model code SHA256, all input hashes,
