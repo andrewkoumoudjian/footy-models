@@ -47,13 +47,6 @@ while City shots rise **2.167 to 2.333** (+0.167). The expected City
 goals simultaneously fall **0.375 to 0.278**. This should not be read
 as the highest probability of a City goal.
 
-The 45–60 to 60–75 shift is mainly a simulated decline in
-**Liverpool's** shot pressure: Liverpool expected shots drop from
-2.431 to 1.806 (-0.625), while City's rise only 2.167 to 2.333
-(+0.167). City's expected goals actually fall from 0.375 to
-0.278 (-0.097). The ratio peaks because Liverpool weakens
-relative to City, not because City's goal rate suddenly spikes.
-
 In the pre-match six-bin distribution, 60–75 accounted for **16.95%**
 of City's expected goals, barely above a 16.67% uniform clock.
 Conditioned on City scoring three, at least two falling in that
