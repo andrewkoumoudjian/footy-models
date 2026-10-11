@@ -26,7 +26,7 @@ use crate::driver::{
 use footy_core::{MatchId, MetricId, PlayerId};
 use footy_match::{
     apply_dixon_coles, simulate_second_resolved_dynamic_mental_match, DynamicMentalTransitionParameters, FormationPrior,
-    LineupProjectionInput, LineupSamplingParameters, OutcomeCalibrationSample, OutcomeCalibrator,
+    fit_exact_lineup_weights, LineupProjectionInput, LineupSamplingParameters, OutcomeCalibrationSample, OutcomeCalibrator,
     PlayerMatchupState, PrimitiveMatchSimulationInput, SecondResolvedDynamicMentalForecast,
     SecondResolvedSimulationParameters, SpecificGoalProcess, SpecificInMatchParameters,
     SpecificMatchEnvironment, SpecificScoreStateMetricModifier,
@@ -56,6 +56,8 @@ pub struct HistoricalInputContract {
     /// Research-only: preserve each team's causal attacking/defensive strength in its
     /// own goal intensity instead of giving both teams the same blended anchor.
     pub team_strength_anchor: bool,
+    /// Optional role-neutral exact-cardinality lineup challenger. Does not affect defaults.
+    pub exact_cardinality_lineup: bool,
 }
 
 impl Default for HistoricalInputContract {
@@ -72,6 +74,7 @@ impl Default for HistoricalInputContract {
             injury_probability_per90: 0.02,
             path_rate_correlation: 0.0,
             team_strength_anchor: false,
+            exact_cardinality_lineup: false,
         }
     }
 }
@@ -166,6 +169,14 @@ pub(crate) fn build_historical_input(
             let corrected = corrected_start_probability(selection_correction, candidate.start_probability);
             candidate.start_probability = corrected;
             candidate.substitute_probability = (appearance - corrected).max(0.0);
+        }
+    }
+    if contract.exact_cardinality_lineup {
+        for lineup in [&mut home_lineup, &mut away_lineup] {
+            let priors: Vec<f64> = lineup.candidates.iter().map(|p| p.start_probability).collect();
+            let fitted = fit_exact_lineup_weights(&priors, 11)
+                .expect("exact-cardinality lineup prior is infeasible or failed to converge");
+            lineup.parameters.exact_cardinality_log_weights = Some(fitted.log_weights);
         }
     }
 
@@ -424,6 +435,24 @@ fn run_fixture(
     // corrected table is exported alongside with its rho and applicability flag.
     // Default rho = 0.0 skips the layer entirely (identity, no new keys beyond rho).
     if let Some(object) = summary.as_object_mut() {
+        if contract.exact_cardinality_lineup {
+            let describe = |lineup: &LineupProjectionInput| {
+                let priors: Vec<f64> = lineup.candidates.iter().map(|p| p.start_probability).collect();
+                let fit = fit_exact_lineup_weights(&priors, 11).expect("previously fitted lineup");
+                json!({
+                    "candidate_count": priors.len(),
+                    "prior_start_sum": priors.iter().sum::<f64>(),
+                    "projected_start_sum": fit.projected_marginals.iter().sum::<f64>(),
+                    "projection_l1": fit.projection_l1,
+                    "max_exact_subset_marginal_error": fit.maximum_marginal_error,
+                    "mean_availability": lineup.candidates.iter().map(|p| p.availability_probability).sum::<f64>() / priors.len() as f64,
+                    "marginal_scope": "conditional_on_full_available_roster_before_path_availability_draws",
+                })
+            };
+            object.insert("exact_cardinality_lineup_diagnostics".to_string(), json!({
+                "home": describe(&input.home_lineup), "away": describe(&input.away_lineup)
+            }));
+        }
         object.insert("dixon_coles_rho".to_string(), json!(dixon_coles_rho));
         if dixon_coles_rho != 0.0 {
             let home_mean = forecast.outcome.home_goals.mean;
@@ -493,6 +522,7 @@ pub fn run_premier_league_historical() {
             "--output" => output_path = iter.next().expect("--output value"),
             "--no-calibration" => use_calibration = false,
             "--selection-correction" => selection_correction_path = Some(iter.next().expect("path")),
+            "--exact-cardinality-lineup" => contract.exact_cardinality_lineup = true,
             "--home-advantage-multiplier" => {
                 contract.home_advantage_multiplier = iter.next().expect("value").parse().expect("number")
             }
@@ -670,6 +700,7 @@ pub fn run_premier_league_historical() {
             "red_card_probability_per90": contract.red_card_probability_per90,
             "injury_probability_per90": contract.injury_probability_per90,
             "team_strength_anchor": contract.team_strength_anchor,
+            "exact_cardinality_lineup": contract.exact_cardinality_lineup,
         },
         "calibration_enabled": use_calibration,
         "dixon_coles_rho": dixon_coles_rho,

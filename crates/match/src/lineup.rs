@@ -1,6 +1,7 @@
 use footy_core::{ClubId, Date, PlayerId, Probability, RoleId};
 use footy_forecast::Rng64;
 use footy_state::PlayerState;
+use crate::lineup_entropy::draw_exact_lineup;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -97,7 +98,7 @@ pub struct LockedStarter {
     pub slot: Option<u8>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LineupSamplingParameters {
     /// Exponent on role suitability. Larger values punish awkward assignments more strongly.
     pub role_fit_power: f64,
@@ -109,6 +110,10 @@ pub struct LineupSamplingParameters {
     pub scarce_role_fit_threshold: f64,
     /// Availability draws are rejected until the team can field eleven players.
     pub max_availability_resamples: u8,
+    /// Research-only exact-cardinality subset model, fitted once from dated player priors.
+    /// Indexed by `candidates`. Only valid for role-neutral squads with no locked XI.
+    /// `None` keeps the production sequential, role-aware sampler completely unchanged.
+    pub exact_cardinality_log_weights: Option<Vec<f64>>,
 }
 
 impl Default for LineupSamplingParameters {
@@ -119,6 +124,7 @@ impl Default for LineupSamplingParameters {
             fatigue_weight: 0.75,
             scarce_role_fit_threshold: 0.35,
             max_availability_resamples: 16,
+            exact_cardinality_log_weights: None,
         }
     }
 }
@@ -145,6 +151,20 @@ impl LineupProjectionInput {
             || !(0.0..=1.0).contains(&self.parameters.scarce_role_fit_threshold)
         {
             return false;
+        }
+        if let Some(weights) = &self.parameters.exact_cardinality_log_weights {
+            if weights.len() != self.candidates.len()
+                || weights.iter().any(|w| w.is_nan())
+                || !self.locked_starters.is_empty()
+            { return false; }
+            if weights.iter().zip(&self.candidates).any(|(&weight, candidate)| {
+                weight == f64::INFINITY && candidate.availability_probability != 1.0
+            }) { return false; }
+            // Exact-subset research intentionally omits role assignment probabilities.
+            // Reject any input whose role suitability is not exchangeable over slots.
+            if self.formations.iter().any(|prior| prior.formation.slots.iter().any(|slot| {
+                self.candidates.iter().any(|player| (player.role_fit(slot.role) - 1.0).abs() > 1e-12)
+            })) { return false; }
         }
         let mut players = BTreeSet::new();
         if !self.candidates.iter().all(|candidate| players.insert(candidate.player) && candidate.validate()) {
@@ -488,6 +508,28 @@ pub fn sample_lineup(input: &LineupProjectionInput, rng: &mut Rng64) -> Option<S
     }
     if sampled_available.len() < 11 { return None; }
 
+    if let Some(weights) = &input.parameters.exact_cardinality_log_weights {
+        // Condition the fitted exact-XI law on this path's available players. The fitted
+        // marginals are *not* unconditional when availability is stochastic; this is an
+        // intentional research limitation, not an assertion of full start calibration.
+        let available: Vec<usize> = input.candidates.iter().enumerate()
+            .filter_map(|(i, candidate)| sampled_available.contains(&candidate.player).then_some(i))
+            .collect();
+        let conditional: Vec<f64> = available.iter().map(|&i| weights[i]).collect();
+        let selected = draw_exact_lineup(&conditional, 11, rng)?;
+        let mut starter_indices: Vec<usize> = selected.iter().map(|&i| available[i]).collect();
+        // The role-neutral subset law contains no slot-preference information. Randomize
+        // the assignment instead of inserting an accidental candidate-index/slot bias.
+        for i in (1..starter_indices.len()).rev() {
+            let j = ((rng.uniform() * (i + 1) as f64) as usize).min(i);
+            starter_indices.swap(i, j);
+        }
+        let mut starters: Vec<SampledStarter> = formation.slots.iter().zip(starter_indices)
+            .map(|(slot, i)| make_starter(&input.candidates[i], *slot, rng)).collect();
+        starters.sort_by_key(|value| value.slot);
+        return Some(SampledLineup { club: input.club, formation_id: formation.id, starters });
+    }
+
     let (ability_mean, ability_sigma) = squad_ability_moments(&input.candidates);
     let mut remaining_slots = formation.slots.clone();
     let mut used_players = BTreeSet::<PlayerId>::new();
@@ -534,7 +576,7 @@ pub fn sample_lineup(input: &LineupProjectionInput, rng: &mut Rng64) -> Option<S
             slot.role,
             ability_mean,
             ability_sigma,
-            input.parameters,
+            &input.parameters,
         ));
         let selected = available[weighted_index(weights, rng)?];
         used_players.insert(selected.player);
@@ -636,7 +678,7 @@ fn selection_weight(
     role: RoleId,
     ability_mean: f64,
     ability_sigma: f64,
-    parameters: LineupSamplingParameters,
+    parameters: &LineupSamplingParameters,
 ) -> f64 {
     let start = candidate.start_probability.max(1e-6);
     let role_fit = (candidate.role_fit(role) + 0.01).powf(parameters.role_fit_power);
@@ -735,6 +777,55 @@ mod tests {
         let value = with_player_unavailable(&input(), PlayerId(1)).unwrap();
         let projection = project_lineup(&value, 200, 7).unwrap();
         assert_eq!(projection.players.iter().find(|value| value.player == PlayerId(1)).unwrap().start_probability, Probability::ZERO);
+    }
+
+    #[test]
+    fn opt_in_exact_cardinality_preserves_role_neutral_marginals() {
+        let mut value = input();
+        for candidate in &mut value.candidates {
+            candidate.role_fits.iter_mut().for_each(|fit| fit.fit = 1.0);
+            candidate.availability_probability = 1.0;
+        }
+        value.candidates[0].start_probability = 1.0;
+        value.candidates[15].start_probability = 0.0;
+        let priors: Vec<f64> = value.candidates.iter().map(|player| player.start_probability).collect();
+        let prepared = crate::fit_exact_lineup_weights(&priors, 11).unwrap();
+        value.parameters.exact_cardinality_log_weights = Some(prepared.log_weights);
+        let first = project_lineup(&value, 20_000, 42).unwrap();
+        let second = project_lineup(&value, 20_000, 42).unwrap();
+        assert_eq!(first, second);
+        for (index, player) in first.players.iter().enumerate() {
+            let actual = f64::from(player.start_probability.get());
+            let expected = prepared.projected_marginals[index];
+            assert!((actual - expected).abs() < 0.02, "player {index}: {actual} != {expected}");
+        }
+        assert_eq!(first.players[0].start_probability, Probability::ONE);
+        assert_eq!(first.players[15].start_probability, Probability::ZERO);
+    }
+
+    #[test]
+    fn exact_cardinality_rejects_role_sensitive_input() {
+        let mut value = input();
+        let priors = value.candidates.iter().map(|candidate| candidate.start_probability).collect::<Vec<_>>();
+        value.parameters.exact_cardinality_log_weights = Some(
+            crate::fit_exact_lineup_weights(&priors, 11).unwrap().log_weights
+        );
+        assert!(!value.validate());
+    }
+
+    #[test]
+    fn exact_cardinality_rejects_forced_start_with_uncertain_availability() {
+        let mut value = input();
+        for candidate in &mut value.candidates {
+            candidate.role_fits.iter_mut().for_each(|fit| fit.fit = 1.0);
+        }
+        value.candidates[0].start_probability = 1.0;
+        let priors = value.candidates.iter().map(|candidate| candidate.start_probability).collect::<Vec<_>>();
+        value.parameters.exact_cardinality_log_weights = Some(
+            crate::fit_exact_lineup_weights(&priors, 11).unwrap().log_weights
+        );
+        value.candidates[0].availability_probability = 0.8;
+        assert!(!value.validate());
     }
 
     #[test]
