@@ -193,8 +193,9 @@ Reproduce section.
   occurrence and substitution incidence beat their causal references with bootstrap intervals
   below zero. The engine's player-production layer is genuinely informative.
 - **Not validated:** match outcome (W/D/L), exact score and team-goal distributions do not beat the
-  causal regularized-Poisson baseline; exact score is clearly worse. The engine's current goal
-  contract over-predicts goals and home advantage on this subset.
+  causal regularized-Poisson baseline; exact score is clearly worse. The goal level was already
+  close to correct on OOS (70.7 expected vs 68 actual), the larger fit-period gap did not generalize,
+  and a global fit-period rescale made losses significantly worse (see the experiment section).
 - **Not validated:** the 2026 FM26-enhanced pipeline. The FM attributes, registered-squad priors
   and results-model anchor change the feature contract; this report does not transfer to them.
 - **Not validated:** any league-wide claim. The sample is 25 held-out fixtures from a club-skewed
