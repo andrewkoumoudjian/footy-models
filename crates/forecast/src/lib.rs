@@ -2,8 +2,12 @@
 //! Deterministic Monte Carlo and market-factor volatility primitives.
 
 mod calibration;
+mod player_participation;
+mod player_rate;
 mod stats;
 pub use calibration::*;
+pub use player_participation::*;
+pub use player_rate::*;
 pub use stats::*;
 
 use footy_core::{Confidence, EuroCents, Probability};
@@ -161,39 +165,68 @@ pub struct MonteCarloSummary {
     pub paths: u32,
 }
 
-pub fn monte_carlo<P: StochasticProcess>(
+#[derive(Debug, Clone, PartialEq)]
+pub struct MonteCarloPaths {
+    /// One entry per path; each inner vec is the price series including the
+    /// initial state, one value per completed step (len = steps + 1).
+    pub paths: Vec<Vec<EuroCents>>,
+    /// Per-path terminal transfer flag (from `StochasticProcess::transferred`).
+    pub transferred: Vec<bool>,
+    pub steps: usize,
+    pub seed: u64,
+}
+
+pub fn monte_carlo_paths<P: StochasticProcess>(
     process: &P,
     initial: &P::State,
     config: MonteCarloConfig,
-) -> Option<MonteCarloSummary> {
+) -> Option<MonteCarloPaths> {
     if config.paths == 0 || config.step_days == 0 || config.horizon_days == 0 || !config.downside_fraction.is_finite() || !(0.0..=1.0).contains(&config.downside_fraction) {
         return None;
     }
     let initial_price = process.terminal_price(initial);
     if initial_price.cents() < 0 { return None; }
     let mut rng = Rng64::new(config.seed);
-    let mut prices = Vec::with_capacity(config.paths as usize);
-    let mut transferred = 0_u32;
-    let mut downside = 0_u32;
+    let mut series: Vec<Vec<EuroCents>> = Vec::with_capacity(config.paths as usize);
+    let mut transferred = Vec::with_capacity(config.paths as usize);
     for _ in 0..config.paths {
         let mut state = initial.clone();
+        let mut path = Vec::with_capacity(1 + config.horizon_days.div_ceil(config.step_days) as usize);
+        path.push(process.terminal_price(&state));
         let mut elapsed = 0_u16;
         while elapsed < config.horizon_days {
             let remaining = config.horizon_days - elapsed;
             let step = config.step_days.min(remaining);
             state = process.step(&state, step, &mut rng);
             elapsed = elapsed.saturating_add(step);
+            path.push(process.terminal_price(&state));
         }
-        let price = process.terminal_price(&state);
-        if process.transferred(&state) { transferred = transferred.saturating_add(1); }
+        transferred.push(process.transferred(&state));
+        series.push(path);
+    }
+    Some(MonteCarloPaths { paths: series, transferred, steps: config.horizon_days.div_ceil(config.step_days) as usize, seed: config.seed })
+}
+
+pub fn monte_carlo<P: StochasticProcess>(
+    process: &P,
+    initial: &P::State,
+    config: MonteCarloConfig,
+) -> Option<MonteCarloSummary> {
+    let paths = monte_carlo_paths(process, initial, config)?;
+    let initial_price = process.terminal_price(initial);
+    let mut transferred = 0_u32;
+    let mut downside = 0_u32;
+    for (path, was_transferred) in paths.paths.iter().zip(paths.transferred.iter()) {
+        let price = path[path.len() - 1];
+        if *was_transferred { transferred = transferred.saturating_add(1); }
         if price.cents() as f64 <= initial_price.cents() as f64 * config.downside_fraction { downside = downside.saturating_add(1); }
-        prices.push(price);
     }
     let confidence = Confidence::clamped((1.0 - (-(config.paths as f64) / 1_000.0).exp()) as f32);
-    let distribution = PriceDistribution::from_samples(&prices, confidence)?;
-    let mean = prices.iter().map(|value| value.cents() as f64).sum::<f64>() / prices.len() as f64;
+    let distribution = PriceDistribution::from_samples(&terminal_prices(&paths.paths), confidence)?;
+    let prices: Vec<f64> = terminal_prices(&paths.paths).iter().map(|value| value.cents() as f64).collect();
+    let mean = prices.iter().sum::<f64>() / prices.len() as f64;
     let variance = if prices.len() > 1 {
-        prices.iter().map(|value| (value.cents() as f64 - mean).powi(2)).sum::<f64>() / (prices.len() - 1) as f64
+        prices.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / (prices.len() - 1) as f64
     } else { 0.0 };
     Some(MonteCarloSummary {
         price: distribution,
@@ -203,6 +236,10 @@ pub fn monte_carlo<P: StochasticProcess>(
         downside_probability: Probability::clamped(downside as f32 / config.paths as f32),
         paths: config.paths,
     })
+}
+
+fn terminal_prices(paths: &[Vec<EuroCents>]) -> Vec<EuroCents> {
+    paths.iter().map(|path| path[path.len() - 1]).collect()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -339,6 +376,25 @@ mod tests {
         let second = monte_carlo(&process, &initial, config).unwrap();
         assert_eq!(first, second);
         assert!(first.price.p10 <= first.price.p50 && first.price.p50 <= first.price.p90);
+    }
+
+    #[test]
+    fn monte_carlo_paths_returns_deterministic_series() {
+        let process = FootballPathModel { parameters: FootballPathParameters::default() };
+        let initial = SimulatedPlayerState {
+            ability_index: 1.0, performance_index: 1.0, availability: 1.0,
+            contract_remaining_days: 1_095, market_log_factor: 0.0,
+            price: EuroCents(1_000_000), transferred: false,
+        };
+        let config = MonteCarloConfig { paths: 50, horizon_days: 1_080, step_days: 30, seed: 7, downside_fraction: 0.5 };
+        let first = monte_carlo_paths(&process, &initial, config).unwrap();
+        let second = monte_carlo_paths(&process, &initial, config).unwrap();
+        assert_eq!(first, second);
+        assert_eq!(first.steps, 36);
+        assert_eq!(first.paths.len(), 50);
+        assert_eq!(first.paths[0].len(), 37);
+        assert_eq!(first.paths[0][0].cents(), 1_000_000);
+        assert_eq!(first.transferred.len(), 50);
     }
 
     #[test]

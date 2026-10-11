@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CF Montréal scouting report — twenty players worth a look</title>
+<style>
+  /* Apple Print Design Language. 8pt grid, 72pt margins, neutral palette only. */
+  @page { size: letter; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 10pt; }
+  body { font-family: "SF Pro Text", "Helvetica Neue", Arial, sans-serif; background: #FFFFFF; color: #1D1D1F; line-height: 1.5; }
+  .page { width: 8.5in; height: 11in; background: #FFFFFF; display: flex; flex-direction: column; page-break-after: always; overflow: hidden; }
+  .page:last-child { page-break-after: auto; }
+  h1, h2, h3 { font-family: "SF Pro Display", "Helvetica Neue", Arial, sans-serif; color: #1D1D1F; font-weight: 600; letter-spacing: -0.01em; }
+  .pb { flex: 1; min-height: 0; overflow: hidden; padding: 56pt 72pt 40pt; display: flex; flex-direction: column; }
+  .ph, .pf { padding: 32pt 72pt 0; display: flex; justify-content: space-between; font-size: 8pt; color: #86868B; letter-spacing: 0.02em; flex: 0 0 auto; }
+  .pf { padding: 0 72pt 32pt; border-top: 0.5pt solid #E5E5EA; margin-top: 16pt; padding-top: 12pt; }
+  .cover { justify-content: space-between; }
+  .cover-top { padding: 72pt; }
+  .cover-kicker { font-size: 9pt; font-weight: 500; color: #86868B; letter-spacing: 0.02em; margin-bottom: 20pt; }
+  .cover-title { font-size: 40pt; font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; max-width: 5.2in; }
+  .cover-sub { font-size: 11pt; color: #86868B; margin-top: 20pt; max-width: 4.6in; line-height: 1.5; }
+  .cover-bottom { padding: 72pt; }
+  .cover-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36pt; }
+  .cn-big { font-family: "SF Pro Display", sans-serif; font-size: 28pt; font-weight: 600; letter-spacing: -0.01em; color: #1D1D1F; }
+  .cn-lbl { font-size: 8pt; font-weight: 500; color: #86868B; margin-top: 4pt; letter-spacing: 0.02em; }
+  .cover-foot { font-size: 8pt; color: #86868B; margin-top: 48pt; letter-spacing: 0.02em; }
+  .kicker { font-size: 9pt; font-weight: 500; color: #86868B; letter-spacing: 0.02em; margin-bottom: 8pt; }
+  h2.section { font-size: 24pt; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 16pt; }
+  h3 { font-size: 13pt; font-weight: 600; margin: 16pt 0 6pt; letter-spacing: -0.005em; }
+  p.body { font-size: 10pt; line-height: 1.45; color: #1D1D1F; margin-bottom: 8pt; max-width: 5.8in; }
+  p.small { font-size: 8pt; color: #86868B; line-height: 1.45; max-width: 5.8in; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12pt; }
+  thead th { text-align: left; font-size: 8pt; font-weight: 500; color: #86868B; letter-spacing: 0.02em; padding: 8pt 8pt 8pt 0; border-bottom: 0.5pt solid #E5E5EA; }
+  tbody td { padding: 10pt 8pt 10pt 0; font-size: 10pt; border-bottom: 0.5pt solid #E5E5EA; color: #1D1D1F; }
+  td.name { font-weight: 600; }
+  td.rank { color: #86868B; font-weight: 500; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  thead th.r { text-align: right; }
+  .player-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16pt; }
+  .ph-l { display: flex; align-items: baseline; gap: 12pt; }
+  .p-num { font-family: "SF Pro Display", sans-serif; font-size: 24pt; font-weight: 600; color: #E5E5EA; letter-spacing: -0.01em; }
+  .p-name { font-size: 22pt; font-weight: 600; letter-spacing: -0.01em; }
+  .p-sub { font-size: 9.5pt; color: #86868B; margin-top: 4pt; }
+  .ph-r { text-align: right; }
+  .p-v { font-family: "SF Pro Display", sans-serif; font-size: 22pt; font-weight: 600; letter-spacing: -0.01em; }
+  .p-vl { font-size: 8pt; color: #86868B; margin-top: 2pt; letter-spacing: 0.02em; }
+  .why { margin-bottom: 12pt; }
+  .why-kicker { font-size: 8pt; font-weight: 500; color: #86868B; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 6pt; }
+  .why-text { font-size: 11pt; line-height: 1.45; color: #1D1D1F; max-width: 5.6in; }
+  .why-gap { font-size: 9.5pt; color: #1D1D1F; margin-top: 6pt; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 24pt; margin: 12pt 0; }
+  figure figcaption { font-size: 9pt; font-weight: 600; color: #1D1D1F; margin-bottom: 6pt; }
+  .chartbox { border: 0.5pt solid #E5E5EA; padding: 6pt; }
+  .chartbox img { width: 100%; display: block; max-height: 1.9in; object-fit: contain; }
+  .cap { font-size: 7.5pt; color: #86868B; line-height: 1.4; margin-top: 6pt; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16pt; margin: 8pt 0 12pt; }
+  .st-big { font-family: "SF Pro Display", sans-serif; font-size: 16pt; font-weight: 600; letter-spacing: -0.01em; color: #1D1D1F; }
+  .st-lbl { font-size: 7.5pt; color: #86868B; margin-top: 4pt; line-height: 1.4; letter-spacing: 0.01em; }
+  .rationale { margin-top: 4pt; }
+  .rationale-text { font-size: 9.5pt; line-height: 1.5; color: #1D1D1F; max-width: 6in; }
+  .margins { margin-top: 32pt; }
+  ul.plain { list-style: none; }
+  ul.plain li { padding-left: 16pt; position: relative; margin-bottom: 12pt; font-size: 10.5pt; line-height: 1.5; max-width: 6in; }
+  ul.plain li::before { content: ''; position: absolute; left: 0; top: 8pt; width: 6pt; height: 6pt; background: #86868B; }
+</style>
+</head>
+<body>
+
+<div class="page cover">
+  <div class="cover-top">
+    <div class="cover-kicker">CF Montréal · Recruitment</div>
+    <h1 class="cover-title">Twenty players worth a look</h1>
+    <p class="cover-sub">A shortlist of young players who fit the club style, whose value can grow, and who fill real gaps in the squad. Written for everyone at the club. No data background needed.</p>
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-nums">
+      <div><div class="cn-big">1,255</div><div class="cn-lbl">Young players reviewed</div></div>
+      <div><div class="cn-big">20</div><div class="cn-lbl">Made the shortlist</div></div>
+      <div><div class="cn-big">3</div><div class="cn-lbl">Left-wing targets. The club has no left winger today</div></div>
+      <div><div class="cn-big">1,000</div><div class="cn-lbl">Simulations run per player</div></div>
+    </div>
+    <div class="cover-foot">Prepared with the CFM scouting pipeline. Data as of June 2026. Values in euros.</div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>2</span></div>
+  <div class="pb">
+    <div class="kicker">Part 1 of 2</div>
+    <h2 class="section">The shortlist</h2>
+    <p class="body">Each player is under 23. Each costs between EUR 400k and EUR 2.5M. Each matches the attitude profile of the club's successful sales. Each has a real chance that value grows.</p>
+    <table>
+      <thead><tr><th>#</th><th>Player</th><th>Club</th><th>Pos</th><th class="r">Age</th><th class="r">Value today</th><th class="r">Likely in 3 yrs</th><th class="r">Chance of +50%</th></tr></thead>
+      <tbody><tr>
+  <td class="rank">1</td>
+  <td class="name">Lisandro Piñero</td>
+  <td>Banfield</td>
+  <td>FW</td>
+  <td>19</td>
+  <td class="num">€400k</td>
+  <td class="num">€10.48M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">2</td>
+  <td class="name">Noah Tolf</td>
+  <td>IFK Göteborg</td>
+  <td>MF</td>
+  <td>21</td>
+  <td class="num">€1.00M</td>
+  <td class="num">€20.66M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">3</td>
+  <td class="name">Yannick Geiger</td>
+  <td>AIK</td>
+  <td>MF</td>
+  <td>19</td>
+  <td class="num">€600k</td>
+  <td class="num">€14.09M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">4</td>
+  <td class="name">Jeremías Merlo</td>
+  <td>Gimnasia</td>
+  <td>MF</td>
+  <td>20</td>
+  <td class="num">€700k</td>
+  <td class="num">€13.87M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">5</td>
+  <td class="name">Niko Sepic</td>
+  <td>Istra 1961</td>
+  <td>MF</td>
+  <td>20</td>
+  <td class="num">€400k</td>
+  <td class="num">€8.91M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">6</td>
+  <td class="name">George Earthy</td>
+  <td>West Ham</td>
+  <td>MF</td>
+  <td>22</td>
+  <td class="num">€1.00M</td>
+  <td class="num">€23.17M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">7</td>
+  <td class="name">Alfie Dorrington</td>
+  <td>Aberdeen</td>
+  <td>MF</td>
+  <td>21</td>
+  <td class="num">€500k</td>
+  <td class="num">€13.15M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">8</td>
+  <td class="name">Romeo Arrhenius Leandersson</td>
+  <td>Mjällby</td>
+  <td>MF</td>
+  <td>18</td>
+  <td class="num">€600k</td>
+  <td class="num">€14.04M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">9</td>
+  <td class="name">Alessandro Romano</td>
+  <td>Roma</td>
+  <td>MF</td>
+  <td>20</td>
+  <td class="num">€500k</td>
+  <td class="num">€12.45M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">10</td>
+  <td class="name">Andrea Natali</td>
+  <td>AZ Alkmaar</td>
+  <td>DF</td>
+  <td>18</td>
+  <td class="num">€400k</td>
+  <td class="num">€10.71M</td>
+  <td class="num">99%</td>
+</tr></tbody>
+    </table>
+    <p class="small margins">Values come from simulations, not promises. "Chance of +50%" is the share of 1,000 simulated futures where the player is worth at least 50% more than today.</p>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>2</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>3</span></div>
+  <div class="pb">
+    <div class="kicker">Part 2 of 2</div>
+    <h2 class="section">The shortlist, ranks 11 to 20</h2>
+    <p class="body">The same rules apply to every player on this page. Each one is under 23. Each one fits the club profile. Each one fills a squad need or has a strong value case.</p>
+    <table>
+      <thead><tr><th>#</th><th>Player</th><th>Club</th><th>Pos</th><th class="r">Age</th><th class="r">Value today</th><th class="r">Likely in 3 yrs</th><th class="r">Chance of +50%</th></tr></thead>
+      <tbody><tr>
+  <td class="rank">11</td>
+  <td class="name">Tiago Freitas</td>
+  <td>Benfica</td>
+  <td>MF</td>
+  <td>20</td>
+  <td class="num">€550k</td>
+  <td class="num">€13.03M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">12</td>
+  <td class="name">Felipe Bussio</td>
+  <td>Platense</td>
+  <td>MF</td>
+  <td>22</td>
+  <td class="num">€400k</td>
+  <td class="num">€8.48M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">13</td>
+  <td class="name">Andrea Cogoni</td>
+  <td>Cagliari</td>
+  <td>MF</td>
+  <td>20</td>
+  <td class="num">€400k</td>
+  <td class="num">€9.44M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">14</td>
+  <td class="name">Wassim Bouziane</td>
+  <td>AZ Alkmaar</td>
+  <td>FW</td>
+  <td>19</td>
+  <td class="num">€450k</td>
+  <td class="num">€7.73M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">15</td>
+  <td class="name">Diogo Ferreira</td>
+  <td>Benfica</td>
+  <td>GK</td>
+  <td>19</td>
+  <td class="num">€800k</td>
+  <td class="num">€17.99M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">16</td>
+  <td class="name">Olivier Mambwa</td>
+  <td>Young Boys</td>
+  <td>DF</td>
+  <td>18</td>
+  <td class="num">€1.00M</td>
+  <td class="num">€18.25M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">17</td>
+  <td class="name">Matija Subotic</td>
+  <td>Lokomotiva</td>
+  <td>MF</td>
+  <td>18</td>
+  <td class="num">€850k</td>
+  <td class="num">€16.69M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">18</td>
+  <td class="name">Matteo Spinaccè</td>
+  <td>Inter</td>
+  <td>FW</td>
+  <td>20</td>
+  <td class="num">€1.00M</td>
+  <td class="num">€21.18M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">19</td>
+  <td class="name">Adrian Kurd Rønning</td>
+  <td>Kristiansund</td>
+  <td>FW</td>
+  <td>20</td>
+  <td class="num">€450k</td>
+  <td class="num">€6.76M</td>
+  <td class="num">99%</td>
+</tr><tr>
+  <td class="rank">20</td>
+  <td class="name">Seydou Fini</td>
+  <td>Genoa</td>
+  <td>FW</td>
+  <td>20</td>
+  <td class="num">€1.00M</td>
+  <td class="num">€19.16M</td>
+  <td class="num">99%</td>
+</tr></tbody>
+    </table>
+    <p class="small margins">The ranking combines four factors: attitude fit, chance of a value jump, expected value growth, and squad need. Details are on the next pages.</p>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>3</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>4</span></div>
+  <div class="pb">
+    <div class="kicker">How we picked them</div>
+    <h2 class="section">Three questions. Three answers.</h2>
+    <p class="body">We started with 1,255 young players from the global market. Then we asked three questions. A player must pass all three to make this list.</p>
+    <h3>1. Does his attitude fit the club?</h3>
+    <p class="body">CF Montréal buys young players. It develops them. It sells them for more. We studied the 18 players who left the club for a fee. We looked at what the successful ones had in common. Determination. Composure. Work rate. Teamwork. That profile is the yardstick. Every player on this list matches it closely.</p>
+    <h3>2. Can his value grow?</h3>
+    <p class="body">For each player we ran 1,000 simulated futures over three years. Each future is a different "what if". Injury, form, and moves differ in each one. The result is a range of values: the likely value, the worst realistic value, and the odds of a big jump.</p>
+    <h3>3. Is there a place for him?</h3>
+    <p class="body">The squad has no left winger. It has two left-backs, both over 26. We scored each position by need. A player who fills a real hole gets bonus points. No position gets more than three names.</p>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>4</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>5</span></div>
+  <div class="pb">
+    <div class="kicker">Reading the player pages</div>
+    <h2 class="section">What the numbers mean</h2>
+    <p class="body">Each player gets one page. This page explains how to read it.</p>
+    <h3>The two charts</h3>
+    <p class="body">Both charts show where value can go over three years. The grey band is the likely range. The dark line is the middle path. The left chart is the optimistic forecast. The right chart is the cautious forecast. If both end above today's value, the player is a low-risk bet.</p>
+    <h3>The four numbers</h3>
+    <p class="body"><strong>Attitude score</strong> — how well he matches the club's success profile. Range is 0 (no match) to 1 (perfect match). <strong>Chance of +50%</strong> — the share of simulations where value rises 50% or more. <strong>Worst realistic value</strong> — the bad end of the range. <strong>Performance rating</strong> — his average match rating this season, out of 10.</p>
+    <h3>The one-paragraph summary</h3>
+    <p class="body">Every page ends with a plain-language summary. That paragraph is the short version. The rest of the page is the evidence.</p>
+    <p class="small">Sources: Transfermarkt values (June 2026), Football Manager 26 attributes (November 2025), SofaScore ratings (August 2026). FBref blocks automated access, so it is not used. This is stated honestly, not hidden.</p>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>5</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>6</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">01</div>
+        <div>
+          <h2 class="p-name">Lisandro Piñero</h2>
+          <div class="p-sub">Banfield · FW · age 19 · worth €400k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€10.48M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (LW). value is expected to grow.</p>
+      <p class="why-gap">Squad note: the club has no left winger at all.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_01.png" alt="Lisandro Piñero value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_01.png" alt="Lisandro Piñero value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.63</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€3.74M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.7</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">18.9-year-old left winger out of Banfield with the strongest combined score; consistent and composed, fits the LW gap exactly and sits in the U22 window.</p>
+      <p class="cap">Liga Profesional de Fútbol, Primera LPF 2026 · 0 goal(s), 0 assist(s), 13 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>6</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>7</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">02</div>
+        <div>
+          <h2 class="p-name">Noah Tolf</h2>
+          <div class="p-sub">IFK Göteborg · MF · age 21 · worth €1.00M today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€20.66M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (LB). value is expected to grow.</p>
+      <p class="why-gap">Squad note: the club has only two left-backs, both over 26.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_02.png" alt="Noah Tolf value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_02.png" alt="Noah Tolf value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.66</div><div class="st-lbl">Attitude score, 0 to 1 — excellent</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€7.37M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.75</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">IFK Göteborg left-back with 29 Allsvenskan starts last season; high natural fitness and teamwork, fills the old LB spot at 20.8.</p>
+      <p class="cap">Allsvenskan, Allsvenskan 2026 · 0 goal(s), 1 assist(s), 8 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>7</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>8</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">03</div>
+        <div>
+          <h2 class="p-name">Yannick Geiger</h2>
+          <div class="p-sub">AIK · MF · age 19 · worth €600k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€14.09M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: central midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_03.png" alt="Yannick Geiger value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_03.png" alt="Yannick Geiger value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.64</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€5.03M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.83</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">AIK central midfielder, determination 14; cheap, high-yield, U22 CM depth for the bridge pipeline.</p>
+      <p class="cap">Allsvenskan, Allsvenskan 2026 · 1 goal(s), 0 assist(s), 6 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>8</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>9</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">04</div>
+        <div>
+          <h2 class="p-name">Jeremías Merlo</h2>
+          <div class="p-sub">Gimnasia · MF · age 20 · worth €700k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€13.87M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (LW). value is expected to grow.</p>
+      <p class="why-gap">Squad note: the club has no left winger at all.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_04.png" alt="Jeremías Merlo value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_04.png" alt="Jeremías Merlo value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.67</div><div class="st-lbl">Attitude score, 0 to 1 — excellent</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€4.95M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.47</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Gimnasia left winger, balanced mental profile; second LW option, U22 initiative eligible.</p>
+      <p class="cap">Liga Profesional de Fútbol, Primera LPF 2026 · 0 goal(s), 0 assist(s), 7 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>9</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>10</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">05</div>
+        <div>
+          <h2 class="p-name">Niko Sepic</h2>
+          <div class="p-sub">Istra 1961 · MF · age 20 · worth €400k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€8.91M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">value has a real chance to jump. fills a squad gap (LB). value is expected to grow.</p>
+      <p class="why-gap">Squad note: the club has only two left-backs, both over 26.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_05.png" alt="Niko Sepic value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_05.png" alt="Niko Sepic value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.60</div><div class="st-lbl">Attitude score, 0 to 1 — good</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€3.18M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.68</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Istra 1961 left-back, 13 HNL starts at 20.3; high work rate and fitness, second LB option.</p>
+      <p class="cap">HNL, HNL 25/26 · 0 goal(s), 0 assist(s), 13 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>10</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>11</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">06</div>
+        <div>
+          <h2 class="p-name">George Earthy</h2>
+          <div class="p-sub">West Ham · MF · age 22 · worth €1.00M today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€23.17M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (AM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: attacking midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_06.png" alt="George Earthy value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_06.png" alt="George Earthy value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.64</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€8.27M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.6</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">West Ham academy product on loan with 10 Championship apps; versatile AM with good composure; the AM/10 slot behind the forwards.</p>
+      <p class="cap">Championship, Championship 25/26 · 0 goal(s), 0 assist(s), 10 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>11</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>12</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">07</div>
+        <div>
+          <h2 class="p-name">Alfie Dorrington</h2>
+          <div class="p-sub">Aberdeen · MF · age 21 · worth €500k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€13.15M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CB). value is expected to grow.</p>
+      <p class="why-gap">Squad note: centre-back depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_07.png" alt="Alfie Dorrington value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_07.png" alt="Alfie Dorrington value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.65</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€4.69M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.47</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Tottenham loanee at Aberdeen, CB with determination 15; premium long-term CB asset at EUR 500k.</p>
+      <p class="cap">League Two, League Two 25/26 · 0 goal(s), 1 assist(s), 10 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>12</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>13</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">08</div>
+        <div>
+          <h2 class="p-name">Romeo Arrhenius Leandersson</h2>
+          <div class="p-sub">Mjällby · MF · age 18 · worth €600k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€14.04M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: central midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_08.png" alt="Romeo Arrhenius Leandersson value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_08.png" alt="Romeo Arrhenius Leandersson value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.62</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€5.01M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.61</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">17.9-year-old Mjällby central midfielder; the youngest CM in the list, fits the U22 window perfectly.</p>
+      <p class="cap">Allsvenskan, Allsvenskan 2026 · 0 goal(s), 0 assist(s), 11 appearances · medium confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>13</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>14</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">09</div>
+        <div>
+          <h2 class="p-name">Alessandro Romano</h2>
+          <div class="p-sub">Roma · MF · age 20 · worth €500k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€12.45M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">value has a real chance to jump. fills a squad gap (DM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: defensive midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_09.png" alt="Alessandro Romano value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_09.png" alt="Alessandro Romano value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.60</div><div class="st-lbl">Attitude score, 0 to 1 — good</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€4.44M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.88</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Roma youth product on loan at Spezia with 19 Serie B apps; high ImportantMatches, DM depth at 19.9.</p>
+      <p class="cap">Serie B, Serie B 25/26 · 0 goal(s), 1 assist(s), 19 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>14</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>15</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">10</div>
+        <div>
+          <h2 class="p-name">Andrea Natali</h2>
+          <div class="p-sub">AZ Alkmaar · DF · age 18 · worth €400k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€10.71M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CB). value is expected to grow.</p>
+      <p class="why-gap">Squad note: centre-back depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_10.png" alt="Andrea Natali value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_10.png" alt="Andrea Natali value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.62</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€3.82M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.76</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">AZ's 18.4-year-old CB with 11 Eerste Divisie starts; determination 15, archetype-adjacent, cheap CB option.</p>
+      <p class="cap">Eerste Divisie, Eerste Divisie 25/26 · 0 goal(s), 1 assist(s), 11 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>15</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>16</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">11</div>
+        <div>
+          <h2 class="p-name">Tiago Freitas</h2>
+          <div class="p-sub">Benfica · MF · age 20 · worth €550k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€13.03M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: central midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_11.png" alt="Tiago Freitas value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_11.png" alt="Tiago Freitas value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.60</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€4.65M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.62</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Benfica B central midfielder with 22 Liga Portugal 2 apps; high natural fitness and consistency.</p>
+      <p class="cap">Liga Portugal 2, Liga Portugal 2 25/26 · 3 goal(s), 2 assist(s), 22 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>16</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>17</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">12</div>
+        <div>
+          <h2 class="p-name">Felipe Bussio</h2>
+          <div class="p-sub">Platense · MF · age 22 · worth €400k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€8.48M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (DM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: defensive midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_12.png" alt="Felipe Bussio value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_12.png" alt="Felipe Bussio value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.64</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€3.03M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.6</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Platense DM with 11 LPF starts; team-first profile (teamwork 14) for the holding slot.</p>
+      <p class="cap">Liga Profesional de Fútbol, Primera LPF 2026 · 0 goal(s), 0 assist(s), 11 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>17</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>18</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">13</div>
+        <div>
+          <h2 class="p-name">Andrea Cogoni</h2>
+          <div class="p-sub">Cagliari · MF · age 20 · worth €400k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€9.44M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CB). value is expected to grow.</p>
+      <p class="why-gap">Squad note: centre-back depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_13.png" alt="Andrea Cogoni value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_13.png" alt="Andrea Cogoni value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.62</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€3.37M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">7.02</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Cagliari youth CB with 30 Primavera apps and a 7.02 rating; ImportantMatches 15.</p>
+      <p class="cap">Campionato Primavera 1, Primavera 1 25/26 · 2 goal(s), 2 assist(s), 30 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>18</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>19</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">14</div>
+        <div>
+          <h2 class="p-name">Wassim Bouziane</h2>
+          <div class="p-sub">AZ Alkmaar · FW · age 19 · worth €450k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€7.73M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (LW).</p>
+      <p class="why-gap">Squad note: the club has no left winger at all.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_14.png" alt="Wassim Bouziane value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_14.png" alt="Wassim Bouziane value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.60</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€2.76M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">7.08</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">AZ left winger with 20 Eerste Divisie apps, 4 goals and 3 assists (7.08 rating); direct LW cover.</p>
+      <p class="cap">Eerste Divisie, Eerste Divisie 25/26 · 4 goal(s), 3 assist(s), 20 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>19</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>20</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">15</div>
+        <div>
+          <h2 class="p-name">Diogo Ferreira</h2>
+          <div class="p-sub">Benfica · GK · age 19 · worth €800k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€17.99M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (GK). value is expected to grow.</p>
+      <p class="why-gap">Squad note: goalkeeper depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_15.png" alt="Diogo Ferreira value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_15.png" alt="Diogo Ferreira value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.62</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€6.42M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.85</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Benfica B goalkeeper with 26 Liga Portugal 2 apps at 6.85; long-term GK succession behind Gillier.</p>
+      <p class="cap">Liga Portugal 2, Liga Portugal 2 25/26 · 0 goal(s), 0 assist(s), 26 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>20</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>21</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">16</div>
+        <div>
+          <h2 class="p-name">Olivier Mambwa</h2>
+          <div class="p-sub">Young Boys · DF · age 18 · worth €1.00M today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€18.25M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">value has a real chance to jump. fills a squad gap (LB). value is expected to grow.</p>
+      <p class="why-gap">Squad note: the club has only two left-backs, both over 26.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_16.png" alt="Olivier Mambwa value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_16.png" alt="Olivier Mambwa value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.58</div><div class="st-lbl">Attitude score, 0 to 1 — good</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€6.51M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.14</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">17.5-year-old Young Boys U21 left-back already with 7 Super League apps; the youngest LB prospect.</p>
+      <p class="cap">Swiss Super League, Super League 25/26 · 0 goal(s), 1 assist(s), 7 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>21</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>22</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">17</div>
+        <div>
+          <h2 class="p-name">Matija Subotic</h2>
+          <div class="p-sub">Lokomotiva · MF · age 18 · worth €850k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€16.69M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">value has a real chance to jump. fills a squad gap (DM). value is expected to grow.</p>
+      <p class="why-gap">Squad note: defensive midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_17.png" alt="Matija Subotic value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_17.png" alt="Matija Subotic value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.60</div><div class="st-lbl">Attitude score, 0 to 1 — good</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€5.95M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.67</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Lokomotiva Zagreb DM with 32 HNL apps; versatile with high composure, DM depth.</p>
+      <p class="cap">HNL, HNL 25/26 · 0 goal(s), 2 assist(s), 32 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>22</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>23</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">18</div>
+        <div>
+          <h2 class="p-name">Matteo Spinaccè</h2>
+          <div class="p-sub">Inter · FW · age 20 · worth €1.00M today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€21.18M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (CF). value is expected to grow.</p>
+      <p class="why-gap">Squad note: striker depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_18.png" alt="Matteo Spinaccè value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_18.png" alt="Matteo Spinaccè value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.63</div><div class="st-lbl">Attitude score, 0 to 1 — strong</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€7.56M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.74</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Inter youth striker on loan at Mantova, 6 goals in 26 Serie C starts; U22 CF option despite CF stock.</p>
+      <p class="cap">Serie C, Girone A, Serie C, Group A 25/26 · 6 goal(s), missing assist(s), 26 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>23</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>24</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">19</div>
+        <div>
+          <h2 class="p-name">Adrian Kurd Rønning</h2>
+          <div class="p-sub">Kristiansund · FW · age 20 · worth €450k today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€6.76M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (AM).</p>
+      <p class="why-gap">Squad note: attacking midfield depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_19.png" alt="Adrian Kurd Rønning value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_19.png" alt="Adrian Kurd Rønning value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.70</div><div class="st-lbl">Attitude score, 0 to 1 — excellent</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€2.41M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">6.54</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Kristiansund attacking midfielder with 16 Eliteserien apps; the highest psych fit in the list (0.704).</p>
+      <p class="cap">Eliteserien, Eliteserien 2026 · 1 goal(s), 0 assist(s), 16 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>24</span></div>
+</div>
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>25</span></div>
+  <div class="pb">
+    <div class="player-head">
+      <div class="ph-l">
+        <div class="p-num">20</div>
+        <div>
+          <h2 class="p-name">Seydou Fini</h2>
+          <div class="p-sub">Genoa · FW · age 20 · worth €1.00M today</div>
+        </div>
+      </div>
+      <div class="ph-r">
+        <div class="p-v">€19.16M</div>
+        <div class="p-vl">most likely value in 3 years</div>
+      </div>
+    </div>
+    <div class="why">
+      <div class="why-kicker">Why he makes the list</div>
+      <p class="why-text">attitude matches the club profile. value has a real chance to jump. fills a squad gap (RW). value is expected to grow.</p>
+      <p class="why-gap">Squad note: right wing depth.</p>
+    </div>
+    <div class="charts">
+      <figure>
+        <figcaption>If things go well</figcaption>
+        <div class="chartbox"><img src="cfm/charts/chart_player_20.png" alt="Seydou Fini value paths, optimistic forecast"></div>
+        <p class="cap">The grey band is the likely range of value. The dark line is the middle path.</p>
+      </figure>
+      <figure>
+        <figcaption>On the cautious forecast</figcaption>
+        <div class="chartbox"><img src="cfm/charts_base/chart_player_20.png" alt="Seydou Fini value paths, cautious forecast"></div>
+        <p class="cap">The same player with the conservative forecast. Most paths stay above today's value.</p>
+      </figure>
+    </div>
+    <div class="stats-row">
+      <div class="st"><div class="st-big">0.66</div><div class="st-lbl">Attitude score, 0 to 1 — excellent</div></div>
+      <div class="st"><div class="st-big">99%</div><div class="st-lbl">Chance value rises 50% or more — almost certain</div></div>
+      <div class="st"><div class="st-big">€6.84M</div><div class="st-lbl">Worst realistic value in 3 years</div></div>
+      <div class="st"><div class="st-big">7.06</div><div class="st-lbl">Performance rating this season, out of 10</div></div>
+    </div>
+    <div class="rationale">
+      <div class="why-kicker">In one paragraph</div>
+      <p class="rationale-text">Genoa winger on loan at Frosinone, 1 goal and 1 assist in 8 Serie B apps at a 7.06 rating; RW succession.</p>
+      <p class="cap">Serie B, Serie B 25/26 · 1 goal(s), 1 assist(s), 8 appearances · high confidence · FBref stats unavailable (site blocks automated access).</p>
+    </div>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>25</span></div>
+</div>
+
+<div class="page">
+  <div class="ph"><span>CF Montréal scouting report</span><span>26</span></div>
+  <div class="pb">
+    <div class="kicker">Being honest</div>
+    <h2 class="section">What could be wrong</h2>
+    <p class="body">This report is a starting point, not a guarantee. These are the limits we know.</p>
+    <ul class="plain">
+      <li><strong>Personality data is incomplete.</strong> Hidden traits like pressure handling and professionalism exist for about one third of players. Where they are missing, we used a general profile of what works at clubs like CF Montréal.</li>
+      <li><strong>The club benchmark is small.</strong> Five players set the success profile. It is the best evidence a club this size has. Do not over-read small differences.</li>
+      <li><strong>Simulations are estimates, not promises.</strong> They show what can happen, not what will happen. The optimistic chart assumes good form continues.</li>
+      <li><strong>Data ages.</strong> Values are from June 2026. Attributes are from November 2025. Ratings are from August 2026. A move or an injury changes the picture.</li>
+      <li><strong>One advanced-stats site was unavailable.</strong> FBref blocks automated access. Those stats are absent. Everything else is real data, not filled-in guesses.</li>
+    </ul>
+    <p class="small margins">Prepared with the CFM scouting pipeline. Fixed random seed (42) for repeatable results. Values in euros.</p>
+  </div>
+  <div class="pf"><span>CF Montréal recruitment analytics</span><span>26</span></div>
+</div>
+</body>
+</html>

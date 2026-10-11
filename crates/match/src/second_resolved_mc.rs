@@ -861,9 +861,9 @@ fn apply_state_event(
         }
         StateEvent::Injury { club, player } => {
             let (team, projection, squad, mental) = if club == input.home {
-                (home, home_projection, home_squad, home_mental)
+                (&mut *home, home_projection, home_squad, &mut *home_mental)
             } else if club == input.away {
-                (away, away_projection, away_squad, away_mental)
+                (&mut *away, away_projection, away_squad, &mut *away_mental)
             } else { return None; };
             let Some(outgoing) = team.players.iter().find(|value| value.sampled.player == player).map(|value| value.sampled) else { return Some(()); };
             team.players.retain(|value| value.sampled.player != player);
@@ -879,8 +879,8 @@ fn apply_state_event(
             }
         }
         StateEvent::TacticalSub { club, player } => {
-            let (team, projection) = if club == input.home { (home, home_projection) }
-                else if club == input.away { (away, away_projection) }
+            let (team, projection) = if club == input.home { (&mut *home, home_projection) }
+                else if club == input.away { (&mut *away, away_projection) }
                 else { return None; };
             if team.substitutions >= input.in_match.max_substitutions { return Some(()); }
             let Some(outgoing) = team.players.iter().find(|value| value.sampled.player == player).map(|value| value.sampled) else { return Some(()); };

@@ -14,8 +14,52 @@ fn main() -> Result<(), Box<dyn Error>> {
     match args.first().map(String::as_str) {
         Some("batch") => batch(&args[1..]),
         Some("canonical") => canonical(&args[1..]),
-        _ => Err("usage:\n  footy-score batch --model model.bin --features matrix.bin --output predictions.bin\n  footy-score canonical --model model.bin --canonical canonical.bin --as-of YYYY-MM-DD --output predictions.bin".into()),
+        Some("surge") => surge(&args[1..]),
+        Some("surge-score-all") => surge_score_all(&args[1..]),
+        Some("forecast") => forecast(&args[1..]),
+        Some("tail-forecast") => tail_forecast(&args[1..]),
+        _ => Err("usage:\n  footy-score batch --model model.bin --features matrix.bin --output predictions.bin\n  footy-score canonical --model model.bin --canonical canonical.bin --as-of YYYY-MM-DD --output predictions.bin\n  footy-score surge --model model.bin --candidates candidates_matrix.bin --meta candidates_meta.tsv [--max-age 28] [--top-n 100] --output proposals_top100.csv\n  footy-score forecast --model model.bin --candidates candidates_matrix.bin --meta candidates_meta.tsv [--top-n 100] [--min-pa 140] [--max-mv 1000000] [--rows 100|0] --output forecast_u23_top100.csv\n  footy-score surge-score-all --model model.bin --candidates candidates_matrix.bin --meta candidates_meta.tsv --output scored.csv\n  footy-score tail-forecast --model model.bin --candidates candidates_matrix.bin --meta candidates_meta.tsv --output scored.csv".into()),
     }
+}
+
+fn surge(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model_path = required_value(args, "--model")?;
+    let candidates_path = required_value(args, "--candidates")?;
+    let meta_path = required_value(args, "--meta")?;
+    let output = required_value(args, "--output")?;
+    let max_age = optional_value(args, "--max-age")
+        .map(|value| value.parse::<f64>())
+        .transpose()?
+        .unwrap_or(footy_score::DEFAULT_MAX_AGE);
+    let top_n = optional_value(args, "--top-n")
+        .map(|value| value.parse::<usize>())
+        .transpose()?
+        .unwrap_or(footy_score::DEFAULT_TOP_N);
+    let proposals = footy_score::run_surge_proposals(
+        model_path,
+        candidates_path,
+        meta_path,
+        output,
+        max_age,
+        top_n,
+    )?;
+    let mut by_position = std::collections::BTreeMap::<&str, usize>::new();
+    for proposal in &proposals {
+        *by_position.entry(&proposal.pos_cls).or_default() += 1;
+    }
+    let position_summary: Vec<String> = by_position
+        .iter()
+        .map(|(position, count)| format!("{position}={count}"))
+        .collect();
+    println!(
+        "surge proposals={} top={} max_age={} positions=[{}] output={}",
+        proposals.len(),
+        top_n,
+        max_age,
+        position_summary.join(" "),
+        output
+    );
+    Ok(())
 }
 
 fn batch(args: &[String]) -> Result<(), Box<dyn Error>> {
@@ -115,4 +159,80 @@ fn parse_date(value: &str) -> Result<Date, Box<dyn Error>> {
 fn required_value<'a>(args: &'a [String], flag: &str) -> Result<&'a str, Box<dyn Error>> {
     let index = args.iter().position(|arg| arg == flag).ok_or_else(|| format!("missing {flag}"))?;
     args.get(index + 1).map(String::as_str).ok_or_else(|| format!("missing value for {flag}").into())
+}
+
+fn optional_value<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
+    let index = args.iter().position(|arg| arg == flag)?;
+    args.get(index + 1).map(String::as_str)
+}
+
+fn forecast(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model_path = required_value(args, "--model")?;
+    let candidates_path = required_value(args, "--candidates")?;
+    let meta_path = required_value(args, "--meta")?;
+    let output = required_value(args, "--output")?;
+    let top_n = optional_value(args, "--top-n")
+        .map(|value| value.parse::<usize>())
+        .transpose()?
+        .unwrap_or(footy_score::DEFAULT_TOP_N);
+    let min_pa = optional_value(args, "--min-pa")
+        .map(|value| value.parse::<f64>())
+        .transpose()?
+        .unwrap_or(140.0);
+    let max_mv = optional_value(args, "--max-mv")
+        .map(|value| value.parse::<f64>())
+        .transpose()?
+        .unwrap_or(1_000_000.0);
+    let required_rows = match optional_value(args, "--rows") {
+        None => Some(100),
+        Some("0") => None,
+        Some(value) => Some(value.parse::<usize>()?),
+    };
+    let proposals = footy_score::run_forecast_proposals(
+        model_path,
+        candidates_path,
+        meta_path,
+        output,
+        top_n,
+        min_pa,
+        max_mv,
+        required_rows,
+    )?;
+    let mut by_position = std::collections::BTreeMap::<&str, usize>::new();
+    for proposal in &proposals {
+        *by_position.entry(&proposal.pos_cls).or_default() += 1;
+    }
+    let position_summary: Vec<String> = by_position
+        .iter()
+        .map(|(position, count)| format!("{position}={count}"))
+        .collect();
+    println!(
+        "forecast proposals={} top={} positions=[{}] output={}",
+        proposals.len(),
+        top_n,
+        position_summary.join(" "),
+        output
+    );
+    Ok(())
+}
+
+
+fn surge_score_all(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model_path = required_value(args, "--model")?;
+    let candidates_path = required_value(args, "--candidates")?;
+    let meta_path = required_value(args, "--meta")?;
+    let output = required_value(args, "--output")?;
+    let scored = footy_score::run_surge_all_scoring(model_path, candidates_path, meta_path, output)?;
+    println!("surge-score-all rows={} output={}", scored.len(), output);
+    Ok(())
+}
+
+fn tail_forecast(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model_path = required_value(args, "--model")?;
+    let candidates_path = required_value(args, "--candidates")?;
+    let meta_path = required_value(args, "--meta")?;
+    let output = required_value(args, "--output")?;
+    let scored = footy_score::run_tail_scoring(model_path, candidates_path, meta_path, output)?;
+    println!("tail-forecast rows={} output={}", scored.len(), output);
+    Ok(())
 }

@@ -1,0 +1,36 @@
+fixture                       P(H)     P(D)     P(A) |     xG    xGA | result
+form regimes: 144 players fitted, 33 models adjusted
+CF vs Portland               0.333    0.207    0.460 |   1.71 vs 2.39   | actual 2-2 (D)
+form regimes: 148 players fitted, 36 models adjusted
+CF vs Chicago                0.337    0.160    0.503 |   2.48 vs 3.36   | actual 0-2 (A)
+form regimes: 161 players fitted, 36 models adjusted
+DC vs CF                     0.500    0.220    0.280 |   2.15 vs 1.51   | actual 4-4 (D)
+form regimes: 172 players fitted, 0 models adjusted
+Vancouver vs CF              0.453    0.173    0.373 |   2.86 vs 2.44   | actual 1-2 (A)
+form regimes: 173 players fitted, 33 models adjusted
+CF vs Vancouver              0.393    0.193    0.413 |   2.23 vs 2.55   | actual 2-1 (H)
+form regimes: 176 players fitted, 42 models adjusted
+CF vs Toronto                0.253    0.187    0.560 |   1.21 vs 2.31   | actual 0-0 (D)
+form regimes: 194 players fitted, 45 models adjusted
+Nashville vs CF              0.720    0.197    0.083 |   2.63 vs 0.77   | actual 1-0 (H)
+form regimes: 199 players fitted, 78 models adjusted
+CF vs Inter                  0.013    0.033    0.953 |   1.01 vs 6.79   | actual 0-1 (A)
+form regimes: 203 players fitted, 51 models adjusted
+CF vs New                    0.163    0.207    0.630 |   0.88 vs 2.19   | actual 2-2 (D)
+form regimes: 216 players fitted, 51 models adjusted
+CF vs DC                     0.210    0.160    0.630 |   1.06 vs 2.60   | actual 1-1 (D)
+form regimes: 235 players fitted, 51 models adjusted
+Columbus vs CF               0.713    0.177    0.110 |   2.70 vs 0.89   | actual 1-2 (A)
+form regimes: 243 players fitted, 51 models adjusted
+CF vs LA                     0.177    0.177    0.647 |   1.10 vs 2.78   | actual 2-2 (D)
+
+=== Accuracy summary over 12 fixtures ===
+top-pick accuracy : 3/12 = 25.0%
+majority baseline : 50.0% (pick the modal outcome: 6 games)
+mean Brier score  : 0.7754   (lower is better; uniform = 0.667, perfect = 0)
+mean log loss     : 1.2584   (uniform = 1.099, perfect = 0)
+
+calibration (predicted P(H) bucket vs observed H rate):
+  0-25%: n=4  avg P(H)=0.141 observed H rate=0.000
+  25-50%: n=5  avg P(H)=0.354 observed H rate=0.200
+  50-75%: n=3  avg P(H)=0.644 observed H rate=0.333

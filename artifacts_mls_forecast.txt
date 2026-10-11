@@ -1,0 +1,17 @@
+MLS pipeline: 136 qualified players, 36 team windows (as-of 2026-08-23)
+
+=== Fixture Inter Miami CF vs CF Montréal (history: 23 and 24 matches) ===
+P(home)=0.675 P(draw)=0.190 P(away)=0.135 | goals 2.47-0.79 | xPts 2.22-0.60
+engine: 200 paths, 14.1 state events/path, collision prob 0.055
+
+=== Fixture Philadelphia Union vs CF Montréal (history: 24 and 24 matches) ===
+P(home)=0.415 P(draw)=0.360 P(away)=0.225 | goals 1.14-0.85 | xPts 1.60-1.03
+engine: 200 paths, 12.7 state events/path, collision prob 0.040
+
+=== Fixture Vancouver Whitecaps (CanChamp) vs CF Montréal (history: 25 and 24 matches) ===
+P(home)=0.770 P(draw)=0.140 P(away)=0.090 | goals 3.54-0.96 | xPts 2.45-0.41
+engine: 200 paths, 15.2 state events/path, collision prob 0.040
+
+=== Fixture CF Montréal vs Charlotte FC (history: 24 and 21 matches) ===
+P(home)=0.330 P(draw)=0.350 P(away)=0.320 | goals 0.89-0.85 | xPts 1.34-1.31
+engine: 200 paths, 12.6 state events/path, collision prob 0.045

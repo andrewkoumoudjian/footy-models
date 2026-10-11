@@ -1,0 +1,28 @@
+[package]
+name = "footy-matchforecast"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "footy-matchforecast"
+path = "src/main.rs"
+
+[[bin]]
+name = "footy-matchforecast-mls"
+path = "src/main_mls.rs"
+
+[[bin]]
+name = "footy-matchforecast-backtest"
+path = "src/backtest.rs"
+
+[dependencies]
+footy-core = { path = "../../crates/core" }
+footy-source-stats = { path = "../../crates/source-stats" }
+footy-dataset = { path = "../../crates/dataset" }
+footy-performance = { path = "../../crates/performance" }
+footy-forecast = { path = "../../crates/forecast" }
+footy-state = { path = "../../crates/state" }
+footy-entities = { path = "../../crates/entities" }
+footy-match = { path = "../../crates/match" }
+serde_json = { workspace = true }

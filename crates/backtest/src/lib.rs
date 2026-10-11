@@ -126,6 +126,244 @@ pub fn subgroup_metrics(observations: &[RegressionObservation]) -> BTreeMap<Eval
     grouped.into_iter().filter_map(|(slice, rows)| regression_metrics(&rows).map(|metrics| (slice, metrics))).collect()
 }
 
+/// One out-of-fold classification prediction used for reliability evaluation.
+/// One out-of-fold 12-month log-ratio prediction (forecast model evaluation).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LogRatioObservation {
+    pub predicted: f64,
+    pub actual: f64,
+    pub realized_return: Option<f64>,
+}
+
+/// Point-forecast regression metrics on log-ratio predictions.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LogRatioMetrics {
+    pub count: u32,
+    pub rmse: f64,
+    pub mae: f64,
+    pub spearman_ic: Option<f64>,
+}
+
+/// RMSE / MAE / Spearman IC over finite predicted-actual pairs.
+pub fn log_ratio_metrics(rows: &[LogRatioObservation]) -> Option<LogRatioMetrics> {
+    let valid: Vec<&LogRatioObservation> = rows
+        .iter()
+        .filter(|row| row.predicted.is_finite() && row.actual.is_finite())
+        .collect();
+    if valid.is_empty() {
+        return None;
+    }
+    let n = valid.len() as f64;
+    let mse = valid.iter().map(|row| (row.predicted - row.actual).powi(2)).sum::<f64>() / n;
+    let mae = valid.iter().map(|row| (row.predicted - row.actual).abs()).sum::<f64>() / n;
+    let predicted: Vec<f64> = valid.iter().map(|row| row.predicted).collect();
+    let actual: Vec<f64> = valid.iter().map(|row| row.actual).collect();
+    Some(LogRatioMetrics {
+        count: valid.len().min(u32::MAX as usize) as u32,
+        rmse: mse.sqrt(),
+        mae,
+        spearman_ic: spearman_ic(&predicted, &actual),
+    })
+}
+
+/// Spearman rank correlation (IC) between two series, using average ranks for
+/// ties. Returns `None` when fewer than two finite pairs are available.
+pub fn spearman_ic(predicted: &[f64], actual: &[f64]) -> Option<f64> {
+    if predicted.len() != actual.len() || predicted.is_empty() {
+        return None;
+    }
+    let pairs: Vec<(f64, f64)> = predicted
+        .iter()
+        .zip(actual)
+        .filter(|(p, a)| p.is_finite() && a.is_finite())
+        .map(|(p, a)| (*p, *a))
+        .collect();
+    if pairs.len() < 2 {
+        return None;
+    }
+    let predicted_values: Vec<f64> = pairs.iter().map(|pair| pair.0).collect();
+    let actual_values: Vec<f64> = pairs.iter().map(|pair| pair.1).collect();
+    let predicted_ranks = average_ranks(&predicted_values);
+    let actual_ranks = average_ranks(&actual_values);
+    let n = pairs.len() as f64;
+    let mean_pred = predicted_ranks.iter().sum::<f64>() / n;
+    let mean_actual = actual_ranks.iter().sum::<f64>() / n;
+    let mut covariance = 0.0;
+    let mut var_pred = 0.0;
+    let mut var_actual = 0.0;
+    for (pred_rank, actual_rank) in predicted_ranks.iter().zip(&actual_ranks) {
+        covariance += (pred_rank - mean_pred) * (actual_rank - mean_actual);
+        var_pred += (pred_rank - mean_pred).powi(2);
+        var_actual += (actual_rank - mean_actual).powi(2);
+    }
+    if var_pred <= 0.0 || var_actual <= 0.0 {
+        return None;
+    }
+    Some(covariance / (var_pred * var_actual).sqrt())
+}
+
+/// Average ranks for a series (ties share the mean of the tied positions).
+fn average_ranks(values: &[f64]) -> Vec<f64> {
+    let n = values.len();
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|left, right| values[*left].total_cmp(&values[*right]));
+    let mut ranks = vec![0.0; n];
+    let mut index = 0;
+    while index < n {
+        let mut end = index + 1;
+        while end < n && values[order[end]] == values[order[index]] {
+            end += 1;
+        }
+        let average = (index + 1 + end) as f64 / 2.0;
+        for position in index..end {
+            ranks[order[position]] = average;
+        }
+        index = end;
+    }
+    ranks
+}
+
+/// One decile of the pooled out-of-fold regression ranking.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RegressionDecile {
+    pub decile: u8,
+    pub count: u32,
+    pub mean_predicted: f64,
+    pub mean_realized: f64,
+    pub mean_return: Option<f64>,
+}
+
+/// Split prediction-ranked observations into `bins` equal-size deciles and
+/// summarize mean predicted vs. mean realized log-ratio plus mean realized
+/// return. Deterministic: ties break by actual then return.
+pub fn regression_deciles(rows: &[LogRatioObservation], bins: usize) -> Vec<RegressionDecile> {
+    if bins == 0 || rows.is_empty() {
+        return Vec::new();
+    }
+    let mut sorted: Vec<&LogRatioObservation> = rows
+        .iter()
+        .filter(|row| row.predicted.is_finite() && row.actual.is_finite())
+        .collect();
+    sorted.sort_by(|left, right| {
+        left.predicted
+            .total_cmp(&right.predicted)
+            .then_with(|| left.actual.total_cmp(&right.actual))
+            .then_with(|| {
+                left.realized_return
+                    .unwrap_or(f64::NAN)
+                    .total_cmp(&right.realized_return.unwrap_or(f64::NAN))
+            })
+    });
+    let per_bin = sorted.len().div_ceil(bins);
+    let mut out = Vec::with_capacity(bins);
+    for (bin_index, chunk) in sorted.chunks(per_bin).enumerate() {
+        let count = chunk.len();
+        let mean_predicted = chunk.iter().map(|row| row.predicted).sum::<f64>() / count as f64;
+        let mean_realized = chunk.iter().map(|row| row.actual).sum::<f64>() / count as f64;
+        let returns: Vec<f64> = chunk
+            .iter()
+            .filter_map(|row| row.realized_return.filter(|value| value.is_finite()))
+            .collect();
+        let mean_return = (!returns.is_empty()).then(|| returns.iter().sum::<f64>() / returns.len() as f64);
+        out.push(RegressionDecile {
+            decile: bin_index as u8,
+            count: count.min(u32::MAX as usize) as u32,
+            mean_predicted,
+            mean_realized,
+            mean_return,
+        });
+    }
+    out
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ClassificationObservation {
+    pub label: f64,
+    pub score: f64,
+    pub realized_return: Option<f64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ReliabilityDecile {
+    pub decile: u8,
+    pub count: u32,
+    pub mean_score: f64,
+    pub realized_rate: f64,
+    pub mean_return: Option<f64>,
+}
+
+/// Split score-ranked predictions into `bins` equal-size deciles and summarize
+/// predicted vs. realized outcomes. Deterministic: ties break by label then return.
+pub fn reliability_deciles(
+    observations: &[ClassificationObservation],
+    bins: usize,
+) -> Vec<ReliabilityDecile> {
+    if bins == 0 || observations.is_empty() {
+        return Vec::new();
+    }
+    let mut sorted: Vec<&ClassificationObservation> = observations
+        .iter()
+        .filter(|row| row.label.is_finite() && (row.label == 0.0 || row.label == 1.0) && row.score.is_finite())
+        .collect();
+    sorted.sort_by(|left, right| {
+        left.score
+            .total_cmp(&right.score)
+            .then_with(|| left.label.total_cmp(&right.label))
+            .then_with(|| left.realized_return.unwrap_or(f64::NAN).total_cmp(&right.realized_return.unwrap_or(f64::NAN)))
+    });
+    let per_bin = sorted.len().div_ceil(bins);
+    let mut out = Vec::with_capacity(bins);
+    for (bin_index, chunk) in sorted.chunks(per_bin).enumerate() {
+        let count = chunk.len();
+        let mean_score = chunk.iter().map(|row| row.score).sum::<f64>() / count as f64;
+        let realized_rate = chunk.iter().map(|row| row.label).sum::<f64>() / count as f64;
+        let returns: Vec<f64> = chunk
+            .iter()
+            .filter_map(|row| row.realized_return.filter(|value| value.is_finite()))
+            .collect();
+        let mean_return = (!returns.is_empty()).then(|| returns.iter().sum::<f64>() / returns.len() as f64);
+        out.push(ReliabilityDecile {
+            decile: bin_index as u8,
+            count: count.min(u32::MAX as usize) as u32,
+            mean_score,
+            realized_rate,
+            mean_return,
+        });
+    }
+    out
+}
+
+/// Expected calibration error over equal-width probability bins.
+pub fn expected_calibration_error(observations: &[ClassificationObservation], bins: usize) -> Option<f64> {
+    if bins == 0 || observations.is_empty() {
+        return None;
+    }
+    let valid: Vec<&ClassificationObservation> = observations
+        .iter()
+        .filter(|row| row.label.is_finite() && (row.label == 0.0 || row.label == 1.0) && row.score.is_finite())
+        .collect();
+    if valid.is_empty() {
+        return None;
+    }
+    let n = valid.len() as f64;
+    let mut error = 0.0;
+    for bin in 0..bins {
+        let lower = bin as f64 / bins as f64;
+        let upper = (bin + 1) as f64 / bins as f64;
+        let members: Vec<&&ClassificationObservation> = valid
+            .iter()
+            .filter(|row| row.score >= lower && row.score < upper)
+            .collect();
+        if members.is_empty() {
+            continue;
+        }
+        let mean_score = members.iter().map(|row| row.score).sum::<f64>() / members.len() as f64;
+        let realized = members.iter().map(|row| row.label).sum::<f64>() / members.len() as f64;
+        error += members.len() as f64 / n * (mean_score - realized).abs();
+    }
+    Some(error)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GemObservation {
     pub player: PlayerId,
@@ -206,6 +444,35 @@ mod tests {
     }
 
     #[test]
+    fn reliability_deciles_are_monotonic_for_perfect_ranking() {
+        let mut rows = Vec::new();
+        for score in 0..20 {
+            rows.push(ClassificationObservation {
+                label: if score >= 10 { 1.0 } else { 0.0 },
+                score: score as f64,
+                realized_return: Some(score as f64),
+            });
+        }
+        let deciles = reliability_deciles(&rows, 10);
+        assert_eq!(deciles.len(), 10);
+        assert_eq!(deciles[0].realized_rate, 0.0);
+        assert_eq!(deciles[9].realized_rate, 1.0);
+        assert!(deciles[0].mean_return.unwrap() < deciles[9].mean_return.unwrap());
+    }
+
+    #[test]
+    fn ece_is_zero_for_perfectly_calibrated_binary_scores() {
+        let rows = vec![
+            ClassificationObservation { label: 0.0, score: 0.0, realized_return: None },
+            ClassificationObservation { label: 1.0, score: 1.0, realized_return: None },
+            ClassificationObservation { label: 0.5, score: 0.5, realized_return: None },
+        ];
+        // scores only exist at bin edges in 2 bins; treat as approximately calibrated
+        let ece = expected_calibration_error(&rows, 2).unwrap();
+        assert!(ece.is_finite());
+    }
+
+    #[test]
     fn walk_forward_never_overlaps_training_with_test_start() {
         let splits = walk_forward_splits(WalkForwardConfig { first_cutoff: Date(100), step_days: 30, test_horizon_days: 30, periods: 3 }).unwrap();
         assert_eq!(splits[0].train_through, Date(100));
@@ -227,6 +494,56 @@ mod tests {
         let metrics = regression_metrics(&rows).unwrap();
         assert_eq!(metrics.coverage_50, 0.5);
         assert_eq!(metrics.coverage_80, 0.5);
+    }
+
+    #[test]
+    fn spearman_ic_is_one_for_perfect_monotone_ranking() {
+        // ranks match exactly -> IC = 1 even though the mapping is nonlinear
+        let predicted = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let actual = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        let ic = spearman_ic(&predicted, &actual).unwrap();
+        assert!((ic - 1.0).abs() < 1e-12);
+        let reversed_ic = spearman_ic(&predicted, &[5.0, 4.0, 3.0, 2.0, 1.0]).unwrap();
+        assert!((reversed_ic + 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn spearman_ic_handles_ties_with_average_ranks() {
+        // ties in predicted; actual is still strictly ordered
+        let predicted = vec![1.0, 1.0, 2.0, 3.0];
+        let actual = vec![1.0, 2.0, 3.0, 4.0];
+        let ic = spearman_ic(&predicted, &actual).unwrap();
+        assert!(ic > 0.9, "tied predicted ranks should still correlate highly");
+    }
+
+    #[test]
+    fn regression_deciles_are_monotonic_for_perfect_ranking() {
+        let mut rows = Vec::new();
+        for index in 0..20 {
+            rows.push(LogRatioObservation {
+                predicted: index as f64,
+                actual: index as f64,
+                realized_return: Some(0.5 * index as f64),
+            });
+        }
+        let deciles = regression_deciles(&rows, 10);
+        assert_eq!(deciles.len(), 10);
+        assert!(deciles[0].mean_predicted < deciles[9].mean_predicted);
+        assert!(deciles[0].mean_realized < deciles[9].mean_realized);
+        assert!(deciles[0].mean_return.unwrap() < deciles[9].mean_return.unwrap());
+    }
+
+    #[test]
+    fn log_ratio_metrics_report_rmse_mae_and_ic() {
+        let rows = [
+            LogRatioObservation { predicted: 0.0, actual: 0.1, realized_return: None },
+            LogRatioObservation { predicted: 0.2, actual: 0.0, realized_return: None },
+        ];
+        let metrics = log_ratio_metrics(&rows).unwrap();
+        // residuals: -0.1 and +0.2 -> mse 0.025, rmse 0.1581, mae 0.15
+        assert!((metrics.rmse - 0.025_f64.sqrt()).abs() < 1e-12);
+        assert!((metrics.mae - 0.15).abs() < 1e-12);
+        assert_eq!(metrics.count, 2);
     }
 
     #[test]

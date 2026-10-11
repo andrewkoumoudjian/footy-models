@@ -23,6 +23,9 @@ members = [
     "apps/train",
     "apps/score",
     "apps/query",
+    "apps/mc",
+    "apps/forward",
+    "apps/matchforecast",
 ]
 
 [workspace.package]

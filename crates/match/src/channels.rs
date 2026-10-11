@@ -77,15 +77,28 @@ impl CausalChannelGraph {
         self.topological_order().is_some()
     }
 
-    /// Evaluate reference-normalized metric deviations such as `(realized/reference - 1) * exposure`.
+    /// Evaluate reference-normalized metric-rate deviations such as `realized/reference - 1`.
     /// The graph must be acyclic, making the causal order explicit rather than relying on feature
     /// ordering or repeated fixed-point updates.
     pub fn evaluate(&self, metric_deviations: &[(MetricId, f64)]) -> Option<ChannelEvaluation> {
         let order = self.topological_order()?;
         let mut values = BTreeMap::<TeamProcessChannel, f64>::new();
+        // Callers provide one deviation per active player/metric. Those are cross-sectional
+        // observations of the same team process, not independent team-level shocks to sum. A raw
+        // sum makes channel magnitude scale with XI size (and with how many players happen to have
+        // a model), which can turn modest player-rate differences into extreme goal intensities.
+        // Aggregate repeated metric ids to their active-player mean before applying channel
+        // loadings. A metric supplied once is unchanged, preserving the source-neutral API.
+        let mut metric_means = BTreeMap::<MetricId, (f64, u32)>::new();
         for (metric, deviation) in metric_deviations {
             if !deviation.is_finite() { return None; }
-            for loading in self.metric_loadings.iter().filter(|value| value.metric == *metric) {
+            let entry = metric_means.entry(*metric).or_default();
+            entry.0 += *deviation;
+            entry.1 = entry.1.saturating_add(1);
+        }
+        for (metric, (sum, count)) in metric_means {
+            let deviation = sum / f64::from(count.max(1));
+            for loading in self.metric_loadings.iter().filter(|value| value.metric == metric) {
                 *values.entry(loading.channel).or_default() += loading.weight * deviation;
             }
         }
@@ -163,5 +176,27 @@ mod tests {
             goal_loadings: Vec::new(),
         };
         assert!(!graph.validate());
+    }
+
+    #[test]
+    fn repeated_player_metric_signals_are_averaged_not_summed() {
+        let metric = MetricId(1);
+        let graph = CausalChannelGraph {
+            metric_loadings: vec![MetricChannelLoading {
+                metric,
+                channel: TeamProcessChannel::ShotQuality,
+                weight: 1.0,
+            }],
+            edges: Vec::new(),
+            goal_loadings: vec![GoalChannelLoading {
+                channel: TeamProcessChannel::ShotQuality,
+                attack_log_weight: 0.2,
+                defense_log_weight: 0.0,
+            }],
+        };
+        let one = graph.evaluate(&[(metric, 0.5)]).unwrap();
+        let eleven = graph.evaluate(&vec![(metric, 0.5); 11]).unwrap();
+        assert!((one.attack_log_adjustment - 0.1).abs() < 1e-12);
+        assert!((eleven.attack_log_adjustment - one.attack_log_adjustment).abs() < 1e-12);
     }
 }

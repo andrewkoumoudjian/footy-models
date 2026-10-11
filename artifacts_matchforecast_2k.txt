@@ -1,0 +1,11 @@
+=== Fixture forecast pipeline (second-resolved MC) ===
+fixture: Manchester United vs AFC Bournemouth, 2016-05-17 (match 3754159)
+history: 73 prior matches (strictly as-of)
+engine params: paths=2000 seed=42
+parsed: 2011 player-stat records, 146 team-stat records, 73 results, 146 lineups, 546 distinct players
+canonical: 539 players, 20 clubs, 34 metric defs, 146 lineup obs, 0 issues
+player-match observations (with minutes join): 693
+qualified players (>=5 apps, >=300 min): 24
+home form: 39/25 pts, GF 29 GA 26
+away form: 34/25 pts, GF 32 GA 39
+squads: home candidates 14 / away candidates 11, event models 75, attribute states 25

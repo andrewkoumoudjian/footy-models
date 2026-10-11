@@ -6,7 +6,7 @@ use footy_core::{
     FeatureSetVersion, ModelVersion, PlayerId,
 };
 use footy_market::PriceDistribution;
-use footy_models::{ConformalCalibrator, LinearModel, ModelMetadata};
+use footy_models::{ConformalCalibrator, FeatureTransform, LinearModel, ModelMetadata};
 use std::collections::BTreeSet;
 use std::convert::TryInto;
 use std::fmt;
@@ -61,6 +61,11 @@ pub enum ArtifactKind {
     FeatureMatrix = 2,
     LinearPriceModel = 3,
     PredictionBatch = 4,
+    SurgeFeatureMatrix = 5,
+    SurgeModel = 6,
+    ForecastFeatureMatrix = 7,
+    ForecastModel = 8,
+    TailForecastModel = 9,
 }
 
 impl ArtifactKind {
@@ -70,6 +75,11 @@ impl ArtifactKind {
             2 => Ok(Self::FeatureMatrix),
             3 => Ok(Self::LinearPriceModel),
             4 => Ok(Self::PredictionBatch),
+            5 => Ok(Self::SurgeFeatureMatrix),
+            6 => Ok(Self::SurgeModel),
+            7 => Ok(Self::ForecastFeatureMatrix),
+            8 => Ok(Self::ForecastModel),
+            9 => Ok(Self::TailForecastModel),
             _ => Err(ArtifactError::Invalid("unknown artifact kind")),
         }
     }
@@ -728,6 +738,152 @@ mod tests {
     }
 
     #[test]
+    fn surge_feature_matrix_round_trip() {
+        let path = temp_path("surge-matrix");
+        let artifact = SurgeFeatureMatrixArtifact {
+            dataset_version: DatasetVersion(7),
+            source_manifest_checksum: 42,
+            feature_set_version: FeatureSetVersion(3),
+            feature_names: vec!["a".into(), "b".into()],
+            rows: vec![
+                SurgeFeatureRow { player: PlayerId(1), as_of: Date(19000), mv_t: 500_000.0, target: Some(1.0), realized_return: Some(0.7), weight: 1.0, features: vec![1.0, f32::NAN] },
+                SurgeFeatureRow { player: PlayerId(2), as_of: Date(19001), mv_t: 600_000.0, target: None, realized_return: None, weight: 1.0, features: vec![f32::NAN, 2.0] },
+            ],
+        };
+        write_surge_feature_matrix(&path, &artifact).unwrap();
+        let loaded = read_surge_feature_matrix(&path).unwrap();
+        assert_eq!(loaded.dataset_version, artifact.dataset_version);
+        assert_eq!(loaded.feature_names, artifact.feature_names);
+        assert_eq!(loaded.rows.len(), artifact.rows.len());
+        for (left, right) in loaded.rows.iter().zip(&artifact.rows) {
+            assert_eq!(left.player, right.player);
+            assert_eq!(left.as_of, right.as_of);
+            assert_eq!(left.mv_t, right.mv_t);
+            assert_eq!(left.target, right.target);
+            assert_eq!(left.realized_return, right.realized_return);
+            for (left_value, right_value) in left.features.iter().zip(&right.features) {
+                let same = (left_value.is_nan() && right_value.is_nan()) || left_value == right_value;
+                assert!(same, "feature mismatch: {left_value} vs {right_value}");
+            }
+        }
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn surge_model_round_trip_and_scoring() {
+        let path = temp_path("surge-model");
+        let transform = FeatureTransform {
+            means: vec![0.5, -1.0],
+            stds: vec![1.0, 2.0],
+            missing_rates: vec![0.1, 0.2],
+        };
+        let artifact = SurgeModelArtifact {
+            metadata: ModelMetadata {
+                trained_through: Date(20000),
+                model_version: ModelVersion(1),
+                dataset_version: DatasetVersion(7),
+                feature_set_version: FeatureSetVersion(3),
+                seed: 42,
+            },
+            source_manifest_checksum: 42,
+            calibration_version: CalibrationVersion(1),
+            ridge: 1.0,
+            feature_names: vec!["a".into(), "b".into()],
+            transform,
+            coefficients: vec![0.1, 0.2, 0.3, 0.4, 0.5],
+            walkforward: SurgeWalkForwardMetrics {
+                periods: vec![SurgePeriodMetrics { cutoff: Date(19000), train_rows: 100, test_rows: 50, auc: 0.75 }],
+                pooled_auc: 0.74,
+                auc_without_fm: 0.72,
+                ece: 0.02,
+                deciles: vec![SurgeDecileSnapshot { decile: 0, count: 5, mean_score: 0.1, realized_rate: 0.2, mean_return: 0.3 }],
+                conformal_radius: 0.2,
+                calibration_coverage: 0.8,
+                calibration_size: 500,
+            },
+        };
+        write_surge_model(&path, &artifact).unwrap();
+        let loaded = read_surge_model(&path).unwrap();
+        assert_eq!(loaded, artifact);
+        let (p, lower, upper) = loaded.predict_surge(&[1.0, f64::NAN]).unwrap();
+        assert!(p.is_finite() && lower >= 0.0 && upper <= 1.0 && lower <= upper);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn forecast_feature_matrix_round_trip() {
+        let path = temp_path("forecast-matrix");
+        let artifact = ForecastFeatureMatrixArtifact {
+            dataset_version: DatasetVersion(7),
+            source_manifest_checksum: 42,
+            feature_set_version: FeatureSetVersion(3),
+            feature_names: vec!["a".into(), "b".into()],
+            rows: vec![
+                ForecastFeatureRow { player: PlayerId(1), as_of: Date(19000), mv_t: 500_000.0, target: Some(0.7), realized_return: Some(1.0), weight: 1.0, features: vec![1.0, f32::NAN] },
+                ForecastFeatureRow { player: PlayerId(2), as_of: Date(19001), mv_t: 600_000.0, target: None, realized_return: None, weight: 1.0, features: vec![f32::NAN, 2.0] },
+            ],
+        };
+        write_forecast_feature_matrix(&path, &artifact).unwrap();
+        let loaded = read_forecast_feature_matrix(&path).unwrap();
+        assert_eq!(loaded.dataset_version, artifact.dataset_version);
+        assert_eq!(loaded.feature_names, artifact.feature_names);
+        assert_eq!(loaded.rows.len(), artifact.rows.len());
+        for (left, right) in loaded.rows.iter().zip(&artifact.rows) {
+            assert_eq!(left.player, right.player);
+            assert_eq!(left.as_of, right.as_of);
+            assert_eq!(left.mv_t, right.mv_t);
+            assert_eq!(left.target, right.target);
+            assert_eq!(left.realized_return, right.realized_return);
+            for (left_value, right_value) in left.features.iter().zip(&right.features) {
+                let same = (left_value.is_nan() && right_value.is_nan()) || left_value == right_value;
+                assert!(same, "feature mismatch: {left_value} vs {right_value}");
+            }
+        }
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn forecast_model_round_trip_and_scoring() {
+        let path = temp_path("forecast-model");
+        let transform = FeatureTransform {
+            means: vec![0.5, -1.0],
+            stds: vec![1.0, 2.0],
+            missing_rates: vec![0.1, 0.2],
+        };
+        let artifact = ForecastModelArtifact {
+            metadata: ModelMetadata {
+                trained_through: Date(20000),
+                model_version: ModelVersion(1),
+                dataset_version: DatasetVersion(7),
+                feature_set_version: FeatureSetVersion(3),
+                seed: 42,
+            },
+            source_manifest_checksum: 42,
+            calibration_version: CalibrationVersion(1),
+            ridge: 1.0,
+            feature_names: vec!["a".into(), "b".into()],
+            transform,
+            coefficients: vec![0.1, 0.2, 0.3, 0.4, 0.5],
+            walkforward: ForecastWalkForwardMetrics {
+                periods: vec![ForecastPeriodMetrics { cutoff: Date(19000), train_rows: 100, test_rows: 50, rmse: 0.5, mae: 0.4, spearman_ic: Some(0.25) }],
+                pooled_rmse: 0.5,
+                pooled_mae: 0.4,
+                pooled_spearman_ic: Some(0.25),
+                deciles: vec![ForecastDecileSnapshot { decile: 0, count: 5, mean_predicted: 0.1, mean_realized: 0.2, mean_return: 0.3 }],
+                conformal_radius: 0.5,
+                calibration_coverage: 0.8,
+                calibration_size: 500,
+            },
+        };
+        write_forecast_model(&path, &artifact).unwrap();
+        let loaded = read_forecast_model(&path).unwrap();
+        assert_eq!(loaded, artifact);
+        let (prediction, lower, upper) = loaded.predict_log_ratio(&[1.0, f64::NAN]).unwrap();
+        assert!(prediction.is_finite() && lower <= prediction && prediction <= upper);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
     fn dataset_manifest_round_trips_with_checksum() {
         let path = temp_path("manifest");
         let manifest = DatasetManifest {
@@ -804,6 +960,1254 @@ mod tests {
             calibration_cutoff: Date(20),
             rows: vec![FundamentalPredictionRow { player: PlayerId(1), as_of: Date(20), value }],
         };
+        assert!(artifact.validate().is_err());
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Value-surge (future-gem) artifacts
+// ---------------------------------------------------------------------------
+
+/// One raw (untransformed) feature row. `features` deliberately permits `NaN`
+/// entries: missingness is a first-class signal encoded by the model transform.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SurgeFeatureRow {
+    pub player: PlayerId,
+    pub as_of: Date,
+    pub mv_t: f64,
+    pub target: Option<f64>,
+    pub realized_return: Option<f64>,
+    pub weight: f64,
+    pub features: Vec<f32>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SurgeFeatureMatrixArtifact {
+    pub dataset_version: DatasetVersion,
+    pub source_manifest_checksum: u64,
+    pub feature_set_version: FeatureSetVersion,
+    pub feature_names: Vec<String>,
+    pub rows: Vec<SurgeFeatureRow>,
+}
+
+impl SurgeFeatureMatrixArtifact {
+    pub fn validate(&self) -> Result<(), ArtifactError> {
+        if self.feature_names.is_empty() {
+            return Err(ArtifactError::Invalid("surge matrix has no features"));
+        }
+        if self.feature_names.iter().any(|name| name.is_empty()) {
+            return Err(ArtifactError::Invalid("empty surge feature name"));
+        }
+        let mut row_keys = BTreeSet::new();
+        for row in &self.rows {
+            if row.features.len() != self.feature_names.len() {
+                return Err(ArtifactError::Invalid("surge feature row width mismatch"));
+            }
+            if row.features.iter().any(|value| !value.is_finite() && !value.is_nan()) {
+                return Err(ArtifactError::Invalid("infinite surge feature"));
+            }
+            if !row.mv_t.is_finite() || row.mv_t <= 0.0 {
+                return Err(ArtifactError::Invalid("invalid surge reference value"));
+            }
+            if row.target.is_some_and(|value| !value.is_finite() || (value != 0.0 && value != 1.0)) {
+                return Err(ArtifactError::Invalid("surge target must be 0 or 1"));
+            }
+            if row.realized_return.is_some_and(|value| !value.is_finite()) {
+                return Err(ArtifactError::Invalid("non-finite realized return"));
+            }
+            if !row.weight.is_finite() || row.weight <= 0.0 {
+                return Err(ArtifactError::Invalid("invalid surge row weight"));
+            }
+            if !row_keys.insert((row.player, row.as_of)) {
+                return Err(ArtifactError::Invalid("duplicate surge player/date row"));
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Persisted walk-forward evaluation summary for the surge model.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SurgePeriodMetrics {
+    pub cutoff: Date,
+    pub train_rows: u32,
+    pub test_rows: u32,
+    pub auc: f64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SurgeDecileSnapshot {
+    pub decile: u8,
+    pub count: u32,
+    pub mean_score: f64,
+    pub realized_rate: f64,
+    pub mean_return: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SurgeWalkForwardMetrics {
+    pub periods: Vec<SurgePeriodMetrics>,
+    pub pooled_auc: f64,
+    pub auc_without_fm: f64,
+    pub ece: f64,
+    pub deciles: Vec<SurgeDecileSnapshot>,
+    pub conformal_radius: f64,
+    pub calibration_coverage: f64,
+    pub calibration_size: u32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SurgeModelArtifact {
+    pub metadata: ModelMetadata,
+    pub source_manifest_checksum: u64,
+    pub calibration_version: CalibrationVersion,
+    pub ridge: f64,
+    pub feature_names: Vec<String>,
+    pub transform: FeatureTransform,
+    /// Intercept first, followed by `2 * feature_names.len()` coefficients
+    /// (standardized value slot, then missingness-indicator slot, per feature).
+    pub coefficients: Vec<f64>,
+    pub walkforward: SurgeWalkForwardMetrics,
+}
+
+impl SurgeModelArtifact {
+    pub fn validate(&self) -> Result<(), ArtifactError> {
+        if !self.ridge.is_finite() || self.ridge < 0.0 {
+            return Err(ArtifactError::Invalid("invalid surge ridge parameter"));
+        }
+        if self.feature_names.is_empty() {
+            return Err(ArtifactError::Invalid("surge model has no features"));
+        }
+        if self.transform.width() != self.feature_names.len() {
+            return Err(ArtifactError::Invalid("surge transform/feature mismatch"));
+        }
+        let expected_coefficients = self.feature_names.len() * 2 + 1;
+        if self.coefficients.len() != expected_coefficients {
+            return Err(ArtifactError::Invalid("surge model coefficient/feature mismatch"));
+        }
+        if self.coefficients.iter().any(|value| !value.is_finite()) {
+            return Err(ArtifactError::Invalid("non-finite surge model coefficient"));
+        }
+        if !self.walkforward.pooled_auc.is_finite()
+            || !self.walkforward.ece.is_finite()
+            || !self.walkforward.conformal_radius.is_finite()
+            || self.walkforward.conformal_radius < 0.0
+            || self.walkforward.calibration_size == 0
+        {
+            return Err(ArtifactError::Invalid("invalid surge walk-forward metrics"));
+        }
+        Ok(())
+    }
+
+    /// Score one raw feature row: returns (surge probability, 80% interval).
+    pub fn predict_surge(&self, raw: &[f64]) -> Result<(f64, f64, f64), ArtifactError> {
+        self.validate()?;
+        let transformed = self.transform.apply(raw).map_err(|_| ArtifactError::Invalid("surge scoring transform failed"))?;
+        let score = self.coefficients[0]
+            + self.coefficients[1..].iter().zip(&transformed).map(|(coefficient, value)| coefficient * value).sum::<f64>();
+        let probability = 1.0 / (1.0 + (-score).exp());
+        if !probability.is_finite() {
+            return Err(ArtifactError::Invalid("non-finite surge probability"));
+        }
+        let radius = self.walkforward.conformal_radius;
+        let lower = (probability - radius).clamp(0.0, 1.0);
+        let upper = (probability + radius).clamp(0.0, 1.0);
+        Ok((probability, lower, upper))
+    }
+}
+
+pub fn write_surge_feature_matrix(
+    path: impl AsRef<Path>,
+    artifact: &SurgeFeatureMatrixArtifact,
+) -> Result<ArtifactHeader, ArtifactError> {
+    artifact.validate()?;
+    let mut encoder = Encoder::new();
+    encoder.u64(artifact.source_manifest_checksum);
+    encoder.u32(artifact.feature_names.len().try_into().map_err(|_| ArtifactError::Invalid("too many surge features"))?);
+    for name in &artifact.feature_names {
+        encoder.string(name)?;
+    }
+    encoder.u64(artifact.rows.len().try_into().map_err(|_| ArtifactError::Invalid("too many surge rows"))?);
+    for row in &artifact.rows {
+        encoder.u64(row.player.0);
+        encoder.i32(row.as_of.0);
+        encoder.f64(row.mv_t);
+        encoder.f64(row.weight);
+        match row.target {
+            Some(target) => {
+                encoder.u8(1);
+                encoder.f64(target);
+            }
+            None => encoder.u8(0),
+        }
+        match row.realized_return {
+            Some(return_value) => {
+                encoder.u8(1);
+                encoder.f64(return_value);
+            }
+            None => encoder.u8(0),
+        }
+        for value in &row.features {
+            encoder.f32(*value);
+        }
+    }
+    write_envelope(path, ArtifactKind::SurgeFeatureMatrix, ArtifactVersions {
+        dataset: artifact.dataset_version,
+        feature_set: Some(artifact.feature_set_version),
+        model: None,
+        calibration: None,
+        cutoff: None,
+    }, &encoder.finish())
+}
+
+pub fn read_surge_feature_matrix(path: impl AsRef<Path>) -> Result<SurgeFeatureMatrixArtifact, ArtifactError> {
+    let (header, payload) = read_envelope(path, ArtifactKind::SurgeFeatureMatrix)?;
+    let feature_set_version = header.versions.feature_set.ok_or(ArtifactError::Invalid("surge matrix missing feature version"))?;
+    let mut decoder = Decoder::new(&payload);
+    let source_manifest_checksum = decoder.u64()?;
+    let feature_count = decoder.u32()? as usize;
+    if feature_count == 0 {
+        return Err(ArtifactError::Invalid("surge matrix has zero width"));
+    }
+    let mut feature_names = Vec::with_capacity(feature_count);
+    for _ in 0..feature_count {
+        feature_names.push(decoder.string()?);
+    }
+    let row_count: usize = decoder.u64()?.try_into().map_err(|_| ArtifactError::Invalid("too many surge rows"))?;
+    let mut rows = Vec::with_capacity(row_count);
+    for _ in 0..row_count {
+        let player = PlayerId(decoder.u64()?);
+        let as_of = Date(decoder.i32()?);
+        let mv_t = decoder.f64()?;
+        let weight = decoder.f64()?;
+        let target = match decoder.u8()? {
+            0 => None,
+            1 => Some(decoder.f64()?),
+            _ => return Err(ArtifactError::Invalid("invalid surge target flag")),
+        };
+        let realized_return = match decoder.u8()? {
+            0 => None,
+            1 => Some(decoder.f64()?),
+            _ => return Err(ArtifactError::Invalid("invalid surge return flag")),
+        };
+        let mut features = Vec::with_capacity(feature_count);
+        for _ in 0..feature_count {
+            features.push(decoder.f32()?);
+        }
+        rows.push(SurgeFeatureRow { player, as_of, mv_t, target, realized_return, weight, features });
+    }
+    decoder.finish()?;
+    let artifact = SurgeFeatureMatrixArtifact {
+        dataset_version: header.versions.dataset,
+        source_manifest_checksum,
+        feature_set_version,
+        feature_names,
+        rows,
+    };
+    artifact.validate()?;
+    Ok(artifact)
+}
+
+fn encode_surge_deciles(encoder: &mut Encoder, deciles: &[SurgeDecileSnapshot]) -> Result<(), ArtifactError> {
+    encoder.u32(deciles.len().try_into().map_err(|_| ArtifactError::Invalid("too many deciles"))?);
+    for decile in deciles {
+        encoder.u8(decile.decile);
+        encoder.u32(decile.count);
+        encoder.f64(decile.mean_score);
+        encoder.f64(decile.realized_rate);
+        encoder.f64(decile.mean_return);
+    }
+    Ok(())
+}
+
+fn decode_surge_deciles(decoder: &mut Decoder<'_>) -> Result<Vec<SurgeDecileSnapshot>, ArtifactError> {
+    let count = decoder.u32()? as usize;
+    let mut deciles = Vec::with_capacity(count);
+    for _ in 0..count {
+        deciles.push(SurgeDecileSnapshot {
+            decile: decoder.u8()?,
+            count: decoder.u32()?,
+            mean_score: decoder.f64()?,
+            realized_rate: decoder.f64()?,
+            mean_return: decoder.f64()?,
+        });
+    }
+    Ok(deciles)
+}
+
+pub fn write_surge_model(path: impl AsRef<Path>, artifact: &SurgeModelArtifact) -> Result<ArtifactHeader, ArtifactError> {
+    artifact.validate()?;
+    let mut encoder = Encoder::new();
+    encoder.u64(artifact.source_manifest_checksum);
+    encoder.u64(artifact.metadata.seed);
+    encoder.f64(artifact.ridge);
+    encoder.u32(artifact.feature_names.len().try_into().map_err(|_| ArtifactError::Invalid("too many surge features"))?);
+    for name in &artifact.feature_names {
+        encoder.string(name)?;
+    }
+    encoder.u32(artifact.transform.width().try_into().map_err(|_| ArtifactError::Invalid("too many transform features"))?);
+    for value in &artifact.transform.means {
+        encoder.f64(*value);
+    }
+    for value in &artifact.transform.stds {
+        encoder.f64(*value);
+    }
+    for value in &artifact.transform.missing_rates {
+        encoder.f64(*value);
+    }
+    encoder.u32(artifact.coefficients.len().try_into().map_err(|_| ArtifactError::Invalid("too many surge coefficients"))?);
+    for coefficient in &artifact.coefficients {
+        encoder.f64(*coefficient);
+    }
+    encoder.u32(artifact.walkforward.periods.len().try_into().map_err(|_| ArtifactError::Invalid("too many periods"))?);
+    for period in &artifact.walkforward.periods {
+        encoder.i32(period.cutoff.0);
+        encoder.u32(period.train_rows);
+        encoder.u32(period.test_rows);
+        encoder.f64(period.auc);
+    }
+    encoder.f64(artifact.walkforward.pooled_auc);
+    encoder.f64(artifact.walkforward.auc_without_fm);
+    encoder.f64(artifact.walkforward.ece);
+    encode_surge_deciles(&mut encoder, &artifact.walkforward.deciles)?;
+    encoder.f64(artifact.walkforward.conformal_radius);
+    encoder.f64(artifact.walkforward.calibration_coverage);
+    encoder.u32(artifact.walkforward.calibration_size);
+    write_envelope(path, ArtifactKind::SurgeModel, ArtifactVersions {
+        dataset: artifact.metadata.dataset_version,
+        feature_set: Some(artifact.metadata.feature_set_version),
+        model: Some(artifact.metadata.model_version),
+        calibration: Some(artifact.calibration_version),
+        cutoff: Some(artifact.metadata.trained_through),
+    }, &encoder.finish())
+}
+
+pub fn read_surge_model(path: impl AsRef<Path>) -> Result<SurgeModelArtifact, ArtifactError> {
+    let (header, payload) = read_envelope(path, ArtifactKind::SurgeModel)?;
+    let feature_set_version = header.versions.feature_set.ok_or(ArtifactError::Invalid("surge model missing feature version"))?;
+    let model_version = header.versions.model.ok_or(ArtifactError::Invalid("surge model missing model version"))?;
+    let calibration_version = header.versions.calibration.ok_or(ArtifactError::Invalid("surge model missing calibration version"))?;
+    let trained_through = header.versions.cutoff.ok_or(ArtifactError::Invalid("surge model missing training cutoff"))?;
+    let mut decoder = Decoder::new(&payload);
+    let source_manifest_checksum = decoder.u64()?;
+    let seed = decoder.u64()?;
+    let ridge = decoder.f64()?;
+    let feature_count = decoder.u32()? as usize;
+    let mut feature_names = Vec::with_capacity(feature_count);
+    for _ in 0..feature_count {
+        feature_names.push(decoder.string()?);
+    }
+    let transform_width = decoder.u32()? as usize;
+    if transform_width != feature_count {
+        return Err(ArtifactError::Invalid("surge transform width mismatch"));
+    }
+    let mut means = Vec::with_capacity(transform_width);
+    let mut stds = Vec::with_capacity(transform_width);
+    let mut missing_rates = Vec::with_capacity(transform_width);
+    for _ in 0..transform_width {
+        means.push(decoder.f64()?);
+    }
+    for _ in 0..transform_width {
+        stds.push(decoder.f64()?);
+    }
+    for _ in 0..transform_width {
+        missing_rates.push(decoder.f64()?);
+    }
+    let coefficient_count = decoder.u32()? as usize;
+    let mut coefficients = Vec::with_capacity(coefficient_count);
+    for _ in 0..coefficient_count {
+        coefficients.push(decoder.f64()?);
+    }
+    let period_count = decoder.u32()? as usize;
+    let mut periods = Vec::with_capacity(period_count);
+    for _ in 0..period_count {
+        periods.push(SurgePeriodMetrics {
+            cutoff: Date(decoder.i32()?),
+            train_rows: decoder.u32()?,
+            test_rows: decoder.u32()?,
+            auc: decoder.f64()?,
+        });
+    }
+    let pooled_auc = decoder.f64()?;
+    let auc_without_fm = decoder.f64()?;
+    let ece = decoder.f64()?;
+    let deciles = decode_surge_deciles(&mut decoder)?;
+    let conformal_radius = decoder.f64()?;
+    let calibration_coverage = decoder.f64()?;
+    let calibration_size = decoder.u32()?;
+    decoder.finish()?;
+    let artifact = SurgeModelArtifact {
+        metadata: ModelMetadata {
+            trained_through,
+            model_version,
+            dataset_version: header.versions.dataset,
+            feature_set_version,
+            seed,
+        },
+        source_manifest_checksum,
+        calibration_version,
+        ridge,
+        feature_names,
+        transform: FeatureTransform { means, stds, missing_rates },
+        coefficients,
+        walkforward: SurgeWalkForwardMetrics {
+            periods,
+            pooled_auc,
+            auc_without_fm,
+            ece,
+            deciles,
+            conformal_radius,
+            calibration_coverage,
+            calibration_size,
+        },
+    };
+    artifact.validate()?;
+    Ok(artifact)
+}
+
+// ---------------------------------------------------------------------------
+// 12-month value-forecast artifacts
+// ---------------------------------------------------------------------------
+
+/// One raw (untransformed) forecast feature row. `features` deliberately permits
+/// `NaN` entries: missingness is encoded by the model transform, never as zero.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ForecastFeatureRow {
+    pub player: PlayerId,
+    pub as_of: Date,
+    pub mv_t: f64,
+    /// 12-month log value ratio `log(mv_12m / mv_t)`; `None` for candidate rows.
+    pub target: Option<f64>,
+    pub realized_return: Option<f64>,
+    pub weight: f64,
+    pub features: Vec<f32>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ForecastFeatureMatrixArtifact {
+    pub dataset_version: DatasetVersion,
+    pub source_manifest_checksum: u64,
+    pub feature_set_version: FeatureSetVersion,
+    pub feature_names: Vec<String>,
+    pub rows: Vec<ForecastFeatureRow>,
+}
+
+impl ForecastFeatureMatrixArtifact {
+    pub fn validate(&self) -> Result<(), ArtifactError> {
+        if self.feature_names.is_empty() {
+            return Err(ArtifactError::Invalid("forecast matrix has no features"));
+        }
+        if self.feature_names.iter().any(|name| name.is_empty()) {
+            return Err(ArtifactError::Invalid("empty forecast feature name"));
+        }
+        let mut row_keys = BTreeSet::new();
+        for row in &self.rows {
+            if row.features.len() != self.feature_names.len() {
+                return Err(ArtifactError::Invalid("forecast feature row width mismatch"));
+            }
+            if row.features.iter().any(|value| !value.is_finite() && !value.is_nan()) {
+                return Err(ArtifactError::Invalid("infinite forecast feature"));
+            }
+            if !row.mv_t.is_finite() || row.mv_t <= 0.0 {
+                return Err(ArtifactError::Invalid("invalid forecast reference value"));
+            }
+            if row.target.is_some_and(|value| !value.is_finite()) {
+                return Err(ArtifactError::Invalid("non-finite forecast target"));
+            }
+            if row.realized_return.is_some_and(|value| !value.is_finite()) {
+                return Err(ArtifactError::Invalid("non-finite realized return"));
+            }
+            if !row.weight.is_finite() || row.weight <= 0.0 {
+                return Err(ArtifactError::Invalid("invalid forecast row weight"));
+            }
+            if !row_keys.insert((row.player, row.as_of)) {
+                return Err(ArtifactError::Invalid("duplicate forecast player/date row"));
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Persisted walk-forward evaluation summary for the forecast model.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ForecastPeriodMetrics {
+    pub cutoff: Date,
+    pub train_rows: u32,
+    pub test_rows: u32,
+    pub rmse: f64,
+    pub mae: f64,
+    pub spearman_ic: Option<f64>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ForecastDecileSnapshot {
+    pub decile: u8,
+    pub count: u32,
+    pub mean_predicted: f64,
+    pub mean_realized: f64,
+    pub mean_return: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ForecastWalkForwardMetrics {
+    pub periods: Vec<ForecastPeriodMetrics>,
+    pub pooled_rmse: f64,
+    pub pooled_mae: f64,
+    pub pooled_spearman_ic: Option<f64>,
+    pub deciles: Vec<ForecastDecileSnapshot>,
+    pub conformal_radius: f64,
+    pub calibration_coverage: f64,
+    pub calibration_size: u32,
+}
+
+/// Forecast model artifact: standardized-feature ridge OLS on the 12-month log
+/// value ratio, plus walk-forward evaluation and conformal interval radius.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ForecastModelArtifact {
+    pub metadata: ModelMetadata,
+    pub source_manifest_checksum: u64,
+    pub calibration_version: CalibrationVersion,
+    pub ridge: f64,
+    pub feature_names: Vec<String>,
+    pub transform: FeatureTransform,
+    /// Intercept first, followed by `2 * feature_names.len()` coefficients
+    /// (standardized value slot, then missingness-indicator slot, per feature).
+    pub coefficients: Vec<f64>,
+    pub walkforward: ForecastWalkForwardMetrics,
+}
+
+impl ForecastModelArtifact {
+    pub fn validate(&self) -> Result<(), ArtifactError> {
+        if !self.ridge.is_finite() || self.ridge < 0.0 {
+            return Err(ArtifactError::Invalid("invalid forecast ridge parameter"));
+        }
+        if self.feature_names.is_empty() {
+            return Err(ArtifactError::Invalid("forecast model has no features"));
+        }
+        if self.transform.width() != self.feature_names.len() {
+            return Err(ArtifactError::Invalid("forecast transform/feature mismatch"));
+        }
+        let expected_coefficients = self.feature_names.len() * 2 + 1;
+        if self.coefficients.len() != expected_coefficients {
+            return Err(ArtifactError::Invalid("forecast model coefficient/feature mismatch"));
+        }
+        if self.coefficients.iter().any(|value| !value.is_finite()) {
+            return Err(ArtifactError::Invalid("non-finite forecast model coefficient"));
+        }
+        if !self.walkforward.pooled_rmse.is_finite()
+            || !self.walkforward.pooled_mae.is_finite()
+            || !self.walkforward.conformal_radius.is_finite()
+            || self.walkforward.conformal_radius < 0.0
+            || self.walkforward.calibration_size == 0
+        {
+            return Err(ArtifactError::Invalid("invalid forecast walk-forward metrics"));
+        }
+        Ok(())
+    }
+
+    /// Score one raw feature row: returns (predicted log_ratio, 80% interval
+    /// lower, 80% interval upper) on the log scale.
+    pub fn predict_log_ratio(&self, raw: &[f64]) -> Result<(f64, f64, f64), ArtifactError> {
+        self.validate()?;
+        let transformed = self.transform
+            .apply(raw)
+            .map_err(|_| ArtifactError::Invalid("forecast scoring transform failed"))?;
+        let prediction = self.coefficients[0]
+            + self.coefficients[1..]
+                .iter()
+                .zip(&transformed)
+                .map(|(coefficient, value)| coefficient * value)
+                .sum::<f64>();
+        if !prediction.is_finite() {
+            return Err(ArtifactError::Invalid("non-finite forecast prediction"));
+        }
+        let radius = self.walkforward.conformal_radius;
+        Ok((prediction, prediction - radius, prediction + radius))
+    }
+}
+
+pub fn write_forecast_feature_matrix(
+    path: impl AsRef<Path>,
+    artifact: &ForecastFeatureMatrixArtifact,
+) -> Result<ArtifactHeader, ArtifactError> {
+    artifact.validate()?;
+    let mut encoder = Encoder::new();
+    encoder.u64(artifact.source_manifest_checksum);
+    encoder.u32(artifact.feature_names.len().try_into().map_err(|_| ArtifactError::Invalid("too many forecast features"))?);
+    for name in &artifact.feature_names {
+        encoder.string(name)?;
+    }
+    encoder.u64(artifact.rows.len().try_into().map_err(|_| ArtifactError::Invalid("too many forecast rows"))?);
+    for row in &artifact.rows {
+        encoder.u64(row.player.0);
+        encoder.i32(row.as_of.0);
+        encoder.f64(row.mv_t);
+        encoder.f64(row.weight);
+        match row.target {
+            Some(target) => {
+                encoder.u8(1);
+                encoder.f64(target);
+            }
+            None => encoder.u8(0),
+        }
+        match row.realized_return {
+            Some(return_value) => {
+                encoder.u8(1);
+                encoder.f64(return_value);
+            }
+            None => encoder.u8(0),
+        }
+        for value in &row.features {
+            encoder.f32(*value);
+        }
+    }
+    write_envelope(path, ArtifactKind::ForecastFeatureMatrix, ArtifactVersions {
+        dataset: artifact.dataset_version,
+        feature_set: Some(artifact.feature_set_version),
+        model: None,
+        calibration: None,
+        cutoff: None,
+    }, &encoder.finish())
+}
+
+pub fn read_forecast_feature_matrix(path: impl AsRef<Path>) -> Result<ForecastFeatureMatrixArtifact, ArtifactError> {
+    let (header, payload) = read_envelope(path, ArtifactKind::ForecastFeatureMatrix)?;
+    let feature_set_version = header.versions.feature_set.ok_or(ArtifactError::Invalid("forecast matrix missing feature version"))?;
+    let mut decoder = Decoder::new(&payload);
+    let source_manifest_checksum = decoder.u64()?;
+    let feature_count = decoder.u32()? as usize;
+    if feature_count == 0 {
+        return Err(ArtifactError::Invalid("forecast matrix has zero width"));
+    }
+    let mut feature_names = Vec::with_capacity(feature_count);
+    for _ in 0..feature_count {
+        feature_names.push(decoder.string()?);
+    }
+    let row_count: usize = decoder.u64()?.try_into().map_err(|_| ArtifactError::Invalid("too many forecast rows"))?;
+    let mut rows = Vec::with_capacity(row_count);
+    for _ in 0..row_count {
+        let player = PlayerId(decoder.u64()?);
+        let as_of = Date(decoder.i32()?);
+        let mv_t = decoder.f64()?;
+        let weight = decoder.f64()?;
+        let target = match decoder.u8()? {
+            0 => None,
+            1 => Some(decoder.f64()?),
+            _ => return Err(ArtifactError::Invalid("invalid forecast target flag")),
+        };
+        let realized_return = match decoder.u8()? {
+            0 => None,
+            1 => Some(decoder.f64()?),
+            _ => return Err(ArtifactError::Invalid("invalid forecast return flag")),
+        };
+        let mut features = Vec::with_capacity(feature_count);
+        for _ in 0..feature_count {
+            features.push(decoder.f32()?);
+        }
+        rows.push(ForecastFeatureRow { player, as_of, mv_t, target, realized_return, weight, features });
+    }
+    decoder.finish()?;
+    let artifact = ForecastFeatureMatrixArtifact {
+        dataset_version: header.versions.dataset,
+        source_manifest_checksum,
+        feature_set_version,
+        feature_names,
+        rows,
+    };
+    artifact.validate()?;
+    Ok(artifact)
+}
+
+fn encode_forecast_deciles(encoder: &mut Encoder, deciles: &[ForecastDecileSnapshot]) -> Result<(), ArtifactError> {
+    encoder.u32(deciles.len().try_into().map_err(|_| ArtifactError::Invalid("too many forecast deciles"))?);
+    for decile in deciles {
+        encoder.u8(decile.decile);
+        encoder.u32(decile.count);
+        encoder.f64(decile.mean_predicted);
+        encoder.f64(decile.mean_realized);
+        encoder.f64(decile.mean_return);
+    }
+    Ok(())
+}
+
+fn decode_forecast_deciles(decoder: &mut Decoder<'_>) -> Result<Vec<ForecastDecileSnapshot>, ArtifactError> {
+    let count = decoder.u32()? as usize;
+    let mut deciles = Vec::with_capacity(count);
+    for _ in 0..count {
+        deciles.push(ForecastDecileSnapshot {
+            decile: decoder.u8()?,
+            count: decoder.u32()?,
+            mean_predicted: decoder.f64()?,
+            mean_realized: decoder.f64()?,
+            mean_return: decoder.f64()?,
+        });
+    }
+    Ok(deciles)
+}
+
+pub fn write_forecast_model(path: impl AsRef<Path>, artifact: &ForecastModelArtifact) -> Result<ArtifactHeader, ArtifactError> {
+    artifact.validate()?;
+    let mut encoder = Encoder::new();
+    encoder.u64(artifact.source_manifest_checksum);
+    encoder.u64(artifact.metadata.seed);
+    encoder.f64(artifact.ridge);
+    encoder.u32(artifact.feature_names.len().try_into().map_err(|_| ArtifactError::Invalid("too many forecast features"))?);
+    for name in &artifact.feature_names {
+        encoder.string(name)?;
+    }
+    encoder.u32(artifact.transform.width().try_into().map_err(|_| ArtifactError::Invalid("too many transform features"))?);
+    for value in &artifact.transform.means {
+        encoder.f64(*value);
+    }
+    for value in &artifact.transform.stds {
+        encoder.f64(*value);
+    }
+    for value in &artifact.transform.missing_rates {
+        encoder.f64(*value);
+    }
+    encoder.u32(artifact.coefficients.len().try_into().map_err(|_| ArtifactError::Invalid("too many forecast coefficients"))?);
+    for coefficient in &artifact.coefficients {
+        encoder.f64(*coefficient);
+    }
+    encoder.u32(artifact.walkforward.periods.len().try_into().map_err(|_| ArtifactError::Invalid("too many forecast periods"))?);
+    for period in &artifact.walkforward.periods {
+        encoder.i32(period.cutoff.0);
+        encoder.u32(period.train_rows);
+        encoder.u32(period.test_rows);
+        encoder.f64(period.rmse);
+        encoder.f64(period.mae);
+        match period.spearman_ic {
+            Some(ic) => {
+                encoder.u8(1);
+                encoder.f64(ic);
+            }
+            None => encoder.u8(0),
+        }
+    }
+    encoder.f64(artifact.walkforward.pooled_rmse);
+    encoder.f64(artifact.walkforward.pooled_mae);
+    match artifact.walkforward.pooled_spearman_ic {
+        Some(ic) => {
+            encoder.u8(1);
+            encoder.f64(ic);
+        }
+        None => encoder.u8(0),
+    }
+    encode_forecast_deciles(&mut encoder, &artifact.walkforward.deciles)?;
+    encoder.f64(artifact.walkforward.conformal_radius);
+    encoder.f64(artifact.walkforward.calibration_coverage);
+    encoder.u32(artifact.walkforward.calibration_size);
+    write_envelope(path, ArtifactKind::ForecastModel, ArtifactVersions {
+        dataset: artifact.metadata.dataset_version,
+        feature_set: Some(artifact.metadata.feature_set_version),
+        model: Some(artifact.metadata.model_version),
+        calibration: Some(artifact.calibration_version),
+        cutoff: Some(artifact.metadata.trained_through),
+    }, &encoder.finish())
+}
+
+pub fn read_forecast_model(path: impl AsRef<Path>) -> Result<ForecastModelArtifact, ArtifactError> {
+    let (header, payload) = read_envelope(path, ArtifactKind::ForecastModel)?;
+    let feature_set_version = header.versions.feature_set.ok_or(ArtifactError::Invalid("forecast model missing feature version"))?;
+    let model_version = header.versions.model.ok_or(ArtifactError::Invalid("forecast model missing model version"))?;
+    let calibration_version = header.versions.calibration.ok_or(ArtifactError::Invalid("forecast model missing calibration version"))?;
+    let trained_through = header.versions.cutoff.ok_or(ArtifactError::Invalid("forecast model missing training cutoff"))?;
+    let mut decoder = Decoder::new(&payload);
+    let source_manifest_checksum = decoder.u64()?;
+    let seed = decoder.u64()?;
+    let ridge = decoder.f64()?;
+    let feature_count = decoder.u32()? as usize;
+    let mut feature_names = Vec::with_capacity(feature_count);
+    for _ in 0..feature_count {
+        feature_names.push(decoder.string()?);
+    }
+    let transform_width = decoder.u32()? as usize;
+    if transform_width != feature_count {
+        return Err(ArtifactError::Invalid("forecast transform width mismatch"));
+    }
+    let mut means = Vec::with_capacity(transform_width);
+    let mut stds = Vec::with_capacity(transform_width);
+    let mut missing_rates = Vec::with_capacity(transform_width);
+    for _ in 0..transform_width {
+        means.push(decoder.f64()?);
+    }
+    for _ in 0..transform_width {
+        stds.push(decoder.f64()?);
+    }
+    for _ in 0..transform_width {
+        missing_rates.push(decoder.f64()?);
+    }
+    let coefficient_count = decoder.u32()? as usize;
+    let mut coefficients = Vec::with_capacity(coefficient_count);
+    for _ in 0..coefficient_count {
+        coefficients.push(decoder.f64()?);
+    }
+    let period_count = decoder.u32()? as usize;
+    let mut periods = Vec::with_capacity(period_count);
+    for _ in 0..period_count {
+        let cutoff = Date(decoder.i32()?);
+        let train_rows = decoder.u32()?;
+        let test_rows = decoder.u32()?;
+        let rmse = decoder.f64()?;
+        let mae = decoder.f64()?;
+        let spearman_ic = match decoder.u8()? {
+            0 => None,
+            1 => Some(decoder.f64()?),
+            _ => return Err(ArtifactError::Invalid("invalid forecast IC flag")),
+        };
+        periods.push(ForecastPeriodMetrics { cutoff, train_rows, test_rows, rmse, mae, spearman_ic });
+    }
+    let pooled_rmse = decoder.f64()?;
+    let pooled_mae = decoder.f64()?;
+    let pooled_spearman_ic = match decoder.u8()? {
+        0 => None,
+        1 => Some(decoder.f64()?),
+        _ => return Err(ArtifactError::Invalid("invalid forecast pooled IC flag")),
+    };
+    let deciles = decode_forecast_deciles(&mut decoder)?;
+    let conformal_radius = decoder.f64()?;
+    let calibration_coverage = decoder.f64()?;
+    let calibration_size = decoder.u32()?;
+    decoder.finish()?;
+    let artifact = ForecastModelArtifact {
+        metadata: ModelMetadata {
+            trained_through,
+            model_version,
+            dataset_version: header.versions.dataset,
+            feature_set_version,
+            seed,
+        },
+        source_manifest_checksum,
+        calibration_version,
+        ridge,
+        feature_names,
+        transform: FeatureTransform { means, stds, missing_rates },
+        coefficients,
+        walkforward: ForecastWalkForwardMetrics {
+            periods,
+            pooled_rmse,
+            pooled_mae,
+            pooled_spearman_ic,
+            deciles,
+            conformal_radius,
+            calibration_coverage,
+            calibration_size,
+        },
+    };
+    artifact.validate()?;
+    Ok(artifact)
+}
+
+// ---------------------------------------------------------------------------
+// Tail-aware forecast model artifact (spike refinement run)
+// ---------------------------------------------------------------------------
+
+/// The tail objective the model was fit with. `Quantile` minimizes the pinball
+/// loss at `tau` (the fitted value is the conditional `tau`-quantile of the
+/// 12-month log value ratio); `Expectile` minimizes the asymmetric squared loss
+/// at `omega` (the fitted value is the conditional `omega`-expectile).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum TailObjective {
+    Quantile { tau: f64 },
+    Expectile { omega: f64 },
+}
+
+impl TailObjective {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Quantile { .. } => "quantile",
+            Self::Expectile { .. } => "expectile",
+        }
+    }
+}
+
+/// One walk-forward period of the tail-aware forecast evaluation.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TailPeriodMetrics {
+    pub cutoff: Date,
+    pub train_rows: u32,
+    pub test_rows: u32,
+    pub rank_ic: Option<f64>,
+    pub top_decile_spike50_rate: f64,
+    pub top_decile_spike100_rate: f64,
+}
+
+/// Pooled out-of-fold decile snapshot ranked by the tail score.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TailDecileSnapshot {
+    pub decile: u8,
+    pub count: u32,
+    pub mean_predicted: f64,
+    pub mean_realized: f64,
+    pub mean_return: f64,
+    pub median_return: f64,
+    pub spike50_rate: f64,
+    pub spike100_rate: f64,
+}
+
+/// Walk-forward evaluation metrics for the tail-aware forecast model.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TailWalkForwardMetrics {
+    pub periods: Vec<TailPeriodMetrics>,
+    pub pooled_rank_ic: Option<f64>,
+    pub deciles: Vec<TailDecileSnapshot>,
+    /// Empirical fraction of out-of-fold rows with `actual <= predicted`; for a
+    /// well-calibrated quantile model this is close to `tau`.
+    pub q_coverage: f64,
+    pub q_coverage_size: u32,
+    pub pooled_spike50_rate: f64,
+    pub pooled_spike100_rate: f64,
+}
+
+/// Tail-aware forecast model artifact: ridge regression with a tail objective
+/// (high quantile / expectile) on the 12-month log value ratio, plus
+/// walk-forward evaluation. Same 47-feature causal schema as the forecast and
+/// surge artifacts (standardized values + paired missingness indicators).
+#[derive(Debug, Clone, PartialEq)]
+pub struct TailForecastModelArtifact {
+    pub metadata: ModelMetadata,
+    pub source_manifest_checksum: u64,
+    pub calibration_version: CalibrationVersion,
+    pub ridge: f64,
+    pub objective: TailObjective,
+    pub feature_names: Vec<String>,
+    pub transform: FeatureTransform,
+    /// Intercept first, followed by `2 * feature_names.len()` coefficients
+    /// (standardized value slot, then missingness-indicator slot, per feature).
+    pub coefficients: Vec<f64>,
+    pub walkforward: TailWalkForwardMetrics,
+}
+
+impl TailForecastModelArtifact {
+    pub fn validate(&self) -> Result<(), ArtifactError> {
+        if !self.ridge.is_finite() || self.ridge < 0.0 {
+            return Err(ArtifactError::Invalid("invalid tail ridge parameter"));
+        }
+        match self.objective {
+            TailObjective::Quantile { tau } => {
+                if !tau.is_finite() || tau <= 0.0 || tau >= 1.0 {
+                    return Err(ArtifactError::Invalid("invalid tail quantile tau"));
+                }
+            }
+            TailObjective::Expectile { omega } => {
+                if !omega.is_finite() || omega <= 0.0 || omega >= 1.0 {
+                    return Err(ArtifactError::Invalid("invalid tail expectile omega"));
+                }
+            }
+        }
+        if self.feature_names.is_empty() {
+            return Err(ArtifactError::Invalid("tail model has no features"));
+        }
+        if self.transform.width() != self.feature_names.len() {
+            return Err(ArtifactError::Invalid("tail transform/feature mismatch"));
+        }
+        let expected_coefficients = self.feature_names.len() * 2 + 1;
+        if self.coefficients.len() != expected_coefficients {
+            return Err(ArtifactError::Invalid("tail model coefficient/feature mismatch"));
+        }
+        if self.coefficients.iter().any(|value| !value.is_finite()) {
+            return Err(ArtifactError::Invalid("non-finite tail model coefficient"));
+        }
+        if !self.walkforward.q_coverage.is_finite()
+            || !self.walkforward.pooled_spike50_rate.is_finite()
+            || !self.walkforward.pooled_spike100_rate.is_finite()
+            || self.walkforward.q_coverage_size == 0
+        {
+            return Err(ArtifactError::Invalid("invalid tail walk-forward metrics"));
+        }
+        Ok(())
+    }
+
+    /// Score one raw feature row: returns the fitted tail score (the predicted
+    /// high quantile / expectile of the 12-month log value ratio). Higher is a
+    /// stronger spike signal.
+    pub fn predict_tail(&self, raw: &[f64]) -> Result<f64, ArtifactError> {
+        self.validate()?;
+        let transformed = self
+            .transform
+            .apply(raw)
+            .map_err(|_| ArtifactError::Invalid("tail scoring transform failed"))?;
+        let prediction = self.coefficients[0]
+            + self.coefficients[1..]
+                .iter()
+                .zip(&transformed)
+                .map(|(coefficient, value)| coefficient * value)
+                .sum::<f64>();
+        if !prediction.is_finite() {
+            return Err(ArtifactError::Invalid("non-finite tail prediction"));
+        }
+        Ok(prediction)
+    }
+}
+
+pub fn write_tail_forecast_model(
+    path: impl AsRef<Path>,
+    artifact: &TailForecastModelArtifact,
+) -> Result<ArtifactHeader, ArtifactError> {
+    artifact.validate()?;
+    let mut encoder = Encoder::new();
+    encoder.u64(artifact.source_manifest_checksum);
+    encoder.u64(artifact.metadata.seed);
+    encoder.f64(artifact.ridge);
+    match artifact.objective {
+        TailObjective::Quantile { tau } => {
+            encoder.u8(0);
+            encoder.f64(tau);
+        }
+        TailObjective::Expectile { omega } => {
+            encoder.u8(1);
+            encoder.f64(omega);
+        }
+    }
+    encoder.u32(artifact.feature_names.len().try_into().map_err(|_| ArtifactError::Invalid("too many tail features"))?);
+    for name in &artifact.feature_names {
+        encoder.string(name)?;
+    }
+    encoder.u32(artifact.transform.width().try_into().map_err(|_| ArtifactError::Invalid("too many transform features"))?);
+    for value in &artifact.transform.means {
+        encoder.f64(*value);
+    }
+    for value in &artifact.transform.stds {
+        encoder.f64(*value);
+    }
+    for value in &artifact.transform.missing_rates {
+        encoder.f64(*value);
+    }
+    encoder.u32(artifact.coefficients.len().try_into().map_err(|_| ArtifactError::Invalid("too many tail coefficients"))?);
+    for coefficient in &artifact.coefficients {
+        encoder.f64(*coefficient);
+    }
+    encoder.u32(artifact.walkforward.periods.len().try_into().map_err(|_| ArtifactError::Invalid("too many tail periods"))?);
+    for period in &artifact.walkforward.periods {
+        encoder.i32(period.cutoff.0);
+        encoder.u32(period.train_rows);
+        encoder.u32(period.test_rows);
+        match period.rank_ic {
+            Some(ic) => {
+                encoder.u8(1);
+                encoder.f64(ic);
+            }
+            None => encoder.u8(0),
+        }
+        encoder.f64(period.top_decile_spike50_rate);
+        encoder.f64(period.top_decile_spike100_rate);
+    }
+    match artifact.walkforward.pooled_rank_ic {
+        Some(ic) => {
+            encoder.u8(1);
+            encoder.f64(ic);
+        }
+        None => encoder.u8(0),
+    }
+    encoder.u32(artifact.walkforward.deciles.len().try_into().map_err(|_| ArtifactError::Invalid("too many tail deciles"))?);
+    for decile in &artifact.walkforward.deciles {
+        encoder.u8(decile.decile);
+        encoder.u32(decile.count);
+        encoder.f64(decile.mean_predicted);
+        encoder.f64(decile.mean_realized);
+        encoder.f64(decile.mean_return);
+        encoder.f64(decile.median_return);
+        encoder.f64(decile.spike50_rate);
+        encoder.f64(decile.spike100_rate);
+    }
+    encoder.f64(artifact.walkforward.q_coverage);
+    encoder.u32(artifact.walkforward.q_coverage_size);
+    encoder.f64(artifact.walkforward.pooled_spike50_rate);
+    encoder.f64(artifact.walkforward.pooled_spike100_rate);
+    write_envelope(path, ArtifactKind::TailForecastModel, ArtifactVersions {
+        dataset: artifact.metadata.dataset_version,
+        feature_set: Some(artifact.metadata.feature_set_version),
+        model: Some(artifact.metadata.model_version),
+        calibration: Some(artifact.calibration_version),
+        cutoff: Some(artifact.metadata.trained_through),
+    }, &encoder.finish())
+}
+
+pub fn read_tail_forecast_model(path: impl AsRef<Path>) -> Result<TailForecastModelArtifact, ArtifactError> {
+    let (header, payload) = read_envelope(path, ArtifactKind::TailForecastModel)?;
+    let feature_set_version = header.versions.feature_set.ok_or(ArtifactError::Invalid("tail model missing feature version"))?;
+    let model_version = header.versions.model.ok_or(ArtifactError::Invalid("tail model missing model version"))?;
+    let calibration_version = header.versions.calibration.ok_or(ArtifactError::Invalid("tail model missing calibration version"))?;
+    let trained_through = header.versions.cutoff.ok_or(ArtifactError::Invalid("tail model missing training cutoff"))?;
+    let mut decoder = Decoder::new(&payload);
+    let source_manifest_checksum = decoder.u64()?;
+    let seed = decoder.u64()?;
+    let ridge = decoder.f64()?;
+    let objective = match decoder.u8()? {
+        0 => TailObjective::Quantile { tau: decoder.f64()? },
+        1 => TailObjective::Expectile { omega: decoder.f64()? },
+        _ => return Err(ArtifactError::Invalid("invalid tail objective flag")),
+    };
+    let feature_count = decoder.u32()? as usize;
+    let mut feature_names = Vec::with_capacity(feature_count);
+    for _ in 0..feature_count {
+        feature_names.push(decoder.string()?);
+    }
+    let transform_width = decoder.u32()? as usize;
+    if transform_width != feature_count {
+        return Err(ArtifactError::Invalid("tail transform width mismatch"));
+    }
+    let mut means = Vec::with_capacity(transform_width);
+    let mut stds = Vec::with_capacity(transform_width);
+    let mut missing_rates = Vec::with_capacity(transform_width);
+    for _ in 0..transform_width {
+        means.push(decoder.f64()?);
+    }
+    for _ in 0..transform_width {
+        stds.push(decoder.f64()?);
+    }
+    for _ in 0..transform_width {
+        missing_rates.push(decoder.f64()?);
+    }
+    let coefficient_count = decoder.u32()? as usize;
+    let mut coefficients = Vec::with_capacity(coefficient_count);
+    for _ in 0..coefficient_count {
+        coefficients.push(decoder.f64()?);
+    }
+    let period_count = decoder.u32()? as usize;
+    let mut periods = Vec::with_capacity(period_count);
+    for _ in 0..period_count {
+        let cutoff = Date(decoder.i32()?);
+        let train_rows = decoder.u32()?;
+        let test_rows = decoder.u32()?;
+        let rank_ic = match decoder.u8()? {
+            0 => None,
+            1 => Some(decoder.f64()?),
+            _ => return Err(ArtifactError::Invalid("invalid tail IC flag")),
+        };
+        let top_decile_spike50_rate = decoder.f64()?;
+        let top_decile_spike100_rate = decoder.f64()?;
+        periods.push(TailPeriodMetrics { cutoff, train_rows, test_rows, rank_ic, top_decile_spike50_rate, top_decile_spike100_rate });
+    }
+    let pooled_rank_ic = match decoder.u8()? {
+        0 => None,
+        1 => Some(decoder.f64()?),
+        _ => return Err(ArtifactError::Invalid("invalid tail pooled IC flag")),
+    };
+    let decile_count = decoder.u32()? as usize;
+    let mut deciles = Vec::with_capacity(decile_count);
+    for _ in 0..decile_count {
+        let decile = decoder.u8()?;
+        let count = decoder.u32()?;
+        let mean_predicted = decoder.f64()?;
+        let mean_realized = decoder.f64()?;
+        let mean_return = decoder.f64()?;
+        let median_return = decoder.f64()?;
+        let spike50_rate = decoder.f64()?;
+        let spike100_rate = decoder.f64()?;
+        deciles.push(TailDecileSnapshot { decile, count, mean_predicted, mean_realized, mean_return, median_return, spike50_rate, spike100_rate });
+    }
+    let q_coverage = decoder.f64()?;
+    let q_coverage_size = decoder.u32()?;
+    let pooled_spike50_rate = decoder.f64()?;
+    let pooled_spike100_rate = decoder.f64()?;
+    decoder.finish()?;
+    let artifact = TailForecastModelArtifact {
+        metadata: ModelMetadata {
+            trained_through,
+            model_version,
+            dataset_version: header.versions.dataset,
+            feature_set_version,
+            seed,
+        },
+        source_manifest_checksum,
+        calibration_version,
+        ridge,
+        objective,
+        feature_names,
+        transform: FeatureTransform { means, stds, missing_rates },
+        coefficients,
+        walkforward: TailWalkForwardMetrics {
+            periods,
+            pooled_rank_ic,
+            deciles,
+            q_coverage,
+            q_coverage_size,
+            pooled_spike50_rate,
+            pooled_spike100_rate,
+        },
+    };
+    artifact.validate()?;
+    Ok(artifact)
+}
+
+#[cfg(test)]
+mod tail_tests {
+    use super::*;
+
+    fn sample_tail_artifact() -> TailForecastModelArtifact {
+        let width = 47;
+        let transform = FeatureTransform {
+            means: vec![0.0; width],
+            stds: vec![1.0; width],
+            missing_rates: vec![0.0; width],
+        };
+        let coefficients = vec![0.1; width * 2 + 1];
+        TailForecastModelArtifact {
+            metadata: ModelMetadata {
+                trained_through: Date(20000),
+                model_version: ModelVersion(3),
+                dataset_version: DatasetVersion(1),
+                feature_set_version: FeatureSetVersion(1),
+                seed: 42,
+            },
+            source_manifest_checksum: 7,
+            calibration_version: CalibrationVersion(1),
+            ridge: 1.0,
+            objective: TailObjective::Quantile { tau: 0.9 },
+            feature_names: (0..width).map(|i| format!("f{i}")).collect(),
+            transform,
+            coefficients,
+            walkforward: TailWalkForwardMetrics {
+                periods: vec![TailPeriodMetrics {
+                    cutoff: Date(20000),
+                    train_rows: 100,
+                    test_rows: 50,
+                    rank_ic: Some(0.3),
+                    top_decile_spike50_rate: 0.4,
+                    top_decile_spike100_rate: 0.2,
+                }],
+                pooled_rank_ic: Some(0.3),
+                deciles: vec![TailDecileSnapshot {
+                    decile: 9,
+                    count: 50,
+                    mean_predicted: 0.5,
+                    mean_realized: 0.4,
+                    mean_return: 0.6,
+                    median_return: 0.3,
+                    spike50_rate: 0.4,
+                    spike100_rate: 0.2,
+                }],
+                q_coverage: 0.9,
+                q_coverage_size: 500,
+                pooled_spike50_rate: 0.3,
+                pooled_spike100_rate: 0.15,
+            },
+        }
+    }
+
+    #[test]
+    fn tail_artifact_round_trips() {
+        let dir = std::env::temp_dir().join(format!("footy-tail-artifact-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("tail.bin");
+        let artifact = sample_tail_artifact();
+        write_tail_forecast_model(&path, &artifact).unwrap();
+        let loaded = read_tail_forecast_model(&path).unwrap();
+        assert_eq!(loaded, artifact);
+        let raw = vec![0.0_f64; 47];
+        let score = loaded.predict_tail(&raw).unwrap();
+        assert!(score.is_finite());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn tail_artifact_rejects_bad_tau() {
+        let mut artifact = sample_tail_artifact();
+        artifact.objective = TailObjective::Quantile { tau: 1.5 };
+        assert!(artifact.validate().is_err());
+        let mut artifact = sample_tail_artifact();
+        artifact.objective = TailObjective::Expectile { omega: 0.0 };
         assert!(artifact.validate().is_err());
     }
 }

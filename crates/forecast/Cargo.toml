@@ -7,5 +7,6 @@ rust-version.workspace = true
 [dependencies]
 footy-core.workspace = true
 footy-market.workspace = true
+footy-models.workspace = true
 footy-performance.workspace = true
 footy-state.workspace = true

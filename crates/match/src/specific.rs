@@ -630,7 +630,10 @@ fn segment_output(
                 StatFamily::Count => f64::from(poisson(rate * exposure, rng)),
             };
             let effective_rate = if exposure > 0.0 { total / exposure } else { 0.0 };
-            let deviation = (effective_rate / model.reference_per90 - 1.0) * exposure;
+            // Channel state is a rate condition. Segment duration already scales the event total
+            // and the segment goal exposure, so applying exposure here again makes the result
+            // depend on the arbitrary number of simulation segments.
+            let deviation = effective_rate / model.reference_per90 - 1.0;
             deviations.push((model.metric, deviation));
             segment_metrics.push(SegmentMetric {
                 player: starter.player, metric: model.metric, total, deviation,
@@ -1012,6 +1015,53 @@ mod tests {
         let p = first.outcome.home_win.get() + first.outcome.draw.get() + first.outcome.away_win.get();
         assert!((p - 1.0).abs() < 1e-6);
         assert!(first.team_channels.iter().any(|value| value.channel == TeamProcessChannel::ShotQuality));
+    }
+
+    #[test]
+    fn channel_rate_signal_does_not_depend_on_segment_length() {
+        let mut input = input();
+        for model in &mut input.event_models {
+            model.variance_per90 = 0.0;
+            model.epistemic_sigma = 0.0;
+            model.aggregate_matchup_sensitivity = 0.0;
+            model.attribute_matchup_sensitivity = 0.0;
+            model.teammate_sensitivity = 0.0;
+            model.role_fit_sensitivity = 0.0;
+            model.fatigue_sensitivity = 0.0;
+        }
+        input.own_attribute_loadings.clear();
+        input.aggregate_matchup_rules.clear();
+        input.attribute_matchup_rules.clear();
+        input.score_state_modifiers.clear();
+
+        let sampled = |projection: &LineupProjectionInput| SampledLineup {
+            club: projection.club,
+            formation_id: 433,
+            starters: projection
+                .candidates
+                .iter()
+                .take(11)
+                .enumerate()
+                .map(|(index, candidate)| SampledStarter {
+                    player: candidate.player,
+                    slot: index as u8,
+                    role: RoleId(index as u16 + 1),
+                    x: 0.05 + index as f64 * 0.075,
+                    y: (index % 5) as f64 / 4.0,
+                    minutes: 90.0,
+                    role_fit: 1.0,
+                    fatigue: 0.0,
+                })
+                .collect(),
+        };
+        let home = sampled(&input.home_lineup);
+        let away = sampled(&input.away_lineup);
+        let mut rng_15 = Rng64::new(17);
+        let mut rng_30 = Rng64::new(17);
+        let fifteen = segment_output(&input, &home, &away, true, ScoreState::Level, 15.0, &mut rng_15).unwrap();
+        let thirty = segment_output(&input, &home, &away, true, ScoreState::Level, 30.0, &mut rng_30).unwrap();
+        assert!((fifteen.attack - thirty.attack).abs() < 1e-12);
+        assert!((fifteen.defense - thirty.defense).abs() < 1e-12);
     }
 
     #[test]

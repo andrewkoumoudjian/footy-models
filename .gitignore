@@ -1,1 +1,14 @@
 /target/
+
+# Locally generated training/source data (rebuild with the scripts in data/ and scripts/)
+/data/**/*.csv
+/data/**/*.tsv
+/data/**/*.json
+/data/**/*.bin
+/data/**/*.parquet
+/data/**/*.pdf
+
+# Large generated Monte Carlo paths, Python bytecode
+/artifacts/**/*.tsv
+__pycache__/
+*.pyc

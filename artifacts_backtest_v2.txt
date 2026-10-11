@@ -1,0 +1,24 @@
+fixture                       P(H)     P(D)     P(A) |     xG    xGA | result
+CF vs Portland               0.253    0.233    0.513 |   1.36 vs 2.07   | actual 2-2 (D)
+CF vs Chicago                0.297    0.123    0.580 |   2.19 vs 3.46   | actual 0-2 (A)
+DC vs CF                     0.550    0.193    0.257 |   2.39 vs 1.29   | actual 4-4 (D)
+Vancouver vs CF              0.453    0.173    0.373 |   2.86 vs 2.44   | actual 1-2 (A)
+CF vs Vancouver              0.347    0.197    0.457 |   1.88 vs 2.53   | actual 2-1 (H)
+CF vs Toronto                0.213    0.223    0.563 |   1.08 vs 2.18   | actual 0-0 (D)
+Nashville vs CF              0.677    0.187    0.137 |   2.49 vs 0.78   | actual 1-0 (H)
+CF vs Inter                  0.017    0.033    0.950 |   0.83 vs 6.28   | actual 0-1 (A)
+CF vs New                    0.200    0.203    0.597 |   0.82 vs 2.01   | actual 2-2 (D)
+CF vs DC                     0.200    0.213    0.587 |   0.97 vs 2.11   | actual 1-1 (D)
+Columbus vs CF               0.707    0.173    0.120 |   2.67 vs 0.83   | actual 1-2 (A)
+CF vs LA                     0.123    0.173    0.703 |   0.92 vs 2.74   | actual 2-2 (D)
+
+=== Accuracy summary over 12 fixtures ===
+top-pick accuracy : 3/12 = 25.0%
+majority baseline : 50.0% (pick the modal outcome: 6 games)
+mean Brier score  : 0.7646   (lower is better; uniform = 0.667, perfect = 0)
+mean log loss     : 1.2200   (uniform = 1.099, perfect = 0)
+
+calibration (predicted P(H) bucket vs observed H rate):
+  0-25%: n=5  avg P(H)=0.150 observed H rate=0.000
+  25-50%: n=4  avg P(H)=0.337 observed H rate=0.250
+  50-75%: n=3  avg P(H)=0.644 observed H rate=0.333

@@ -6,7 +6,9 @@ use footy_market::{
     AcquisitionPrice, FairWage, FundamentalValue, FutureValue, MarketPerceivedValue, PriceDistribution,
     TransferHazard,
 };
-use footy_state::{RoleScore, RoleVector};
+use footy_state::RoleVector;
+
+pub mod surge;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RecruitmentAlpha {
@@ -448,6 +450,7 @@ pub fn distribution_gap(left: PriceDistribution, right: PriceDistribution) -> Eu
 
 #[cfg(test)]
 mod tests {
+    use footy_state::RoleScore;
     use super::*;
 
     fn distribution(value: i64) -> PriceDistribution {

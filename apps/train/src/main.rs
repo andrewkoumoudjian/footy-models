@@ -21,12 +21,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some("materialize") => materialize(&args[1..]),
         Some("materialize-canonical") => materialize_canonical(&args[1..]),
         Some("fit") => fit(&args[1..]),
+        Some("surge-materialize") => surge_materialize(&args[1..]),
+        Some("surge-materialize-candidates") => surge_materialize_candidates(&args[1..]),
+        Some("surge-fit") => surge_fit(&args[1..]),
+        Some("surge-report") => surge_report(&args[1..]),
+        Some("forecast-materialize") => forecast_materialize(&args[1..]),
+        Some("forecast-materialize-candidates") => forecast_materialize_candidates(&args[1..]),
+        Some("forecast-fit") => forecast_fit(&args[1..]),
+        Some("forecast-report") => forecast_report(&args[1..]),
+        Some("forecast-inspect") => forecast_inspect(&args[1..]),
+        Some("tail-fit") => tail_fit(&args[1..]),
+        Some("tail-inspect") => tail_inspect(&args[1..]),
         _ => Err(usage().into()),
     }
 }
 
 fn usage() -> &'static str {
-    "usage:\n  footy-train materialize --input rows.tsv --dataset-manifest manifest.bin --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train materialize-canonical --canonical canonical.bin --feature-set-version N [--through YYYY-MM-DD] --output matrix.bin\n  footy-train fit --input matrix.bin --dataset-version N --feature-set-version N --training-cutoff YYYY-MM-DD --calibration-cutoff YYYY-MM-DD --model-version N --calibration-version N --ridge R --seed N --output model.bin\nmaterialize TSV columns: player_id, as_of, target_log_price, weight, feature:<id>..."
+    "usage:\n  footy-train materialize --input rows.tsv --dataset-manifest manifest.bin --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train materialize-canonical --canonical canonical.bin --feature-set-version N [--through YYYY-MM-DD] --output matrix.bin\n  footy-train fit --input matrix.bin --dataset-version N --feature-set-version N --training-cutoff YYYY-MM-DD --calibration-cutoff YYYY-MM-DD --model-version N --calibration-version N --ridge R --seed N --output model.bin\n  footy-train surge-materialize --input train.tsv --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train surge-materialize-candidates --input candidates.tsv --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train surge-fit --matrix matrix.bin --model-version N --calibration-version N --ridge R --seed N [--cutoffs YYYY-MM-DD,...] [--horizon-days N] --output model.bin\n  footy-train surge-report --model model.bin --proposals proposals_top100.csv --output model_report.md\n  footy-train forecast-materialize --input train.tsv --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train forecast-materialize-candidates --input candidates.tsv --dataset-version N --feature-set-version N --output matrix.bin\n  footy-train forecast-fit --matrix matrix.bin --dataset-version N --feature-set-version N --model-version N --calibration-version N --ridge R --seed N [--cutoffs YYYY-MM-DD,...] [--horizon-days N] --output model.bin\n  footy-train forecast-report --model model.bin --proposals forecast_u23_top100.csv --meta candidates_meta.tsv --output forecast_report.md\n  footy-train tail-fit --matrix matrix.bin --dataset-version N --feature-set-version N --model-version N --calibration-version N --ridge R --seed N [--tau 0.9|--omega 0.9] [--cutoffs YYYY-MM-DD,...] [--horizon-days N] --output model.bin\n  footy-train tail-inspect --model model.bin\nmaterialize TSV columns: player_id, as_of, target_log_price, weight, feature:<id>..."
 }
 
 fn materialize(args: &[String]) -> Result<(), Box<dyn Error>> {
@@ -202,3 +213,190 @@ fn optional_value<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
 }
 
 fn required_u64(args: &[String], flag: &str) -> Result<u64, Box<dyn Error>> { Ok(required_value(args, flag)?.parse::<u64>()?) }
+
+
+// ---------------------------------------------------------------------------
+// Value-surge (future-gem) pipeline
+// ---------------------------------------------------------------------------
+
+fn surge_materialize(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let input = required_value(args, "--input")?;
+    let dataset_version = DatasetVersion(required_u64(args, "--dataset-version")?);
+    let feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    let output = required_value(args, "--output")?;
+    footy_train::materialize_surge_tsv(input, output, dataset_version, feature_set_version, true)
+}
+
+fn surge_materialize_candidates(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let input = required_value(args, "--input")?;
+    let dataset_version = DatasetVersion(required_u64(args, "--dataset-version")?);
+    let feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    let output = required_value(args, "--output")?;
+    footy_train::materialize_surge_tsv(input, output, dataset_version, feature_set_version, false)
+}
+
+fn surge_report(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model = required_value(args, "--model")?;
+    let proposals = required_value(args, "--proposals")?;
+    let output = required_value(args, "--output")?;
+    footy_train::write_surge_report(model, proposals, output)?;
+    Ok(())
+}
+
+fn surge_fit(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let matrix = required_value(args, "--matrix")?;
+    let model_output = required_value(args, "--output")?;
+    let mut config = footy_train::SurgeFitConfig::default();
+    config.dataset_version = DatasetVersion(required_u64(args, "--dataset-version")?);
+    config.feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    config.model_version = ModelVersion(required_u64(args, "--model-version")?);
+    config.calibration_version = CalibrationVersion(required_u64(args, "--calibration-version")?);
+    if let Some(seed) = optional_value(args, "--seed") {
+        config.seed = seed.parse()?;
+    }
+    if let Some(ridge) = optional_value(args, "--ridge") {
+        config.ridge = ridge.parse()?;
+    }
+    if let Some(cutoffs) = optional_value(args, "--cutoffs") {
+        config.cutoffs = footy_train::parse_cutoffs(cutoffs)?;
+    }
+    if let Some(horizon) = optional_value(args, "--horizon-days") {
+        config.horizon_days = horizon.parse()?;
+    }
+    footy_train::run_surge_fit(matrix, model_output, &config)?;
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// 12-month value-forecast pipeline
+// ---------------------------------------------------------------------------
+
+fn forecast_materialize(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let input = required_value(args, "--input")?;
+    let dataset_version = DatasetVersion(required_u64(args, "--dataset-version")?);
+    let feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    let output = required_value(args, "--output")?;
+    footy_train::materialize_forecast_tsv(input, output, dataset_version, feature_set_version, true)
+}
+
+fn forecast_materialize_candidates(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let input = required_value(args, "--input")?;
+    let dataset_version = DatasetVersion(required_u64(args, "--dataset-version")?);
+    let feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    let output = required_value(args, "--output")?;
+    footy_train::materialize_forecast_tsv(input, output, dataset_version, feature_set_version, false)
+}
+
+fn forecast_fit(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let matrix = required_value(args, "--matrix")?;
+    let model_output = required_value(args, "--output")?;
+    let config = footy_train::ForecastFitConfig {
+        dataset_version: DatasetVersion(required_u64(args, "--dataset-version")?),
+        feature_set_version: FeatureSetVersion(required_u64(args, "--feature-set-version")?),
+        model_version: ModelVersion(required_u64(args, "--model-version")?),
+        calibration_version: CalibrationVersion(required_u64(args, "--calibration-version")?),
+        seed: optional_value(args, "--seed").map(str::parse).transpose()?.unwrap_or(42),
+        ridge: optional_value(args, "--ridge").map(str::parse).transpose()?.unwrap_or(1.0),
+        cutoffs: match optional_value(args, "--cutoffs") {
+            Some(value) => footy_train::parse_cutoffs(value)?,
+            None => footy_train::ForecastFitConfig::default().cutoffs,
+        },
+        horizon_days: optional_value(args, "--horizon-days").map(str::parse).transpose()?.unwrap_or(365),
+    };
+    footy_train::run_forecast_fit(matrix, model_output, &config)?;
+    Ok(())
+}
+
+fn forecast_report(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model = required_value(args, "--model")?;
+    let proposals = required_value(args, "--proposals")?;
+    let meta = required_value(args, "--meta")?;
+    let output = required_value(args, "--output")?;
+    footy_train::write_forecast_report(model, proposals, meta, output)?;
+    Ok(())
+}
+
+fn forecast_inspect(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model = required_value(args, "--model")?;
+    footy_train::inspect_forecast_model(model)?;
+    Ok(())
+}
+
+
+// ---------------------------------------------------------------------------
+// Tail-aware forecast pipeline
+// ---------------------------------------------------------------------------
+
+fn tail_fit(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let matrix = required_value(args, "--matrix")?;
+    let model_output = required_value(args, "--output")?;
+    let mut config = footy_train::TailFitConfig::default();
+    config.dataset_version = DatasetVersion(required_u64(args, "--dataset-version")?);
+    config.feature_set_version = FeatureSetVersion(required_u64(args, "--feature-set-version")?);
+    config.model_version = ModelVersion(required_u64(args, "--model-version")?);
+    config.calibration_version = CalibrationVersion(required_u64(args, "--calibration-version")?);
+    if let Some(seed) = optional_value(args, "--seed") {
+        config.seed = seed.parse()?;
+    }
+    if let Some(ridge) = optional_value(args, "--ridge") {
+        config.ridge = ridge.parse()?;
+    }
+    match (optional_value(args, "--tau"), optional_value(args, "--omega")) {
+        (Some(tau), None) => config.objective = footy_artifacts::TailObjective::Quantile { tau: tau.parse()? },
+        (None, Some(omega)) => config.objective = footy_artifacts::TailObjective::Expectile { omega: omega.parse()? },
+        (None, None) => {}
+        _ => return Err("specify at most one of --tau or --omega".into()),
+    }
+    if let Some(cutoffs) = optional_value(args, "--cutoffs") {
+        config.cutoffs = footy_train::parse_cutoffs(cutoffs)?;
+    }
+    if let Some(horizon) = optional_value(args, "--horizon-days") {
+        config.horizon_days = horizon.parse()?;
+    }
+    footy_train::run_tail_fit(matrix, model_output, &config)?;
+    Ok(())
+}
+
+fn tail_inspect(args: &[String]) -> Result<(), Box<dyn Error>> {
+    let model_path = required_value(args, "--model")?;
+    let model = footy_artifacts::read_tail_forecast_model(model_path)?;
+    let (objective_name, objective_param) = match model.objective {
+        footy_artifacts::TailObjective::Quantile { tau } => ("quantile", tau),
+        footy_artifacts::TailObjective::Expectile { omega } => ("expectile", omega),
+    };
+    println!(
+        "# tail model: version={} dataset={} feature_set={} calibration={} trained_through={} ridge={} objective={} param={} seed={}",
+        model.metadata.model_version.0,
+        model.metadata.dataset_version.0,
+        model.metadata.feature_set_version.0,
+        model.calibration_version.0,
+        format_date(model.metadata.trained_through),
+        model.ridge,
+        objective_name,
+        objective_param,
+        model.metadata.seed
+    );
+    println!(
+        "# walkforward pooled_rank_ic={} q_coverage={} q_coverage_size={} spike50={} spike100={}",
+        model.walkforward.pooled_rank_ic.map_or_else(|| "n/a".to_string(), |ic| format!("{ic:.6}")),
+        model.walkforward.q_coverage,
+        model.walkforward.q_coverage_size,
+        model.walkforward.pooled_spike50_rate,
+        model.walkforward.pooled_spike100_rate
+    );
+    println!("# decile\tcount\tmean_predicted\tmean_realized\tmean_return\tmedian_return\tspike50_rate\tspike100_rate");
+    for decile in &model.walkforward.deciles {
+        println!(
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            decile.decile,
+            decile.count,
+            decile.mean_predicted,
+            decile.mean_realized,
+            decile.mean_return,
+            decile.median_return,
+            decile.spike50_rate,
+            decile.spike100_rate
+        );
+    }
+    Ok(())
+}
