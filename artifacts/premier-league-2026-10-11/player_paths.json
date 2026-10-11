@@ -1,0 +1,3138 @@
+{
+  "as_of": "2026-10-10",
+  "caveats": [
+    "No confirmed lineups or 2026/27 player minutes; starts are random with CA/exposure priors",
+    "FM-derived event processes have not been validated on EPL player events",
+    "Player goal process anchored to independently refitted results+FM benchmark",
+    "P(any shot) per window is simulated player-event process; goals/red cards/subs are path-observed"
+  ],
+  "fixtures": [
+    {
+      "15_minute_windows": [
+        {
+          "end_of_window_outcomes": [
+            0.2777777777777778,
+            0.5416666666666666,
+            0.18055555555555555
+          ],
+          "expected_away_goals": 0.2361111111111111,
+          "expected_away_shots": 2.4027777777777777,
+          "expected_home_goals": 0.3611111111111111,
+          "expected_home_shots": 2.0,
+          "minute_end": 15,
+          "minute_start": 0,
+          "p_any_goal": 0.4861111111111111,
+          "p_away_goal": 0.2361111111111111,
+          "p_home_goal": 0.3055555555555556,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 0.06944444444444445
+        },
+        {
+          "end_of_window_outcomes": [
+            0.4027777777777778,
+            0.3611111111111111,
+            0.2361111111111111
+          ],
+          "expected_away_goals": 0.18055555555555555,
+          "expected_away_shots": 1.6388888888888888,
+          "expected_home_goals": 0.2361111111111111,
+          "expected_home_shots": 2.3333333333333335,
+          "minute_end": 30,
+          "minute_start": 15,
+          "p_any_goal": 0.3194444444444444,
+          "p_away_goal": 0.1527777777777778,
+          "p_home_goal": 0.20833333333333334,
+          "p_red_card": 0.041666666666666664,
+          "p_substitution": 0.06944444444444445
+        },
+        {
+          "end_of_window_outcomes": [
+            0.4027777777777778,
+            0.3194444444444444,
+            0.2777777777777778
+          ],
+          "expected_away_goals": 0.2361111111111111,
+          "expected_away_shots": 1.875,
+          "expected_home_goals": 0.18055555555555555,
+          "expected_home_shots": 2.013888888888889,
+          "minute_end": 45,
+          "minute_start": 30,
+          "p_any_goal": 0.3194444444444444,
+          "p_away_goal": 0.19444444444444445,
+          "p_home_goal": 0.16666666666666666,
+          "p_red_card": 0.09722222222222222,
+          "p_substitution": 0.013888888888888888
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3888888888888889,
+            0.2916666666666667,
+            0.3194444444444444
+          ],
+          "expected_away_goals": 0.125,
+          "expected_away_shots": 1.9305555555555556,
+          "expected_home_goals": 0.18055555555555555,
+          "expected_home_shots": 2.1944444444444446,
+          "minute_end": 60,
+          "minute_start": 45,
+          "p_any_goal": 0.2361111111111111,
+          "p_away_goal": 0.09722222222222222,
+          "p_home_goal": 0.1527777777777778,
+          "p_red_card": 0.09722222222222222,
+          "p_substitution": 0.5833333333333334
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3888888888888889,
+            0.2222222222222222,
+            0.3888888888888889
+          ],
+          "expected_away_goals": 0.3055555555555556,
+          "expected_away_shots": 1.75,
+          "expected_home_goals": 0.1388888888888889,
+          "expected_home_shots": 1.9027777777777777,
+          "minute_end": 75,
+          "minute_start": 60,
+          "p_any_goal": 0.3888888888888889,
+          "p_away_goal": 0.2638888888888889,
+          "p_home_goal": 0.1388888888888889,
+          "p_red_card": 0.027777777777777776,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.4583333333333333,
+            0.18055555555555555,
+            0.3611111111111111
+          ],
+          "expected_away_goals": 0.2222222222222222,
+          "expected_away_shots": 1.9583333333333333,
+          "expected_home_goals": 0.2222222222222222,
+          "expected_home_shots": 1.8472222222222223,
+          "minute_end": 90,
+          "minute_start": 75,
+          "p_any_goal": 0.3472222222222222,
+          "p_away_goal": 0.19444444444444445,
+          "p_home_goal": 0.18055555555555555,
+          "p_red_card": 0.09722222222222222,
+          "p_substitution": 0.8611111111111112
+        }
+      ],
+      "away": "Nott'm Forest",
+      "away_win": 0.3611111044883728,
+      "comparison_results_fm_model": {
+        "away_win": 0.34968150578000323,
+        "draw": 0.3265349382297813,
+        "home_win": 0.32378355599021547
+      },
+      "date": "2026-10-11",
+      "draw": 0.1805555522441864,
+      "expected_away_goals": 1.3055555555555556,
+      "expected_home_goals": 1.3194444444444444,
+      "home": "Crystal Palace",
+      "home_win": 0.4583333432674408,
+      "match_state_events_per_path": 13.541666666666666,
+      "paths": 72,
+      "players": [
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 40.36940123312301,
+          "expected_shots": 0.4722222222222222,
+          "name": "Christopher Grant Wood",
+          "start_probability": 0.3333333432674408,
+          "uid": 5108293
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 32.98389124994675,
+          "expected_shots": 0.3333333333333333,
+          "name": "Cheick Oumar Doucouré",
+          "start_probability": 0.2916666567325592,
+          "uid": 13194021
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 32.86868790098877,
+          "expected_shots": 0.06944444444444445,
+          "name": "Walter Daniel Benítez",
+          "start_probability": 0.2083333283662796,
+          "uid": 14035968
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 67.75839097452145,
+          "expected_shots": 0.6388888888888888,
+          "name": "Nicolás Martín Domínguez",
+          "start_probability": 0.8472222089767456,
+          "uid": 14077011
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 74.11257908881585,
+          "expected_shots": 0.9444444444444444,
+          "name": "Xaver Schlager",
+          "start_probability": 0.9305555820465088,
+          "uid": 16147660
+        },
+        {
+          "appearance_probability": 0.7777777910232544,
+          "expected_minutes": 58.089691388908896,
+          "expected_shots": 0.013888888888888888,
+          "name": "Matz Sels",
+          "start_probability": 0.7222222089767456,
+          "uid": 18018791
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 36.498172894509395,
+          "expected_shots": 0.4722222222222222,
+          "name": "Edward Keddar Nketiah",
+          "start_probability": 0.3472222089767456,
+          "uid": 28106687
+        },
+        {
+          "appearance_probability": 0.9722222089767456,
+          "expected_minutes": 65.65301918436572,
+          "expected_shots": 1.0972222222222223,
+          "name": "Dwight James Matthew McNeil",
+          "start_probability": 0.8055555820465088,
+          "uid": 28110488
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 67.70438251152848,
+          "expected_shots": 0.7638888888888888,
+          "name": "Tyrick Mitchell",
+          "start_probability": 0.8611111044883728,
+          "uid": 28111507
+        },
+        {
+          "appearance_probability": 0.8333333134651184,
+          "expected_minutes": 63.34683838270111,
+          "expected_shots": 1.125,
+          "name": "Callum James Hudson-Odoi",
+          "start_probability": 0.7916666865348816,
+          "uid": 28112986
+        },
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 63.15848895531591,
+          "expected_shots": 1.0416666666666667,
+          "name": "Neco Shay Williams",
+          "start_probability": 0.75,
+          "uid": 28115792
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 24.18790219821328,
+          "expected_shots": 0.1527777777777778,
+          "name": "Steven-Andreas Benda",
+          "start_probability": 0.0972222238779068,
+          "uid": 28118051
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 66.41820620815609,
+          "expected_shots": 1.1805555555555556,
+          "name": "Liam Rory Delap",
+          "start_probability": 0.8333333134651184,
+          "uid": 28126247
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 35.124060813113516,
+          "expected_shots": 0.7083333333333334,
+          "name": "James John McAtee",
+          "start_probability": 0.2638888955116272,
+          "uid": 28126249
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Daniel Gardner",
+          "start_probability": 0.0,
+          "uid": 29065375
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Remi Luke Matthews",
+          "start_probability": 0.0,
+          "uid": 29068437
+        },
+        {
+          "appearance_probability": 0.8333333134651184,
+          "expected_minutes": 61.236352285626175,
+          "expected_shots": 0.5972222222222222,
+          "name": "William James Hughes",
+          "start_probability": 0.75,
+          "uid": 29086005
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 67.50442988339448,
+          "expected_shots": 0.6805555555555556,
+          "name": "Benjamin James Chilwell",
+          "start_probability": 0.7916666865348816,
+          "uid": 29128536
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 38.3640417312098,
+          "expected_shots": 0.09722222222222222,
+          "name": "Ryan James Yates",
+          "start_probability": 0.3194444477558136,
+          "uid": 29136230
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 74.33355644783565,
+          "expected_shots": 1.0833333333333333,
+          "name": "Morgan Gibbs-White",
+          "start_probability": 0.9166666865348816,
+          "uid": 29175220
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 45.68793633277893,
+          "expected_shots": 0.3472222222222222,
+          "name": "Quinten Ryan Crispito Timber",
+          "start_probability": 0.4722222089767456,
+          "uid": 37060952
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 65.0903274560306,
+          "expected_shots": 1.1805555555555556,
+          "name": "Nicolò Savona",
+          "start_probability": 0.7777777910232544,
+          "uid": 43617691
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 72.20833593522016,
+          "expected_shots": 1.4166666666666667,
+          "name": "Daichi Kamada",
+          "start_probability": 0.8888888955116272,
+          "uid": 45092714
+        },
+        {
+          "appearance_probability": 0.8333333134651184,
+          "expected_minutes": 63.08505216702642,
+          "expected_shots": 0.4722222222222222,
+          "name": "Ibrahim Sangaré",
+          "start_probability": 0.7916666865348816,
+          "uid": 48042717
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 67.26721827657207,
+          "expected_shots": 1.4444444444444444,
+          "name": "Ismaïla Sarr",
+          "start_probability": 0.8472222089767456,
+          "uid": 48042766
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 62.54720475810522,
+          "expected_shots": 1.0555555555555556,
+          "name": "Evann Guessand",
+          "start_probability": 0.75,
+          "uid": 49041006
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 42.87666821158521,
+          "expected_shots": 0.6944444444444444,
+          "name": "Arnaud Kalimuendo Muinga",
+          "start_probability": 0.4166666567325592,
+          "uid": 49048445
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 66.27917776632279,
+          "expected_shots": 0.6111111111111112,
+          "name": "Nikola Milenković",
+          "start_probability": 0.8472222089767456,
+          "uid": 62191195
+        },
+        {
+          "appearance_probability": 0.9722222089767456,
+          "expected_minutes": 75.46188530061325,
+          "expected_shots": 1.2777777777777777,
+          "name": "Óscar Mingueza García",
+          "start_probability": 0.9305555820465088,
+          "uid": 67245413
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 37.95484627719592,
+          "expected_shots": 0.125,
+          "name": "Yeremy Jesús Pino Santos",
+          "start_probability": 0.3333333432674408,
+          "uid": 67295650
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 72.5321640291243,
+          "expected_shots": 0.5138888888888888,
+          "name": "Christopher Jeffrey Richards",
+          "start_probability": 0.8888888955116272,
+          "uid": 72051563
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 38.03503352548142,
+          "expected_shots": 0.5694444444444444,
+          "name": "Daniel Muñoz Mejía",
+          "start_probability": 0.3194444477558136,
+          "uid": 76050675
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 72.89254260540375,
+          "expected_shots": 0.8194444444444444,
+          "name": "Adam James Wharton",
+          "start_probability": 0.8888888955116272,
+          "uid": 2000053516
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 22.857241153547168,
+          "expected_shots": 0.09722222222222222,
+          "name": "Aaron Charlie Bott",
+          "start_probability": 0.0972222238779068,
+          "uid": 2000109147
+        },
+        {
+          "appearance_probability": 0.6388888955116272,
+          "expected_minutes": 48.497597754299925,
+          "expected_shots": 0.6388888888888888,
+          "name": "Darío Esteban Osorio Osorio",
+          "start_probability": 0.5972222089767456,
+          "uid": 2000129380
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "David Ikechukwu Ozoh",
+          "start_probability": 0.0,
+          "uid": 2000140844
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Romain Joy Kouakou Esse",
+          "start_probability": 0.0,
+          "uid": 2000142236
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jamie Christoper Newton",
+          "start_probability": 0.0,
+          "uid": 2000149239
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 75.2698175330226,
+          "expected_shots": 0.4722222222222222,
+          "name": "Ousmane Diomande",
+          "start_probability": 0.9444444179534912,
+          "uid": 2000160511
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Luke Campbell",
+          "start_probability": 0.0,
+          "uid": 2000184615
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 31.034570698092963,
+          "expected_shots": 0.2916666666666667,
+          "name": "Jaydee Bruce Hamady Canvot",
+          "start_probability": 0.1805555522441864,
+          "uid": 2000187623
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Joseph Finbarr Gibbard",
+          "start_probability": 0.0,
+          "uid": 2000216080
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Caleb Billy Mawuko Kporha",
+          "start_probability": 0.0,
+          "uid": 2000216101
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Keehan Martyn Willows",
+          "start_probability": 0.0,
+          "uid": 2000222769
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Archie Harry Thomas Whitehall",
+          "start_probability": 0.0,
+          "uid": 2000222837
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Zavier Didier Tapei Gozo",
+          "start_probability": 0.0,
+          "uid": 2000239554
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Blaine McClure",
+          "start_probability": 0.0,
+          "uid": 2000251028
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kristian Takura Clarke",
+          "start_probability": 0.0,
+          "uid": 2000281054
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "David Dennis Ayodeji Richard Christiano Modupe",
+          "start_probability": 0.0,
+          "uid": 2000281056
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Sebastian Williams",
+          "start_probability": 0.0,
+          "uid": 2000293621
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Tyler Shae Whyte",
+          "start_probability": 0.0,
+          "uid": 2000293623
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kai-Reece Adams-Collman",
+          "start_probability": 0.0,
+          "uid": 2000293625
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "George Callum Michael King",
+          "start_probability": 0.0,
+          "uid": 2000293629
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Marcus Edward James Hill",
+          "start_probability": 0.0,
+          "uid": 2000293632
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Charlie George Walker-Smith",
+          "start_probability": 0.0,
+          "uid": 2000313318
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Benjamin Omena Akpowubrunei Casey",
+          "start_probability": 0.0,
+          "uid": 2000359695
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Zyan Julius Blake",
+          "start_probability": 0.0,
+          "uid": 2000369120
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ethan Broomes",
+          "start_probability": 0.0,
+          "uid": 2000369127
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Frank Evans Ngatang Djamna",
+          "start_probability": 0.0,
+          "uid": 2000369128
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Fuad Ayorinde Smith",
+          "start_probability": 0.0,
+          "uid": 2000369131
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jordan Willows",
+          "start_probability": 0.0,
+          "uid": 2000369134
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Chukwunonyelum Uchenna Amob Okoli",
+          "start_probability": 0.0,
+          "uid": 2000380861
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oreoluwatomiwa Sean Somade",
+          "start_probability": 0.0,
+          "uid": 2000380864
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "David Alun Angibeaud Montjen",
+          "start_probability": 0.0,
+          "uid": 2000380875
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jasper Judd",
+          "start_probability": 0.0,
+          "uid": 2000380876
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Euan Maurice Danaher",
+          "start_probability": 0.0,
+          "uid": 2000380877
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Dean Benamar",
+          "start_probability": 0.0,
+          "uid": 2000380878
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jayden Powell",
+          "start_probability": 0.0,
+          "uid": 2000386746
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 28.998223888061627,
+          "expected_shots": 0.3472222222222222,
+          "name": "Honest Ahanor",
+          "start_probability": 0.1666666716337204,
+          "uid": 2000400123
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Toby Williams",
+          "start_probability": 0.0,
+          "uid": 2000416374
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kalum Thompson",
+          "start_probability": 0.0,
+          "uid": 2000445433
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Joél Jason Drakes-Thomas",
+          "start_probability": 0.0,
+          "uid": 2000451471
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Donte Tyrel Leshawn Martin",
+          "start_probability": 0.0,
+          "uid": 2000451472
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jacob Ayomide Fasida",
+          "start_probability": 0.0,
+          "uid": 2000451473
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Basima Balagizi",
+          "start_probability": 0.0,
+          "uid": 2000479067
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harvey Andrews",
+          "start_probability": 0.0,
+          "uid": 2000479068
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kanye Bradshaw",
+          "start_probability": 0.0,
+          "uid": 2000479070
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Eleazar Lokote",
+          "start_probability": 0.0,
+          "uid": 2000479071
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Riko Robinson",
+          "start_probability": 0.0,
+          "uid": 2000479073
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Shakur Samuels",
+          "start_probability": 0.0,
+          "uid": 2000479074
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Spencer Sutton",
+          "start_probability": 0.0,
+          "uid": 2000479075
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ajean-Ray Anthony Greaves",
+          "start_probability": 0.0,
+          "uid": 2000485629
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oladotun Sherif Lamidi",
+          "start_probability": 0.0,
+          "uid": 2000485630
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jayden Lloyd McDonald",
+          "start_probability": 0.0,
+          "uid": 2000485631
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Daniel Owoade",
+          "start_probability": 0.0,
+          "uid": 2000485633
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Makai Keon Hugh Bernard-Ferguson",
+          "start_probability": 0.0,
+          "uid": 2000485634
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Khyan Kayne Frazer-Williams",
+          "start_probability": 0.0,
+          "uid": 2000502215
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Gabriel Schluter",
+          "start_probability": 0.0,
+          "uid": 2000516189
+        }
+      ],
+      "registered_fm_players": {
+        "away": 41,
+        "home": 47
+      },
+      "same_second_collision_probability": 0.0555555559694767,
+      "seed": 42
+    },
+    {
+      "15_minute_windows": [
+        {
+          "end_of_window_outcomes": [
+            0.125,
+            0.8472222222222222,
+            0.027777777777777776
+          ],
+          "expected_away_goals": 0.027777777777777776,
+          "expected_away_shots": 2.1805555555555554,
+          "expected_home_goals": 0.1527777777777778,
+          "expected_home_shots": 1.9861111111111112,
+          "minute_end": 15,
+          "minute_start": 0,
+          "p_any_goal": 0.1527777777777778,
+          "p_away_goal": 0.027777777777777776,
+          "p_home_goal": 0.125,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 0.041666666666666664
+        },
+        {
+          "end_of_window_outcomes": [
+            0.1527777777777778,
+            0.7361111111111112,
+            0.1111111111111111
+          ],
+          "expected_away_goals": 0.08333333333333333,
+          "expected_away_shots": 2.361111111111111,
+          "expected_home_goals": 0.05555555555555555,
+          "expected_home_shots": 1.5138888888888888,
+          "minute_end": 30,
+          "minute_start": 15,
+          "p_any_goal": 0.125,
+          "p_away_goal": 0.08333333333333333,
+          "p_home_goal": 0.041666666666666664,
+          "p_red_card": 0.041666666666666664,
+          "p_substitution": 0.027777777777777776
+        },
+        {
+          "end_of_window_outcomes": [
+            0.2638888888888889,
+            0.5555555555555556,
+            0.18055555555555555
+          ],
+          "expected_away_goals": 0.09722222222222222,
+          "expected_away_shots": 1.9305555555555556,
+          "expected_home_goals": 0.1111111111111111,
+          "expected_home_shots": 1.625,
+          "minute_end": 45,
+          "minute_start": 30,
+          "p_any_goal": 0.20833333333333334,
+          "p_away_goal": 0.09722222222222222,
+          "p_home_goal": 0.1111111111111111,
+          "p_red_card": 0.1388888888888889,
+          "p_substitution": 0.06944444444444445
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3055555555555556,
+            0.4722222222222222,
+            0.2222222222222222
+          ],
+          "expected_away_goals": 0.09722222222222222,
+          "expected_away_shots": 2.3333333333333335,
+          "expected_home_goals": 0.1111111111111111,
+          "expected_home_shots": 1.8333333333333333,
+          "minute_end": 60,
+          "minute_start": 45,
+          "p_any_goal": 0.18055555555555555,
+          "p_away_goal": 0.08333333333333333,
+          "p_home_goal": 0.09722222222222222,
+          "p_red_card": 0.06944444444444445,
+          "p_substitution": 0.5138888888888888
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3888888888888889,
+            0.3611111111111111,
+            0.25
+          ],
+          "expected_away_goals": 0.1388888888888889,
+          "expected_away_shots": 2.3472222222222223,
+          "expected_home_goals": 0.1388888888888889,
+          "expected_home_shots": 1.8888888888888888,
+          "minute_end": 75,
+          "minute_start": 60,
+          "p_any_goal": 0.2222222222222222,
+          "p_away_goal": 0.125,
+          "p_home_goal": 0.125,
+          "p_red_card": 0.06944444444444445,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3888888888888889,
+            0.3055555555555556,
+            0.3055555555555556
+          ],
+          "expected_away_goals": 0.18055555555555555,
+          "expected_away_shots": 2.2916666666666665,
+          "expected_home_goals": 0.08333333333333333,
+          "expected_home_shots": 1.7361111111111112,
+          "minute_end": 90,
+          "minute_start": 75,
+          "p_any_goal": 0.2222222222222222,
+          "p_away_goal": 0.16666666666666666,
+          "p_home_goal": 0.08333333333333333,
+          "p_red_card": 0.041666666666666664,
+          "p_substitution": 0.8888888888888888
+        }
+      ],
+      "away": "Everton",
+      "away_win": 0.3055555522441864,
+      "comparison_results_fm_model": {
+        "away_win": 0.2283494456660275,
+        "draw": 0.4026478817876574,
+        "home_win": 0.3690026725463151
+      },
+      "date": "2026-10-11",
+      "draw": 0.3055555522441864,
+      "expected_away_goals": 0.625,
+      "expected_home_goals": 0.6527777777777778,
+      "home": "Hull",
+      "home_win": 0.3888888955116272,
+      "match_state_events_per_path": 12.11111111111111,
+      "paths": 72,
+      "players": [
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 29.470135440496318,
+          "expected_shots": 0.2361111111111111,
+          "name": "James Russell",
+          "start_probability": 0.2222222238779068,
+          "uid": 5007413
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 40.590028775254986,
+          "expected_shots": 0.875,
+          "name": "Carlos Jonás Alcaraz Duran",
+          "start_probability": 0.3611111044883728,
+          "uid": 14238164
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 67.68213844196379,
+          "expected_shots": 0.8611111111111112,
+          "name": "Christian Thers Nørgaard",
+          "start_probability": 0.8333333134651184,
+          "uid": 27039017
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "John Egan",
+          "start_probability": 0.0,
+          "uid": 28044428
+        },
+        {
+          "appearance_probability": 0.8333333134651184,
+          "expected_minutes": 65.6417707220792,
+          "expected_shots": 0.4583333333333333,
+          "name": "Michael Keane",
+          "start_probability": 0.8055555820465088,
+          "uid": 28047558
+        },
+        {
+          "appearance_probability": 0.9722222089767456,
+          "expected_minutes": 76.24564049510099,
+          "expected_shots": 0.06944444444444445,
+          "name": "Jordan Lee Pickford",
+          "start_probability": 0.9722222089767456,
+          "uid": 28054565
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 75.86010498980791,
+          "expected_shots": 1.3333333333333333,
+          "name": "Jack Peter Grealish",
+          "start_probability": 0.9166666865348816,
+          "uid": 28067800
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Patrick James Coleman McNair",
+          "start_probability": 0.0,
+          "uid": 28068190
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 69.99254408281409,
+          "expected_shots": 1.0138888888888888,
+          "name": "Ainsley Cory Maitland-Niles",
+          "start_probability": 0.875,
+          "uid": 28095584
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 72.46887384024166,
+          "expected_shots": 1.7361111111111112,
+          "name": "Kiernan Frank Dewsbury-Hall",
+          "start_probability": 0.9027777910232544,
+          "uid": 28106342
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 71.11294483330788,
+          "expected_shots": 1.1944444444444444,
+          "name": "James David Garner",
+          "start_probability": 0.9027777910232544,
+          "uid": 28115831
+        },
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 57.025732926171564,
+          "expected_shots": 0.4861111111111111,
+          "name": "James Tarkowski",
+          "start_probability": 0.7361111044883728,
+          "uid": 29055569
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 39.235547150594726,
+          "expected_shots": 0.5138888888888888,
+          "name": "Matt Davidson Rider Crooks",
+          "start_probability": 0.3333333432674408,
+          "uid": 29071649
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 29.711629694035725,
+          "expected_shots": 0.18055555555555555,
+          "name": "Dillon Phillips",
+          "start_probability": 0.2083333283662796,
+          "uid": 29077899
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Thomas Lloyd King",
+          "start_probability": 0.0,
+          "uid": 29087448
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 67.27867859465572,
+          "expected_shots": 0.9861111111111112,
+          "name": "Oliver Robert McBurnie",
+          "start_probability": 0.8611111044883728,
+          "uid": 29108066
+        },
+        {
+          "appearance_probability": 0.7916666865348816,
+          "expected_minutes": 28.847915469055643,
+          "expected_shots": 0.375,
+          "name": "Lewie Jacob Coyle",
+          "start_probability": 0.1944444477558136,
+          "uid": 29113877
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 35.160275827065476,
+          "expected_shots": 0.3888888888888889,
+          "name": "Ryan John Giles",
+          "start_probability": 0.2916666567325592,
+          "uid": 29175223
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 31.691777251149574,
+          "expected_shots": 0.3055555555555556,
+          "name": "Regan Slater",
+          "start_probability": 0.2361111044883728,
+          "uid": 29180952
+        },
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 59.984146813386964,
+          "expected_shots": 1.125,
+          "name": "Brennan Price Johnson",
+          "start_probability": 0.7361111044883728,
+          "uid": 29189400
+        },
+        {
+          "appearance_probability": 0.8194444179534912,
+          "expected_minutes": 32.06582276630198,
+          "expected_shots": 0.4722222222222222,
+          "name": "Hayden Rhys Hackney",
+          "start_probability": 0.25,
+          "uid": 29218024
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 44.566678853427526,
+          "expected_shots": 0.4444444444444444,
+          "name": "Jarrad Branthwaite",
+          "start_probability": 0.4444444477558136,
+          "uid": 29226000
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 75.32974572201233,
+          "expected_shots": 0.06944444444444445,
+          "name": "Konstantinos Tzolakis",
+          "start_probability": 0.9166666865348816,
+          "uid": 36149384
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 75.77278141001149,
+          "expected_shots": 1.0555555555555556,
+          "name": "Hidemasa Morita",
+          "start_probability": 0.9444444179534912,
+          "uid": 45109174
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 69.69070381538728,
+          "expected_shots": 0.3611111111111111,
+          "name": "Lucas Gourna-Douath",
+          "start_probability": 0.8472222089767456,
+          "uid": 49056367
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 68.04344991074124,
+          "expected_shots": 0.6388888888888888,
+          "name": "Jake O'Brien",
+          "start_probability": 0.8611111044883728,
+          "uid": 52101552
+        },
+        {
+          "appearance_probability": 0.8333333134651184,
+          "expected_minutes": 51.734076956755956,
+          "expected_shots": 0.6388888888888888,
+          "name": "Abdülkadir Ömür",
+          "start_probability": 0.6111111044883728,
+          "uid": 70099762
+        },
+        {
+          "appearance_probability": 0.8333333134651184,
+          "expected_minutes": 29.980347381919103,
+          "expected_shots": 0.3194444444444444,
+          "name": "Merlin Röhl",
+          "start_probability": 0.1944444477558136,
+          "uid": 91204520
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Elliot Stroud",
+          "start_probability": 0.0,
+          "uid": 93144119
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Benjamin Sorba William Thomas",
+          "start_probability": 0.0,
+          "uid": 95040497
+        },
+        {
+          "appearance_probability": 0.9722222089767456,
+          "expected_minutes": 72.5921574224847,
+          "expected_shots": 0.9583333333333334,
+          "name": "Timothy Emeka Iroegbunam",
+          "start_probability": 0.875,
+          "uid": 292380027
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 77.51510252812675,
+          "expected_shots": 0.9305555555555556,
+          "name": "Brooke Norton-Cuffy",
+          "start_probability": 0.9583333134651184,
+          "uid": 2000047226
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 64.60028258561735,
+          "expected_shots": 0.625,
+          "name": "Charles Roger Hughes",
+          "start_probability": 0.7916666865348816,
+          "uid": 2000050618
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Fraser Barnsley",
+          "start_probability": 0.0,
+          "uid": 2000096851
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ezra Sheridan Carrington",
+          "start_probability": 0.0,
+          "uid": 2000106509
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 64.01205053080007,
+          "expected_shots": 1.125,
+          "name": "Thierno Mamadou Barry",
+          "start_probability": 0.7777777910232544,
+          "uid": 2000127926
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 65.63655032927595,
+          "expected_shots": 0.2222222222222222,
+          "name": "Nobel Mendy",
+          "start_probability": 0.8333333134651184,
+          "uid": 2000138305
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 25.99925303870536,
+          "expected_shots": 0.3611111111111111,
+          "name": "Jens Hjertø-Dahl",
+          "start_probability": 0.1666666716337204,
+          "uid": 2000170106
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 66.5385366887113,
+          "expected_shots": 1.2777777777777777,
+          "name": "Mohamed Elbachir Belloumi",
+          "start_probability": 0.7916666865348816,
+          "uid": 2000184286
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 27.564966583486,
+          "expected_shots": 0.2777777777777778,
+          "name": "Tyrique Aaron Delali Yusuff George",
+          "start_probability": 0.125,
+          "uid": 2000184619
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 72.46328063769575,
+          "expected_shots": 1.0972222222222223,
+          "name": "Ilyas Ansah",
+          "start_probability": 0.9166666865348816,
+          "uid": 2000196762
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 35.010938321791805,
+          "expected_shots": 0.7638888888888888,
+          "name": "Tyler-Jay Dibling",
+          "start_probability": 0.2638888955116272,
+          "uid": 2000198043
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "William Tamen",
+          "start_probability": 0.0,
+          "uid": 2000205311
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Martin Sherif",
+          "start_probability": 0.0,
+          "uid": 2000215448
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Callum Bates",
+          "start_probability": 0.0,
+          "uid": 2000215453
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Odin Samuels-Smith",
+          "start_probability": 0.0,
+          "uid": 2000215454
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Omari Benjamin",
+          "start_probability": 0.0,
+          "uid": 2000216562
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Braiden Graham",
+          "start_probability": 0.0,
+          "uid": 2000252560
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Archie Howard",
+          "start_probability": 0.0,
+          "uid": 2000256276
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lucas Herrington",
+          "start_probability": 0.0,
+          "uid": 2000263936
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Damari Daley",
+          "start_probability": 0.0,
+          "uid": 2000284198
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harvey Foster",
+          "start_probability": 0.0,
+          "uid": 2000288696
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 20.695076008606932,
+          "expected_shots": 0.25,
+          "name": "Harrison David Armstrong",
+          "start_probability": 0.0416666679084301,
+          "uid": 2000288697
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Joshua van Schoor",
+          "start_probability": 0.0,
+          "uid": 2000288698
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Aled Thomas",
+          "start_probability": 0.0,
+          "uid": 2000288699
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Luca Davis",
+          "start_probability": 0.0,
+          "uid": 2000288700
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "George Finney",
+          "start_probability": 0.0,
+          "uid": 2000288701
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "George Pickford",
+          "start_probability": 0.0,
+          "uid": 2000288702
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "George Goodman",
+          "start_probability": 0.0,
+          "uid": 2000299818
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ceiran Loney",
+          "start_probability": 0.0,
+          "uid": 2000365564
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Calvin Okike",
+          "start_probability": 0.0,
+          "uid": 2000378348
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Khiani Hrukti Toju Ofuyaekpone-Shombe",
+          "start_probability": 0.0,
+          "uid": 2000381315
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jaykar Justin Donte Clarke",
+          "start_probability": 0.0,
+          "uid": 2000396129
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Melvin Wiafe Akenten Matos",
+          "start_probability": 0.0,
+          "uid": 2000411484
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Luis John Gardner",
+          "start_probability": 0.0,
+          "uid": 2000411485
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Rocco Marlo Lambert",
+          "start_probability": 0.0,
+          "uid": 2000411489
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Douglass Lukjanciks",
+          "start_probability": 0.0,
+          "uid": 2000411492
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Francis Gomez Tambadou",
+          "start_probability": 0.0,
+          "uid": 2000411859
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kerr Reynolds",
+          "start_probability": 0.0,
+          "uid": 2000470403
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Bobby Moore",
+          "start_probability": 0.0,
+          "uid": 2000484098
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Albert Matique",
+          "start_probability": 0.0,
+          "uid": 2000484100
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "John Roderick Daniel Dodds",
+          "start_probability": 0.0,
+          "uid": 2000498183
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harvey Billington",
+          "start_probability": 0.0,
+          "uid": 2000498184
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Malik Olayiwola",
+          "start_probability": 0.0,
+          "uid": 2000498185
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Freddie Murdock",
+          "start_probability": 0.0,
+          "uid": 2000498186
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Shea Pita",
+          "start_probability": 0.0,
+          "uid": 2000498187
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Amari Moses",
+          "start_probability": 0.0,
+          "uid": 2000498188
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Reuben Gokah",
+          "start_probability": 0.0,
+          "uid": 2000507889
+        }
+      ],
+      "registered_fm_players": {
+        "away": 47,
+        "home": 31
+      },
+      "same_second_collision_probability": 0.013888888992369175,
+      "seed": 43
+    },
+    {
+      "15_minute_windows": [
+        {
+          "end_of_window_outcomes": [
+            0.16666666666666666,
+            0.6944444444444444,
+            0.1388888888888889
+          ],
+          "expected_away_goals": 0.16666666666666666,
+          "expected_away_shots": 2.0694444444444446,
+          "expected_home_goals": 0.20833333333333334,
+          "expected_home_shots": 2.4027777777777777,
+          "minute_end": 15,
+          "minute_start": 0,
+          "p_any_goal": 0.3333333333333333,
+          "p_away_goal": 0.16666666666666666,
+          "p_home_goal": 0.19444444444444445,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 0.027777777777777776
+        },
+        {
+          "end_of_window_outcomes": [
+            0.2638888888888889,
+            0.5,
+            0.2361111111111111
+          ],
+          "expected_away_goals": 0.19444444444444445,
+          "expected_away_shots": 1.9583333333333333,
+          "expected_home_goals": 0.2222222222222222,
+          "expected_home_shots": 2.263888888888889,
+          "minute_end": 30,
+          "minute_start": 15,
+          "p_any_goal": 0.3333333333333333,
+          "p_away_goal": 0.19444444444444445,
+          "p_home_goal": 0.18055555555555555,
+          "p_red_card": 0.06944444444444445,
+          "p_substitution": 0.06944444444444445
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3333333333333333,
+            0.3333333333333333,
+            0.3333333333333333
+          ],
+          "expected_away_goals": 0.3333333333333333,
+          "expected_away_shots": 1.9722222222222223,
+          "expected_home_goals": 0.2916666666666667,
+          "expected_home_shots": 2.138888888888889,
+          "minute_end": 45,
+          "minute_start": 30,
+          "p_any_goal": 0.4583333333333333,
+          "p_away_goal": 0.2638888888888889,
+          "p_home_goal": 0.25,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 0.1111111111111111
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3611111111111111,
+            0.2361111111111111,
+            0.4027777777777778
+          ],
+          "expected_away_goals": 0.375,
+          "expected_away_shots": 2.1666666666666665,
+          "expected_home_goals": 0.2222222222222222,
+          "expected_home_shots": 2.4305555555555554,
+          "minute_end": 60,
+          "minute_start": 45,
+          "p_any_goal": 0.4583333333333333,
+          "p_away_goal": 0.2777777777777778,
+          "p_home_goal": 0.20833333333333334,
+          "p_red_card": 0.041666666666666664,
+          "p_substitution": 0.6111111111111112
+        },
+        {
+          "end_of_window_outcomes": [
+            0.3333333333333333,
+            0.2222222222222222,
+            0.4444444444444444
+          ],
+          "expected_away_goals": 0.2777777777777778,
+          "expected_away_shots": 2.3333333333333335,
+          "expected_home_goals": 0.20833333333333334,
+          "expected_home_shots": 1.8055555555555556,
+          "minute_end": 75,
+          "minute_start": 60,
+          "p_any_goal": 0.3888888888888889,
+          "p_away_goal": 0.2638888888888889,
+          "p_home_goal": 0.19444444444444445,
+          "p_red_card": 0.041666666666666664,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.375,
+            0.18055555555555555,
+            0.4444444444444444
+          ],
+          "expected_away_goals": 0.2916666666666667,
+          "expected_away_shots": 1.7638888888888888,
+          "expected_home_goals": 0.2777777777777778,
+          "expected_home_shots": 2.0,
+          "minute_end": 90,
+          "minute_start": 75,
+          "p_any_goal": 0.4305555555555556,
+          "p_away_goal": 0.25,
+          "p_home_goal": 0.25,
+          "p_red_card": 0.125,
+          "p_substitution": 0.8472222222222222
+        }
+      ],
+      "away": "Man City",
+      "away_win": 0.4444444477558136,
+      "comparison_results_fm_model": {
+        "away_win": 0.437815992439084,
+        "draw": 0.28023191002496467,
+        "home_win": 0.28195209753595135
+      },
+      "date": "2026-10-11",
+      "draw": 0.1805555522441864,
+      "expected_away_goals": 1.6388888888888888,
+      "expected_home_goals": 1.4305555555555556,
+      "home": "Liverpool",
+      "home_win": 0.375,
+      "match_state_events_per_path": 13.958333333333334,
+      "paths": 72,
+      "players": [
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 62.822951198598304,
+          "expected_shots": 0.08333333333333333,
+          "name": "Gerónimo Rulli",
+          "start_probability": 0.7777777910232544,
+          "uid": 14030119
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 67.31266029237882,
+          "expected_shots": 1.5277777777777777,
+          "name": "Enzo Jeremías Fernández",
+          "start_probability": 0.8611111044883728,
+          "uid": 14229525
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 69.59172037842546,
+          "expected_shots": 1.2222222222222223,
+          "name": "Dominik Szoboszlai",
+          "start_probability": 0.8888888955116272,
+          "uid": 16202373
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 65.35727733938973,
+          "expected_shots": 1.2361111111111112,
+          "name": "Joško Gvardiol",
+          "start_probability": 0.8194444179534912,
+          "uid": 24060473
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 30.51460869323292,
+          "expected_shots": 0.09722222222222222,
+          "name": "Marcus Bettinelli",
+          "start_probability": 0.2083333283662796,
+          "uid": 28021778
+        },
+        {
+          "appearance_probability": 0.8194444179534912,
+          "expected_minutes": 24.161063691526007,
+          "expected_shots": 0.09722222222222222,
+          "name": "Frederick John Woodman",
+          "start_probability": 0.0972222238779068,
+          "uid": 28091347
+        },
+        {
+          "appearance_probability": 0.9861111044883728,
+          "expected_minutes": 77.50901800246413,
+          "expected_shots": 0.7777777777777778,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "start_probability": 0.9722222089767456,
+          "uid": 28108033
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 69.24538834992879,
+          "expected_shots": 0.09722222222222222,
+          "name": "Vítězslav Jaroš",
+          "start_probability": 0.875,
+          "uid": 28116414
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 72.01271522803334,
+          "expected_shots": 0.18055555555555555,
+          "name": "Elliot Anderson",
+          "start_probability": 0.9027777910232544,
+          "uid": 28127254
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 76.48757923266407,
+          "expected_shots": 1.8333333333333333,
+          "name": "Erling Braut Haaland",
+          "start_probability": 0.9166666865348816,
+          "uid": 29179241
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 64.98777659946388,
+          "expected_shots": 1.5277777777777777,
+          "name": "Antoine Serlom Semenyo",
+          "start_probability": 0.8055555820465088,
+          "uid": 29194724
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 74.82682337708658,
+          "expected_shots": 0.7916666666666666,
+          "name": "Virgil van Dijk",
+          "start_probability": 0.9305555820465088,
+          "uid": 37024025
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 73.56287987789389,
+          "expected_shots": 1.3472222222222223,
+          "name": "Ryan Jiro Gravenberch",
+          "start_probability": 0.9444444179534912,
+          "uid": 37071197
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 67.58630308705452,
+          "expected_shots": 0.09722222222222222,
+          "name": "Gianluigi Donnarumma",
+          "start_probability": 0.8472222089767456,
+          "uid": 43252073
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 67.83102545170539,
+          "expected_shots": 1.3194444444444444,
+          "name": "Rayan Aït-Nouri",
+          "start_probability": 0.8194444179534912,
+          "uid": 49047581
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 74.12555819738462,
+          "expected_shots": 1.7361111111111112,
+          "name": "Bradley Barcola",
+          "start_probability": 0.9166666865348816,
+          "uid": 49056282
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 71.83251632966987,
+          "expected_shots": 0.4583333333333333,
+          "name": "Rúben Santos Gato Alves Dias",
+          "start_probability": 0.9027777910232544,
+          "uid": 55070299
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 69.67220982776041,
+          "expected_shots": 0.08333333333333333,
+          "name": "Giorgi Mamardashvili",
+          "start_probability": 0.8333333134651184,
+          "uid": 59138294
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Matthew Wright",
+          "start_probability": 0.0,
+          "uid": 61094151
+        },
+        {
+          "appearance_probability": 0.9861111044883728,
+          "expected_minutes": 75.01314021379632,
+          "expected_shots": 0.7777777777777778,
+          "name": "Ronald Federico Araujo Da Silva",
+          "start_probability": 0.9305555820465088,
+          "uid": 78085068
+        },
+        {
+          "appearance_probability": 0.8194444179534912,
+          "expected_minutes": 21.27076824214643,
+          "expected_shots": 0.2638888888888889,
+          "name": "Joseph Gómez",
+          "start_probability": 0.0694444477558136,
+          "uid": 82082339
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 78.89674124067913,
+          "expected_shots": 1.75,
+          "name": "Florian Richard Wirtz",
+          "start_probability": 1.0,
+          "uid": 91193048
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 68.64047837121974,
+          "expected_shots": 0.9583333333333334,
+          "name": "Miloš Kerkez",
+          "start_probability": 0.8472222089767456,
+          "uid": 2000011147
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 36.35562030127476,
+          "expected_shots": 0.4027777777777778,
+          "name": "Luke Chambers",
+          "start_probability": 0.2916666567325592,
+          "uid": 2000049215
+        },
+        {
+          "appearance_probability": 0.8194444179534912,
+          "expected_minutes": 25.420630771830062,
+          "expected_shots": 0.5694444444444444,
+          "name": "Claudio Jeremías Echeverri",
+          "start_probability": 0.125,
+          "uid": 2000094152
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 59.40034837788559,
+          "expected_shots": 0.625,
+          "name": "Jérémy Jacquet",
+          "start_probability": 0.75,
+          "uid": 2000094886
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 39.2154914613577,
+          "expected_shots": 0.4166666666666667,
+          "name": "Rico Mark Lewis",
+          "start_probability": 0.3611111044883728,
+          "uid": 2000098727
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 42.66540352610095,
+          "expected_shots": 0.6805555555555556,
+          "name": "Nico O'Reilly",
+          "start_probability": 0.4027777910232544,
+          "uid": 2000101285
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 32.900020627166874,
+          "expected_shots": 0.4305555555555556,
+          "name": "James William McConnell",
+          "start_probability": 0.2361111044883728,
+          "uid": 2000108364
+        },
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 27.943590122818428,
+          "expected_shots": 0.25,
+          "name": "Isaac Angus Mabaya",
+          "start_probability": 0.1805555522441864,
+          "uid": 2000108376
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 63.92729696761765,
+          "expected_shots": 1.3055555555555556,
+          "name": "Víctor Muñoz Villanueva",
+          "start_probability": 0.8055555820465088,
+          "uid": 2000126470
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 66.10544186022432,
+          "expected_shots": 0.7916666666666666,
+          "name": "Abdukodir Khusanov",
+          "start_probability": 0.8194444179534912,
+          "uid": 2000168014
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Wellity Lucky Omoruyi",
+          "start_probability": 0.0,
+          "uid": 2000191774
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Michael Mark Paul Laffey",
+          "start_probability": 0.0,
+          "uid": 2000191792
+        },
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 29.420920551880677,
+          "expected_shots": 0.4305555555555556,
+          "name": "Lewis Terence Koumas",
+          "start_probability": 0.1944444477558136,
+          "uid": 2000191802
+        },
+        {
+          "appearance_probability": 0.7916666865348816,
+          "expected_minutes": 28.89285150973585,
+          "expected_shots": 0.4722222222222222,
+          "name": "Jayden Alexander Danns",
+          "start_probability": 0.2083333283662796,
+          "uid": 2000191846
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harrison Percival Parker",
+          "start_probability": 0.0,
+          "uid": 2000272785
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lucas Pitt",
+          "start_probability": 0.0,
+          "uid": 2000276738
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Clae Ewing",
+          "start_probability": 0.0,
+          "uid": 2000276770
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kian Lee Noble",
+          "start_probability": 0.0,
+          "uid": 2000282868
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Rhys Lloyd Thomas",
+          "start_probability": 0.0,
+          "uid": 2000282899
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oliver Louis Tevenan",
+          "start_probability": 0.0,
+          "uid": 2000282906
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oluwafemi David Adetayo Fapetu",
+          "start_probability": 0.0,
+          "uid": 2000283424
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Noah Adekoya",
+          "start_probability": 0.0,
+          "uid": 2000285680
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Mahamadou Sangaré",
+          "start_probability": 0.0,
+          "uid": 2000288733
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Matthew James Henderson-Hall",
+          "start_probability": 0.0,
+          "uid": 2000296039
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Brooklyn Nfonkeu Feuba",
+          "start_probability": 0.0,
+          "uid": 2000296461
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 35.13137151890321,
+          "expected_shots": 0.1388888888888889,
+          "name": "Ayyoub Bouaddi",
+          "start_probability": 0.2638888955116272,
+          "uid": 2000381365
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "William Wright",
+          "start_probability": 0.0,
+          "uid": 2000388194
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Max-Edgar Chabot",
+          "start_probability": 0.0,
+          "uid": 2000392591
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Bailey Hall",
+          "start_probability": 0.0,
+          "uid": 2000399741
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oliver O'Connor",
+          "start_probability": 0.0,
+          "uid": 2000399794
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ryan Cowley",
+          "start_probability": 0.0,
+          "uid": 2000399824
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Prince Kobé Cissé",
+          "start_probability": 0.0,
+          "uid": 2000399858
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Alvin Ayman",
+          "start_probability": 0.0,
+          "uid": 2000399893
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 22.47575299023725,
+          "expected_shots": 0.2916666666666667,
+          "name": "Kaden Elliot Braithwaite",
+          "start_probability": 0.0833333358168602,
+          "uid": 2000415453
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 23.56704215094685,
+          "expected_shots": 0.2361111111111111,
+          "name": "Ryan Kelly McAidoo",
+          "start_probability": 0.1111111119389534,
+          "uid": 2000416598
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Charlie Courtman",
+          "start_probability": 0.0,
+          "uid": 2000436720
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kylan Midwood",
+          "start_probability": 0.0,
+          "uid": 2000437793
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Tyrone Prosper William Samba",
+          "start_probability": 0.0,
+          "uid": 2000437952
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harrison Miles",
+          "start_probability": 0.0,
+          "uid": 2000438102
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Finlay Gorman",
+          "start_probability": 0.0,
+          "uid": 2000498739
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Cameron Finn Williams",
+          "start_probability": 0.0,
+          "uid": 2000499492
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Cian George Powney Wain",
+          "start_probability": 0.0,
+          "uid": 2000499521
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lucas James Clarke",
+          "start_probability": 0.0,
+          "uid": 2000502095
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lenix Conde",
+          "start_probability": 0.0,
+          "uid": 2000502098
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harry Sam Moran",
+          "start_probability": 0.0,
+          "uid": 2000502100
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harvey Michael Owen",
+          "start_probability": 0.0,
+          "uid": 2000502101
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "La'more Lake Lee Forrester",
+          "start_probability": 0.0,
+          "uid": 2000502106
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ellis David Hickman",
+          "start_probability": 0.0,
+          "uid": 2000502112
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Finn Inglethorpe",
+          "start_probability": 0.0,
+          "uid": 2000502158
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Finley Grigg",
+          "start_probability": 0.0,
+          "uid": 2000506287
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Yohann Obin",
+          "start_probability": 0.0,
+          "uid": 2000510837
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Timeo Whisker",
+          "start_probability": 0.0,
+          "uid": 2000511337
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Floyd Samba",
+          "start_probability": 0.0,
+          "uid": 2000511340
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Teddie Lamb",
+          "start_probability": 0.0,
+          "uid": 2000511353
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "El Hadji Mor Talla Ndiaye",
+          "start_probability": 0.0,
+          "uid": 2000524865
+        }
+      ],
+      "registered_fm_players": {
+        "away": 37,
+        "home": 40
+      },
+      "same_second_collision_probability": 0.02777777798473835,
+      "seed": 44
+    },
+    {
+      "15_minute_windows": [
+        {
+          "end_of_window_outcomes": [
+            0.1111111111111111,
+            0.625,
+            0.2638888888888889
+          ],
+          "expected_away_goals": 0.3611111111111111,
+          "expected_away_shots": 1.875,
+          "expected_home_goals": 0.19444444444444445,
+          "expected_home_shots": 2.111111111111111,
+          "minute_end": 15,
+          "minute_start": 0,
+          "p_any_goal": 0.4027777777777778,
+          "p_away_goal": 0.2916666666666667,
+          "p_home_goal": 0.18055555555555555,
+          "p_red_card": 0.041666666666666664,
+          "p_substitution": 0.08333333333333333
+        },
+        {
+          "end_of_window_outcomes": [
+            0.1388888888888889,
+            0.4861111111111111,
+            0.375
+          ],
+          "expected_away_goals": 0.2638888888888889,
+          "expected_away_shots": 2.0416666666666665,
+          "expected_home_goals": 0.18055555555555555,
+          "expected_home_shots": 1.875,
+          "minute_end": 30,
+          "minute_start": 15,
+          "p_any_goal": 0.3472222222222222,
+          "p_away_goal": 0.2361111111111111,
+          "p_home_goal": 0.18055555555555555,
+          "p_red_card": 0.09722222222222222,
+          "p_substitution": 0.027777777777777776
+        },
+        {
+          "end_of_window_outcomes": [
+            0.2361111111111111,
+            0.3055555555555556,
+            0.4583333333333333
+          ],
+          "expected_away_goals": 0.3194444444444444,
+          "expected_away_shots": 2.0,
+          "expected_home_goals": 0.2638888888888889,
+          "expected_home_shots": 1.9166666666666667,
+          "minute_end": 45,
+          "minute_start": 30,
+          "p_any_goal": 0.4722222222222222,
+          "p_away_goal": 0.2777777777777778,
+          "p_home_goal": 0.2361111111111111,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 0.06944444444444445
+        },
+        {
+          "end_of_window_outcomes": [
+            0.2361111111111111,
+            0.3055555555555556,
+            0.4583333333333333
+          ],
+          "expected_away_goals": 0.2361111111111111,
+          "expected_away_shots": 1.8611111111111112,
+          "expected_home_goals": 0.18055555555555555,
+          "expected_home_shots": 1.8333333333333333,
+          "minute_end": 60,
+          "minute_start": 45,
+          "p_any_goal": 0.4027777777777778,
+          "p_away_goal": 0.2361111111111111,
+          "p_home_goal": 0.18055555555555555,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 0.5138888888888888
+        },
+        {
+          "end_of_window_outcomes": [
+            0.25,
+            0.2222222222222222,
+            0.5277777777777778
+          ],
+          "expected_away_goals": 0.3333333333333333,
+          "expected_away_shots": 1.8333333333333333,
+          "expected_home_goals": 0.18055555555555555,
+          "expected_home_shots": 1.625,
+          "minute_end": 75,
+          "minute_start": 60,
+          "p_any_goal": 0.4305555555555556,
+          "p_away_goal": 0.2777777777777778,
+          "p_home_goal": 0.18055555555555555,
+          "p_red_card": 0.08333333333333333,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.25,
+            0.25,
+            0.5
+          ],
+          "expected_away_goals": 0.3194444444444444,
+          "expected_away_shots": 1.8472222222222223,
+          "expected_home_goals": 0.16666666666666666,
+          "expected_home_shots": 1.9583333333333333,
+          "minute_end": 90,
+          "minute_start": 75,
+          "p_any_goal": 0.4027777777777778,
+          "p_away_goal": 0.2638888888888889,
+          "p_home_goal": 0.1527777777777778,
+          "p_red_card": 0.09722222222222222,
+          "p_substitution": 0.875
+        }
+      ],
+      "away": "Newcastle",
+      "away_win": 0.5,
+      "comparison_results_fm_model": {
+        "away_win": 0.47220300656342273,
+        "draw": 0.29617699719853746,
+        "home_win": 0.2316199962380399
+      },
+      "date": "2026-10-12",
+      "draw": 0.25,
+      "expected_away_goals": 1.8333333333333333,
+      "expected_home_goals": 1.1666666666666667,
+      "home": "Coventry",
+      "home_win": 0.25,
+      "match_state_events_per_path": 14.125,
+      "paths": 72,
+      "players": [
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 30.40397309559253,
+          "expected_shots": 0.3888888888888889,
+          "name": "Bazoumana Touré",
+          "start_probability": 0.2222222238779068,
+          "uid": 12095040
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 66.92953290729074,
+          "expected_shots": 0.9444444444444444,
+          "name": "Amar Dedić",
+          "start_probability": 0.8333333134651184,
+          "uid": 16283629
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 67.07713322473701,
+          "expected_shots": 0.9027777777777778,
+          "name": "Victor Torp Overgaard",
+          "start_probability": 0.8055555820465088,
+          "uid": 27118876
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 44.23252118195311,
+          "expected_shots": 0.5694444444444444,
+          "name": "Ogochukwu Frank Onyeka",
+          "start_probability": 0.4027777910232544,
+          "uid": 27129125
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 65.59393427580709,
+          "expected_shots": 1.0416666666666667,
+          "name": "Harvey Lewis Barnes",
+          "start_probability": 0.8194444179534912,
+          "uid": 28100207
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 58.71153716367846,
+          "expected_shots": 0.8333333333333334,
+          "name": "Joseph Willock",
+          "start_probability": 0.6666666865348816,
+          "uid": 28106684
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Joel Owen Latibeaudiere",
+          "start_probability": 0.0,
+          "uid": 28108493
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 72.63506954823073,
+          "expected_shots": 0.6805555555555556,
+          "name": "Bobby Craig Thomas",
+          "start_probability": 0.875,
+          "uid": 28116346
+        },
+        {
+          "appearance_probability": 0.75,
+          "expected_minutes": 24.23938709517756,
+          "expected_shots": 0.4027777777777778,
+          "name": "Ellis Reco Simms",
+          "start_probability": 0.1388888955116272,
+          "uid": 28116394
+        },
+        {
+          "appearance_probability": 0.875,
+          "expected_minutes": 69.18336504188747,
+          "expected_shots": 1.1388888888888888,
+          "name": "Anthony David Junior Elanga",
+          "start_probability": 0.875,
+          "uid": 28121568
+        },
+        {
+          "appearance_probability": 0.7777777910232544,
+          "expected_minutes": 24.214497968027445,
+          "expected_shots": 0.2361111111111111,
+          "name": "Kaine Kesler Hayden",
+          "start_probability": 0.1388888955116272,
+          "uid": 28127068
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 39.02700087190327,
+          "expected_shots": 0.6388888888888888,
+          "name": "William Idamudia Daugaard Osula",
+          "start_probability": 0.3472222089767456,
+          "uid": 28128173
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Mark Joseph Gillespie",
+          "start_probability": 0.0,
+          "uid": 29036230
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Daniel Ian Bentley",
+          "start_probability": 0.0,
+          "uid": 29060276
+        },
+        {
+          "appearance_probability": 0.7916666865348816,
+          "expected_minutes": 61.84894311622923,
+          "expected_shots": 0.6111111111111112,
+          "name": "Daniel Johnson Burn",
+          "start_probability": 0.7916666865348816,
+          "uid": 29061164
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 68.26153064207041,
+          "expected_shots": 0.8055555555555556,
+          "name": "Jacob Kai Murphy",
+          "start_probability": 0.8472222089767456,
+          "uid": 29079830
+        },
+        {
+          "appearance_probability": 0.8611111044883728,
+          "expected_minutes": 63.40392343628176,
+          "expected_shots": 0.027777777777777776,
+          "name": "Nicholas David Pope",
+          "start_probability": 0.7916666865348816,
+          "uid": 29083750
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 67.14499411471917,
+          "expected_shots": 0.6111111111111112,
+          "name": "Matthew Jacob Grimes",
+          "start_probability": 0.8194444179534912,
+          "uid": 29086056
+        },
+        {
+          "appearance_probability": 0.8194444179534912,
+          "expected_minutes": 34.79236240534813,
+          "expected_shots": 0.3611111111111111,
+          "name": "Jay Rhys Dasilva",
+          "start_probability": 0.25,
+          "uid": 29125192
+        },
+        {
+          "appearance_probability": 0.8055555820465088,
+          "expected_minutes": 30.527305711365255,
+          "expected_shots": 0.3055555555555556,
+          "name": "Solomon Brandon Michael Clarke Thomas-Asante",
+          "start_probability": 0.2361111044883728,
+          "uid": 29162985
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 39.974103701740866,
+          "expected_shots": 0.5972222222222222,
+          "name": "Ephron Jardell Mason-Clark",
+          "start_probability": 0.375,
+          "uid": 29163836
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 65.59587264063948,
+          "expected_shots": 0.8194444444444444,
+          "name": "Jack Edward Rudoni",
+          "start_probability": 0.8194444179534912,
+          "uid": 29191145
+        },
+        {
+          "appearance_probability": 0.8888888955116272,
+          "expected_minutes": 71.15161619015669,
+          "expected_shots": 1.4305555555555556,
+          "name": "Jacob Ramsey",
+          "start_probability": 0.875,
+          "uid": 29193659
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 66.79676817196557,
+          "expected_shots": 0.9027777777777778,
+          "name": "Gustavo Martin Emilio Hamer",
+          "start_probability": 0.8055555820465088,
+          "uid": 37050681
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 65.29732013757827,
+          "expected_shots": 0.5,
+          "name": "Sven Botman",
+          "start_probability": 0.875,
+          "uid": 37063649
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 64.3474225808941,
+          "expected_shots": 0.5277777777777778,
+          "name": "Milan Fabrizio van Ewijk",
+          "start_probability": 0.7638888955116272,
+          "uid": 37075765
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 62.84016151682533,
+          "expected_shots": 0.9583333333333334,
+          "name": "Tatsuhiro Sakamoto",
+          "start_probability": 0.7361111044883728,
+          "uid": 45116614
+        },
+        {
+          "appearance_probability": 0.8472222089767456,
+          "expected_minutes": 69.09403483766665,
+          "expected_shots": 0.041666666666666664,
+          "name": "Lukáš Horníček",
+          "start_probability": 0.8333333134651184,
+          "uid": 83297510
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 39.024437271216165,
+          "expected_shots": 0.7361111111111112,
+          "name": "Yoane Wissa",
+          "start_probability": 0.3055555522441864,
+          "uid": 85140175
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 51.53120082650329,
+          "expected_shots": 0.4861111111111111,
+          "name": "Ethan Rupert Pinnock",
+          "start_probability": 0.5555555820465088,
+          "uid": 89040516
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 68.81241365842277,
+          "expected_shots": 0.2777777777777778,
+          "name": "Carl Andrew Rushworth",
+          "start_probability": 0.875,
+          "uid": 89065344
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 49.105767501878596,
+          "expected_shots": 0.6666666666666666,
+          "name": "Fabian Lukas Schär",
+          "start_probability": 0.5138888955116272,
+          "uid": 98007212
+        },
+        {
+          "appearance_probability": 0.9583333134651184,
+          "expected_minutes": 75.26797776744068,
+          "expected_shots": 1.0694444444444444,
+          "name": "Loum Tchaouna",
+          "start_probability": 0.9444444179534912,
+          "uid": 2000006108
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Thomas Williams",
+          "start_probability": 0.0,
+          "uid": 2000050347
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 71.79965886418485,
+          "expected_shots": 0.8611111111111112,
+          "name": "Lewis Hall",
+          "start_probability": 0.9027777910232544,
+          "uid": 2000108691
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Miodrag Pivaš",
+          "start_probability": 0.0,
+          "uid": 2000112877
+        },
+        {
+          "appearance_probability": 0.9305555820465088,
+          "expected_minutes": 25.747197230649093,
+          "expected_shots": 0.2916666666666667,
+          "name": "Aladji Bamba",
+          "start_probability": 0.0972222238779068,
+          "uid": 2000188753
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Scott Bailey",
+          "start_probability": 0.0,
+          "uid": 2000189865
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Dylan Charlton",
+          "start_probability": 0.0,
+          "uid": 2000189866
+        },
+        {
+          "appearance_probability": 0.9444444179534912,
+          "expected_minutes": 37.73009559170202,
+          "expected_shots": 0.4166666666666667,
+          "name": "Lewis Miley",
+          "start_probability": 0.2916666567325592,
+          "uid": 2000189871
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Johnny Emerson",
+          "start_probability": 0.0,
+          "uid": 2000189872
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Elliot Betjemann",
+          "start_probability": 0.0,
+          "uid": 2000218863
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Aidan William Dausch",
+          "start_probability": 0.0,
+          "uid": 2000218864
+        },
+        {
+          "appearance_probability": 0.7916666865348816,
+          "expected_minutes": 52.681582111018564,
+          "expected_shots": 0.8611111111111112,
+          "name": "Sidiki Chérif",
+          "start_probability": 0.625,
+          "uid": 2000271175
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kacey Wooster",
+          "start_probability": 0.0,
+          "uid": 2000286586
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Fraser Harper",
+          "start_probability": 0.0,
+          "uid": 2000292942
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Aidan Harris",
+          "start_probability": 0.0,
+          "uid": 2000302058
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Luke Craggs",
+          "start_probability": 0.0,
+          "uid": 2000302078
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Sean Neave",
+          "start_probability": 0.0,
+          "uid": 2000302080
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Logan Watts",
+          "start_probability": 0.0,
+          "uid": 2000302083
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Trevan Sanusi",
+          "start_probability": 0.0,
+          "uid": 2000302092
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kyle Fitzgerald",
+          "start_probability": 0.0,
+          "uid": 2000313523
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Joshua Gordon",
+          "start_probability": 0.0,
+          "uid": 2000325662
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "David Mantle",
+          "start_probability": 0.0,
+          "uid": 2000325663
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Vakhtang Salia",
+          "start_probability": 0.0,
+          "uid": 2000336547
+        },
+        {
+          "appearance_probability": 0.9027777910232544,
+          "expected_minutes": 66.66462363470399,
+          "expected_shots": 0.75,
+          "name": "Caleb Marfo Yirenkyi",
+          "start_probability": 0.8333333134651184,
+          "uid": 2000339863
+        },
+        {
+          "appearance_probability": 0.9166666865348816,
+          "expected_minutes": 27.470374121497713,
+          "expected_shots": 0.08333333333333333,
+          "name": "Sean Steur",
+          "start_probability": 0.1111111119389534,
+          "uid": 2000350903
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harrison Gray",
+          "start_probability": 0.0,
+          "uid": 2000378222
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Billy-Ray Cullinane",
+          "start_probability": 0.0,
+          "uid": 2000378588
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Nsemi Sostene Bassega",
+          "start_probability": 0.0,
+          "uid": 2000380080
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jack Peter Ruddy",
+          "start_probability": 0.0,
+          "uid": 2000383084
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ubachukwu Victor Oluebube Madu",
+          "start_probability": 0.0,
+          "uid": 2000383091
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Afner Bernardinho Cá",
+          "start_probability": 0.0,
+          "uid": 2000391795
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Stephen-Nevin Mutanda Mfuni",
+          "start_probability": 0.0,
+          "uid": 2000404708
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Matheos Ferreira",
+          "start_probability": 0.0,
+          "uid": 2000409954
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Henry William Johnson",
+          "start_probability": 0.0,
+          "uid": 2000409969
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Tyler Stuart Jones",
+          "start_probability": 0.0,
+          "uid": 2000409979
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Aaron Ovie Epia",
+          "start_probability": 0.0,
+          "uid": 2000410007
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Elijah Brandon Briscoe",
+          "start_probability": 0.0,
+          "uid": 2000414241
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oliver Goodbrand",
+          "start_probability": 0.0,
+          "uid": 2000445294
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Alfie Hutchison",
+          "start_probability": 0.0,
+          "uid": 2000478937
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Isaac Moran",
+          "start_probability": 0.0,
+          "uid": 2000494866
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Luke Gilligan",
+          "start_probability": 0.0,
+          "uid": 2000494873
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Noah Morgan",
+          "start_probability": 0.0,
+          "uid": 2000494879
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ethan Ndiweni",
+          "start_probability": 0.0,
+          "uid": 2000494883
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Michael Mills",
+          "start_probability": 0.0,
+          "uid": 2000494885
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Mason Miley",
+          "start_probability": 0.0,
+          "uid": 2000494899
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Jack Callaghan",
+          "start_probability": 0.0,
+          "uid": 2000495799
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "George Shepherd",
+          "start_probability": 0.0,
+          "uid": 2000530819
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Shay Dunn",
+          "start_probability": 0.0,
+          "uid": 2000532252
+        }
+      ],
+      "registered_fm_players": {
+        "away": 46,
+        "home": 34
+      },
+      "same_second_collision_probability": 0.1111111119389534,
+      "seed": 45
+    }
+  ],
+  "model": "simulate_second_resolved_dynamic_mental_match",
+  "roster": "2026/27 registered squad list + matched FM26 attributes",
+  "status": "exploratory player-level pre-match scenario; not a statistically validated EPL event forecast"
+}

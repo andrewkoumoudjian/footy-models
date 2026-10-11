@@ -964,6 +964,10 @@ pub(crate) fn run_premier_league() {
     let mut seed = 42_u64;
     let mut only: Option<String> = None;
     let mut output_path = "artifacts/premier-league-2026-10-11/player_paths.json".to_string();
+    let mut as_of_date = "2026-10-11".to_string();
+    let mut results_path = "data/pl/asof_team_stats.csv".to_string();
+    let mut players_path = "data/pl/player_fm_join.csv".to_string();
+    let mut baseline_path = "data/pl/forecasts.json".to_string();
     let mut iter = std::env::args().skip(1);
     while let Some(flag) = iter.next() {
         match flag.as_str() {
@@ -971,14 +975,19 @@ pub(crate) fn run_premier_league() {
             "--seed" => seed = iter.next().expect("--seed value").parse().expect("valid seed"),
             "--only" => only = Some(iter.next().expect("--only team substring")),
             "--output" => output_path = iter.next().expect("--output destination"),
+            "--as-of" => as_of_date = iter.next().expect("--as-of value"),
+            "--results" => results_path = iter.next().expect("--results input"),
+            "--players" => players_path = iter.next().expect("--players input"),
+            "--baseline" => baseline_path = iter.next().expect("--baseline JSON"),
             _ => panic!("unknown argument: {flag}"),
         }
     }
     assert!(paths > 0 && paths <= 10000);
-    let as_of = date_from("2026-10-11");
-    let windows = LeagueWindows::build("data/pl/asof_team_stats.csv", as_of);
-    let players = load_players("data/pl/player_fm_join.csv", 0.0, as_of);
-    let baseline: Value = serde_json::from_str(&std::fs::read_to_string("data/pl/forecasts.json").expect("read baseline"))
+    // --as-of is the match forecast date: only earlier results are used.
+    let as_of = date_from(&as_of_date);
+    let windows = LeagueWindows::build(&results_path, as_of);
+    let players = load_players(&players_path, 0.0, as_of);
+    let baseline: Value = serde_json::from_str(&std::fs::read_to_string(&baseline_path).expect("read baseline"))
         .expect("parse baseline");
     let mut out = Vec::new();
     for (idx, fixture) in baseline["fixtures"].as_array().expect("fixtures").iter().enumerate() {
