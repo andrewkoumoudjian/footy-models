@@ -1,0 +1,23 @@
+{
+  "as_of": "2026-10-10",
+  "source": "https://www.theguardian.com/football/2026/oct/09/premier-league-team-news-predicted-lineups-for-the-weekend-action",
+  "source_published": "2026-10-09",
+  "policy": "Exclude players explicitly listed as injured or suspended; retain doubtful players as stochastic and uncertain. FM identity matched by verified FM UID.",
+  "excluded_by_club": {
+    "Crystal Palace": ["29125334", "49034219", "45095490", "2000231531"],
+    "Nott'm Forest": [],
+    "Hull": ["28044979"],
+    "Everton": [],
+    "Liverpool": ["93070286", "28127166", "2000259904", "49062667", "45030953"],
+    "Man City": ["28108494"],
+    "Coventry": ["84161623", "29156431", "20034959"],
+    "Newcastle": ["2000183134"]
+  },
+  "unmatched_reported_unavailable": {
+    "Crystal Palace": ["Chadi Riad", "Axel Disasi"],
+    "Hull": ["Eliot Matazo", "Darko Gyabi"],
+    "Liverpool": ["Cody Gakpo"],
+    "Coventry": ["Josh Eccles", "Taiwo Awoniyi"]
+  },
+  "doubtful_policy": "Do not zero probability on injuries classified as doubtful. No calibrated availability probability available; model leaves them in stochastic lineup pool."
+}

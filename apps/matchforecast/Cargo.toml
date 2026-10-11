@@ -13,6 +13,10 @@ name = "footy-matchforecast-mls"
 path = "src/main_mls.rs"
 
 [[bin]]
+name = "footy-matchforecast-pl"
+path = "src/main_pl.rs"
+
+[[bin]]
 name = "footy-matchforecast-backtest"
 path = "src/backtest.rs"
 

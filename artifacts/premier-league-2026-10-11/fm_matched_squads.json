@@ -1,0 +1,3049 @@
+{
+  "as_of": "2026-10-10",
+  "registration_source": "https://www.premierleague.com/en/news/4706139/see-all-the-202627-premier-league-squad-lists",
+  "model": "FM26 full attribute database (matched names / UIDs)",
+  "teams": {
+    "Crystal Palace": {
+      "official_club": "Crystal Palace",
+      "registered_players": 25,
+      "official_listed_players": 74,
+      "fm_matches": 53,
+      "fm_matched_registered": 21,
+      "fm_matched_u21": 32,
+      "matched": [
+        {
+          "name": "Benitez, Walter Daniel",
+          "fm_name": "Walter Daniel Benítez",
+          "fm_uid": "14035968",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Chilwell, Benjamin James*",
+          "fm_name": "Benjamin James Chilwell",
+          "fm_uid": "29128536",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Doucoure, Cheick Oumar",
+          "fm_name": "Cheick Oumar Doucouré",
+          "fm_uid": "13194021",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Guessand, Evann Ludovic Vidjannagni",
+          "fm_name": "Evann Guessand",
+          "fm_uid": "49041006",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Henderson, Dean Bradley*",
+          "fm_name": "Dean Bradley Henderson",
+          "fm_uid": "29125334",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hughes, William James*",
+          "fm_name": "William James Hughes",
+          "fm_uid": "29086005",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Kamada, Daichi",
+          "fm_name": "Daichi Kamada",
+          "fm_uid": "45092714",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Khalaili, Anan",
+          "fm_name": "Anan Khalaili",
+          "fm_uid": "2000231531",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mateta, Jean-Philippe",
+          "fm_name": "Jean-Philippe Mateta",
+          "fm_uid": "49034219",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Matthews, Remi Luke*",
+          "fm_name": "Remi Luke Matthews",
+          "fm_uid": "29068437",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McNeil, Dwight James Matthew*",
+          "fm_name": "Dwight James Matthew McNeil",
+          "fm_uid": "28110488",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mingueza Garcia, Oscar",
+          "fm_name": "Óscar Mingueza García",
+          "fm_uid": "67245413",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mitchell, Tyrick*",
+          "fm_name": "Tyrick Mitchell",
+          "fm_uid": "28111507",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Nketiah, Edward Keddar*",
+          "fm_name": "Edward Keddar Nketiah",
+          "fm_uid": "28106687",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Osorio Osorio, Dario Esteban",
+          "fm_name": "Darío Esteban Osorio Osorio",
+          "fm_uid": "2000129380",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Pino Santos, Yeremy Jesus",
+          "fm_name": "Yeremy Jesús Pino Santos",
+          "fm_uid": "67295650",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Richards, Christopher Jeffrey",
+          "fm_name": "Christopher Jeffrey Richards",
+          "fm_uid": "72051563",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sarr, Ismaila",
+          "fm_name": "Ismaïla Sarr",
+          "fm_uid": "48042766",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Timber, Quinten Ryan Crispito",
+          "fm_name": "Quinten Ryan Crispito Timber",
+          "fm_uid": "37060952",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tomiyasu, Takehiro",
+          "fm_name": "Takehiro Tomiyasu",
+          "fm_uid": "45095490",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Wharton, Adam James*",
+          "fm_name": "Adam James Wharton",
+          "fm_uid": "2000053516",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Adams-Collman, Kai-Reece",
+          "fm_name": "Kai-Reece Adams-Collman",
+          "fm_uid": "2000293625",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Ahanor, Honest Eghomwan",
+          "fm_name": "Honest Ahanor",
+          "fm_uid": "2000400123",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Angibeaud Montjen, David Alun",
+          "fm_name": "David Alun Angibeaud Montjen",
+          "fm_uid": "2000380875",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Benamar, Dean",
+          "fm_name": "Dean Benamar",
+          "fm_uid": "2000380878",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bernard-Ferguson, Makai Keon Hugh",
+          "fm_name": "Makai Keon Hugh Bernard-Ferguson",
+          "fm_uid": "2000485634",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Canvot, Jaydee Bruce Hamady",
+          "fm_name": "Jaydee Bruce Hamady Canvot",
+          "fm_uid": "2000187623",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Cardines, Rio Solomon* (Loan)",
+          "fm_name": "Rio Solomon Cardines",
+          "fm_uid": "2000216077",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Casey, Benjamin Omena Akpowubrunei",
+          "fm_name": "Benjamin Omena Akpowubrunei Casey",
+          "fm_uid": "2000359695",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Danaher, Euan Maurice",
+          "fm_name": "Euan Maurice Danaher",
+          "fm_uid": "2000380877",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Drakes-Thomas, Joel Jason*",
+          "fm_name": "Joél Jason Drakes-Thomas",
+          "fm_uid": "2000451471",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Esse, Romain Joy Kouakou*",
+          "fm_name": "Romain Joy Kouakou Esse",
+          "fm_uid": "2000142236",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Fasida, Jacob Ayomide",
+          "fm_name": "Jacob Ayomide Fasida",
+          "fm_uid": "2000451473",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Frazer-Williams, Khyan Kayne",
+          "fm_name": "Khyan Kayne Frazer-Williams",
+          "fm_uid": "2000502215",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gibbard, Joseph Finbarr",
+          "fm_name": "Joseph Finbarr Gibbard",
+          "fm_uid": "2000216080",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gozo, Zavier Didier Tapei",
+          "fm_name": "Zavier Didier Tapei Gozo",
+          "fm_uid": "2000239554",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Greaves, Ajean-Ray Anthony",
+          "fm_name": "Ajean-Ray Anthony Greaves",
+          "fm_uid": "2000485629",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hill, Marcus Edward James",
+          "fm_name": "Marcus Edward James Hill",
+          "fm_uid": "2000293632",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Judd, Jasper",
+          "fm_name": "Jasper Judd",
+          "fm_uid": "2000380876",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "King, George Callum Michael",
+          "fm_name": "George Callum Michael King",
+          "fm_uid": "2000293629",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Kporha, Caleb Billy Mawuko*",
+          "fm_name": "Caleb Billy Mawuko Kporha",
+          "fm_uid": "2000216101",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Lamidi, Oladotun Sherif",
+          "fm_name": "Oladotun Sherif Lamidi",
+          "fm_uid": "2000485630",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Martin, Donte Tyrel Leshawn",
+          "fm_name": "Donte Tyrel Leshawn Martin",
+          "fm_uid": "2000451472",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McDonald, Jayden Lloyd",
+          "fm_name": "Jayden Lloyd McDonald",
+          "fm_uid": "2000485631",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mustapha, Hindolo Thomas Eric (Loan)",
+          "fm_name": "Hindolo Thomas Eric Mustapha",
+          "fm_uid": "2000216083",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Okoli, Chukwunonyelum Uchenna Amobi",
+          "fm_name": "Chukwunonyelum Uchenna Amob Okoli",
+          "fm_uid": "2000380861",
+          "registration": "u21",
+          "matching_method": "high-confidence name"
+        },
+        {
+          "name": "Owoade, Daniel David",
+          "fm_name": "Daniel Owoade",
+          "fm_uid": "2000485633",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Ozoh, David Ikechukwu*",
+          "fm_name": "David Ikechukwu Ozoh",
+          "fm_uid": "2000140844",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Somade, Oreoluwatomiwa Sean",
+          "fm_name": "Oreoluwatomiwa Sean Somade",
+          "fm_uid": "2000380864",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Walker-Smith, Charlie George",
+          "fm_name": "Charlie George Walker-Smith",
+          "fm_uid": "2000313318",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Whyte, Tyler Shae",
+          "fm_name": "Tyler Shae Whyte",
+          "fm_uid": "2000293623",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Williams, Sebastian Harry Christopher",
+          "fm_name": "Sebastian Williams",
+          "fm_uid": "2000293621",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Williams, Toby Keith",
+          "fm_name": "Toby Williams",
+          "fm_uid": "2000416374",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        }
+      ],
+      "unmatched": [
+        "Disasi Mhakinis Belho, Axel",
+        "Franca De Oliveira, Matheus",
+        "Larsen, Jorgen Strand",
+        "Lerma, Jefferson",
+        "Anderson, Raihaan Hanif Ali",
+        "Baah, Kwasi Agyemang",
+        "Barrett III, Anthony Samuel Brockholst",
+        "Benetton, Lucca Magalhaes",
+        "Bonsu-Amako, Sebastian Kofi Gilado",
+        "Bull, Hugo Alexander Suna",
+        "Jordan, Jay Emmanuel David Ngozika",
+        "Lee, Jamar Shane Amari",
+        "Monk, Dylan Arthur",
+        "Morgan Smith, Aiden Joseph",
+        "Moses, Kayden Michael",
+        "Mulvenna, Alfie Stewart",
+        "Sealey, Amaari Kacper",
+        "Shittu, Oluwaremi Nathanael Chinomso",
+        "Smith-Phillips, Kairo Mekhi Jamal Elliott",
+        "Speroni, Thiago Alessandro",
+        "Tejan, Malik Abdul Sholla"
+      ]
+    },
+    "Nott'm Forest": {
+      "official_club": "Nottingham Forest",
+      "registered_players": 25,
+      "official_listed_players": 71,
+      "fm_matches": 48,
+      "fm_matched_registered": 18,
+      "fm_matched_u21": 30,
+      "matched": [
+        {
+          "name": "Benda, Steven-Andreas*",
+          "fm_name": "Steven-Andreas Benda",
+          "fm_uid": "28118051",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bott, Aaron Charlie*",
+          "fm_name": "Aaron Charlie Bott",
+          "fm_uid": "2000109147",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Delap, Liam Rory*",
+          "fm_name": "Liam Rory Delap",
+          "fm_uid": "28126247",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Diomande, Ousmane",
+          "fm_name": "Ousmane Diomande",
+          "fm_uid": "2000160511",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dominguez, Nicolas Martin",
+          "fm_name": "Nicolás Martín Domínguez",
+          "fm_uid": "14077011",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gibbs-White, Morgan Anthony*",
+          "fm_name": "Morgan Gibbs-White",
+          "fm_uid": "29175220",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Hudson-Odoi, Callum James*",
+          "fm_name": "Callum James Hudson-Odoi",
+          "fm_uid": "28112986",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Kalimuendo-Muinga, Arnaud",
+          "fm_name": "Arnaud Kalimuendo Muinga",
+          "fm_uid": "49048445",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McAtee, James John*",
+          "fm_name": "James John McAtee",
+          "fm_uid": "28126249",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Milenkovic, Nikola",
+          "fm_name": "Nikola Milenković",
+          "fm_uid": "62191195",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Munoz Mejia, Daniel",
+          "fm_name": "Daniel Muñoz Mejía",
+          "fm_uid": "76050675",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sangare, Ibrahim",
+          "fm_name": "Ibrahim Sangaré",
+          "fm_uid": "48042717",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Savona, Nicolo",
+          "fm_name": "Nicolò Savona",
+          "fm_uid": "43617691",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Schlager, Xaver",
+          "fm_name": "Xaver Schlager",
+          "fm_uid": "16147660",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sels, Matz Willy Els",
+          "fm_name": "Matz Sels",
+          "fm_uid": "18018791",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Williams, Neco Shay*",
+          "fm_name": "Neco Shay Williams",
+          "fm_uid": "28115792",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Wood, Christopher Grant*",
+          "fm_name": "Christopher Grant Wood",
+          "fm_uid": "5108293",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Yates, Ryan James*",
+          "fm_name": "Ryan James Yates",
+          "fm_uid": "29136230",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Abbott, Zach MacFarlane* (Loan)",
+          "fm_name": "Zach Macfarlane Abbott",
+          "fm_uid": "2000222768",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Andrews, Harvey George",
+          "fm_name": "Harvey Andrews",
+          "fm_uid": "2000479068",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Balagizi, Basima Baba",
+          "fm_name": "Basima Balagizi",
+          "fm_uid": "2000479067",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Bindon, Tyler Grant (Loan)",
+          "fm_name": "Tyler Grant Bindon",
+          "fm_uid": "2000293527",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Blake, Zyan Julius",
+          "fm_name": "Zyan Julius Blake",
+          "fm_uid": "2000369120",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bradshaw, Kanye Kennedy",
+          "fm_name": "Kanye Bradshaw",
+          "fm_uid": "2000479070",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Broomes, Ethan Thomas*",
+          "fm_name": "Ethan Broomes",
+          "fm_uid": "2000369127",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Campbell, Luke Bruno",
+          "fm_name": "Luke Campbell",
+          "fm_uid": "2000184615",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Clarke, Kristian Takura",
+          "fm_name": "Kristian Takura Clarke",
+          "fm_uid": "2000281054",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Da Silva Moreira, Eric Emanuel (Loan)",
+          "fm_name": "Eric Emanuel da Silva Moreira",
+          "fm_uid": "2000180880",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gardner, Daniel Rogan",
+          "fm_name": "Daniel Gardner",
+          "fm_uid": "29065375",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Graham, Alastair John (Loan)",
+          "fm_name": "Alastair Graham",
+          "fm_uid": "2000305265",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Lokote, Eleazar Don",
+          "fm_name": "Eleazar Lokote",
+          "fm_uid": "2000479071",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "McClure, Blaine Alexander Harris",
+          "fm_name": "Blaine McClure",
+          "fm_uid": "2000251028",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "McNeilly, Donnell Ocarriel (Loan)",
+          "fm_name": "Donnell McNeilly",
+          "fm_uid": "2000184624",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Modupe, David Dennis Ayodeji Richard Christiano",
+          "fm_name": "David Dennis Ayodeji Richard Christiano Modupe",
+          "fm_uid": "2000281056",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Newton, Jamie Christopher",
+          "fm_name": "Jamie Christoper Newton",
+          "fm_uid": "2000149239",
+          "registration": "u21",
+          "matching_method": "high-confidence name"
+        },
+        {
+          "name": "Ngatang Djamna, Frank Evans",
+          "fm_name": "Frank Evans Ngatang Djamna",
+          "fm_uid": "2000369128",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Powell, Jayden Anthony",
+          "fm_name": "Jayden Powell",
+          "fm_uid": "2000386746",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Powell, Joshua Alan* (Loan)",
+          "fm_name": "Joshua Alan Powell",
+          "fm_uid": "2000109158",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Robinson, Riko Leon Rickelmae Piper",
+          "fm_name": "Riko Robinson",
+          "fm_uid": "2000479073",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Samuels, Shakur Ruben",
+          "fm_name": "Shakur Samuels",
+          "fm_uid": "2000479074",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Schluter, Gabriel Toby",
+          "fm_name": "Gabriel Schluter",
+          "fm_uid": "2000516189",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Sillah, Lamin (Loan)",
+          "fm_name": "Lamin Sillah",
+          "fm_uid": "2000416506",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Smith, Fuad Ayorinde",
+          "fm_name": "Fuad Ayorinde Smith",
+          "fm_uid": "2000369131",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sutton, Spencer James",
+          "fm_name": "Spencer Sutton",
+          "fm_uid": "2000479075",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Thompson, Kalum Stewart",
+          "fm_name": "Kalum Thompson",
+          "fm_uid": "2000445433",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Whitehall, Archie Harry Thomas",
+          "fm_name": "Archie Harry Thomas Whitehall",
+          "fm_uid": "2000222837",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Willows, Jordan Scott",
+          "fm_name": "Jordan Willows",
+          "fm_uid": "2000369134",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Willows, Keehan Martyn",
+          "fm_name": "Keehan Martyn Willows",
+          "fm_uid": "2000222769",
+          "registration": "u21",
+          "matching_method": "exact"
+        }
+      ],
+      "unmatched": [
+        "Aina, Temitayo Olufisayo Olaoluwa*",
+        "Costa Dos Santos, Murillo Santiago",
+        "Maciel Da Cruz, Igor Jesus",
+        "Maciel Furtado, John Victor",
+        "Ndoye, Dan",
+        "Netz, Luca",
+        "Rodrigues Da Silva, Felipe (Loan)",
+        "Baba Yaya, Cherif-Dine",
+        "Bailey, Joseph Robert",
+        "Bartley, Okello Odongo",
+        "Bowman, Boyd Lee Jake",
+        "Brown, Kasen Orlando*",
+        "Donaldson, Mason",
+        "Grady Francis, McDonnell",
+        "Jones, Brodie",
+        "Maveso , Jaydon Mputu",
+        "Nolan, Sonny",
+        "Nwosu, Chinazaekpere Samuel",
+        "Orr, Matthew",
+        "Paula Da Cunha Filho, Jair",
+        "Russell, Blaine Saint Aubein",
+        "Sanneh, Buba",
+        "Sinclair, James"
+      ]
+    },
+    "Hull": {
+      "official_club": "Hull City",
+      "registered_players": 25,
+      "official_listed_players": 68,
+      "fm_matches": 38,
+      "fm_matched_registered": 21,
+      "fm_matched_u21": 17,
+      "matched": [
+        {
+          "name": "Ansah, Ilyas",
+          "fm_name": "Ilyas Ansah",
+          "fm_uid": "2000196762",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Belloumi, Mohamed Elbachir",
+          "fm_name": "Mohamed Elbachir Belloumi",
+          "fm_uid": "2000184286",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Butland, Jack*",
+          "fm_name": "Jack Butland",
+          "fm_uid": "28044979",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Coyle, Lewie Jacob*",
+          "fm_name": "Lewie Jacob Coyle",
+          "fm_uid": "29113877",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Crooks, Matt Davidson Rider*",
+          "fm_name": "Matt Davidson Rider Crooks",
+          "fm_uid": "29071649",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Egan, John Patrick*",
+          "fm_name": "John Egan",
+          "fm_uid": "28044428",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Giles, Ryan John*",
+          "fm_name": "Ryan John Giles",
+          "fm_uid": "29175223",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gourna-Douath, Lucas Dobe Nicolas Lucien",
+          "fm_name": "Lucas Gourna-Douath",
+          "fm_uid": "49056367",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Hughes, Charles Roger*",
+          "fm_name": "Charles Roger Hughes",
+          "fm_uid": "2000050618",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Iroegbunam, Timothy Emeka*",
+          "fm_name": "Timothy Emeka Iroegbunam",
+          "fm_uid": "292380027",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McBurnie, Oliver Robert*",
+          "fm_name": "Oliver Robert McBurnie",
+          "fm_uid": "29108066",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McNair, Patrick James Coleman*",
+          "fm_name": "Patrick James Coleman McNair",
+          "fm_uid": "28068190",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mendy, Nobel",
+          "fm_name": "Nobel Mendy",
+          "fm_uid": "2000138305",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Morita, Hidemasa",
+          "fm_name": "Hidemasa Morita",
+          "fm_uid": "45109174",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Norton-Cuffy, Brooke Dion Nelson*",
+          "fm_name": "Brooke Norton-Cuffy",
+          "fm_uid": "2000047226",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Omur, Abdulkadir",
+          "fm_name": "Abdülkadir Ömür",
+          "fm_uid": "70099762",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Phillips, Dillon*",
+          "fm_name": "Dillon Phillips",
+          "fm_uid": "29077899",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Slater, Regan Newman*",
+          "fm_name": "Regan Slater",
+          "fm_uid": "29180952",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Stroud, Elliot Karl",
+          "fm_name": "Elliot Stroud",
+          "fm_uid": "93144119",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Thomas, Benjamin Sorba William*",
+          "fm_name": "Benjamin Sorba William Thomas",
+          "fm_uid": "95040497",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tzolakis, Konstantinos",
+          "fm_name": "Konstantinos Tzolakis",
+          "fm_uid": "36149384",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Carter, Ramell Lee McKenzie (Loan)",
+          "fm_name": "Ramell Carter",
+          "fm_uid": "2000372248",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Daley, Damari Anthony*",
+          "fm_name": "Damari Daley",
+          "fm_uid": "2000284198",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Debayo, James Boluwatife* (Loan)",
+          "fm_name": "James Boluwatife Debayo",
+          "fm_uid": "2000142149",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Goodman, George Christopher",
+          "fm_name": "George Goodman",
+          "fm_uid": "2000299818",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Herrington, Lucas",
+          "fm_name": "Lucas Herrington",
+          "fm_uid": "2000263936",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hjerto-Dahl, Jens",
+          "fm_name": "Jens Hjertø-Dahl",
+          "fm_uid": "2000170106",
+          "registration": "u21",
+          "matching_method": "high-confidence name"
+        },
+        {
+          "name": "Howard, Archie George",
+          "fm_name": "Archie Howard",
+          "fm_uid": "2000256276",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Matique, Albert Miguel Tafara",
+          "fm_name": "Albert Matique",
+          "fm_uid": "2000484100",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "McCarthy, Cathal (Loan)",
+          "fm_name": "Cathal McCarthy",
+          "fm_uid": "2000412358",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Moore, Bobby-Dean",
+          "fm_name": "Bobby Moore",
+          "fm_uid": "2000484098",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Ofuyaekpone-Shombe, Khiani Hrukti Toju",
+          "fm_name": "Khiani Hrukti Toju Ofuyaekpone-Shombe",
+          "fm_uid": "2000381315",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Okike, Calvin Lorenzo Chikezie",
+          "fm_name": "Calvin Okike",
+          "fm_uid": "2000378348",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Parker, Hugh William (Loan)",
+          "fm_name": "Hugh Parker",
+          "fm_uid": "2000362717",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Reynolds, Kerr Charles",
+          "fm_name": "Kerr Reynolds",
+          "fm_uid": "2000470403",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Russell, James Lewis",
+          "fm_name": "James Russell",
+          "fm_uid": "5007413",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Tinsdale, Nathan Scott* (Loan)",
+          "fm_name": "Nathan Tinsdale",
+          "fm_uid": "2000123314",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Walker, Coist Daniel (Loan)",
+          "fm_name": "Coist Walker",
+          "fm_uid": "2000453898",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        }
+      ],
+      "unmatched": [
+        "Ajayi, Oluwasemilogo Adesewo Ibidapo*",
+        "Cho, Mohamed-Ali*",
+        "Gelhardt, Joseph Paul*",
+        "Targett, Matthew Robert*",
+        "Akinniranye, Oluwatadese George Omogbolahan",
+        "Ashbee, Stanley Luca*",
+        "Bray, Alfie Farrell Morrow",
+        "Cawte, Alfie",
+        "Crawford, Jude Samuel",
+        "Creaser, Jamie Micheal Graham",
+        "Devine, Edward James",
+        "Dunn, Reuben Frank",
+        "Edey, Alexander*",
+        "Gode, Ted Alban Jefferson",
+        "Gomeniuk, Aleksandr Pavlovich",
+        "Jagielka, Zac Alexander",
+        "Jones, Tyler James",
+        "Kaggwa, Jonathan",
+        "Leach, Charlie Anthony",
+        "Lizardos, Alfie William",
+        "Maskell, Alfie",
+        "Morfitt, Joel Paul",
+        "Okot Ocaya, Joshua Aaron Mbabazi",
+        "Robinson, Ben Alexander`",
+        "Robinson, Dellan Jeremiah",
+        "Sarpong, Emmanuel Boateng",
+        "Sellars-Fleming, Tyrell (Loan)",
+        "Silk, Reuben David Michael",
+        "Umoren, Ekemini-Abasi Zackary Jayden Edet",
+        "Vaz, Robinio"
+      ]
+    },
+    "Everton": {
+      "official_club": "Everton",
+      "registered_players": 19,
+      "official_listed_players": 69,
+      "fm_matches": 50,
+      "fm_matched_registered": 17,
+      "fm_matched_u21": 33,
+      "matched": [
+        {
+          "name": "Alcaraz Duran, Carlos Jonas",
+          "fm_name": "Carlos Jonás Alcaraz Duran",
+          "fm_uid": "14238164",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Barnsley, Fraser Paul*",
+          "fm_name": "Fraser Barnsley",
+          "fm_uid": "2000096851",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Barry, Thierno Mamadou",
+          "fm_name": "Thierno Mamadou Barry",
+          "fm_uid": "2000127926",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Barsøe Nørgaard, Christian Thers",
+          "fm_name": "Christian Thers Nørgaard",
+          "fm_uid": "27039017",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Branthwaite, Jarrad Paul*",
+          "fm_name": "Jarrad Branthwaite",
+          "fm_uid": "29226000",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Dewsbury-Hall, Kiernan Frank*",
+          "fm_name": "Kiernan Frank Dewsbury-Hall",
+          "fm_uid": "28106342",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Garner, James David*",
+          "fm_name": "James David Garner",
+          "fm_uid": "28115831",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Grealish, Jack Peter*",
+          "fm_name": "Jack Peter Grealish",
+          "fm_uid": "28067800",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hackney, Hayden Rhys*",
+          "fm_name": "Hayden Rhys Hackney",
+          "fm_uid": "29218024",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Johnson, Brennan Price*",
+          "fm_name": "Brennan Price Johnson",
+          "fm_uid": "29189400",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Keane, Michael Vincent*",
+          "fm_name": "Michael Keane",
+          "fm_uid": "28047558",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "King, Thomas Lloyd*",
+          "fm_name": "Thomas Lloyd King",
+          "fm_uid": "29087448",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Maitland-Niles, Ainsley Cory*",
+          "fm_name": "Ainsley Cory Maitland-Niles",
+          "fm_uid": "28095584",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "O'Brien, Jake Patrick",
+          "fm_name": "Jake O'Brien",
+          "fm_uid": "52101552",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Pickford, Jordan Lee*",
+          "fm_name": "Jordan Lee Pickford",
+          "fm_uid": "28054565",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Rohl, Merlin",
+          "fm_name": "Merlin Röhl",
+          "fm_uid": "91204520",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tarkowski, James Alan*",
+          "fm_name": "James Tarkowski",
+          "fm_uid": "29055569",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Armstrong, Harrison David*",
+          "fm_name": "Harrison David Armstrong",
+          "fm_uid": "2000288697",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Aznou Ben Cheikh, Adam (Loan)",
+          "fm_name": "Adam Aznou Ben Cheikh",
+          "fm_uid": "2000191507",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bates, Callum Terry",
+          "fm_name": "Callum Bates",
+          "fm_uid": "2000215453",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Benjamin, Omari Kai",
+          "fm_name": "Omari Benjamin",
+          "fm_uid": "2000216562",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Billington, Harvey Lucas",
+          "fm_name": "Harvey Billington",
+          "fm_uid": "2000498184",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Carrington, Ezra Sheridan*",
+          "fm_name": "Ezra Sheridan Carrington",
+          "fm_uid": "2000106509",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Catesby, Joel William (Loan)",
+          "fm_name": "Joel Catesby",
+          "fm_uid": "2000288695",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Clarke, Jaykar Justin Donte",
+          "fm_name": "Jaykar Justin Donte Clarke",
+          "fm_uid": "2000396129",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dibling, Tyler-Jay Robert*",
+          "fm_name": "Tyler-Jay Dibling",
+          "fm_uid": "2000198043",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Dodds, John Rodrick Daniel",
+          "fm_name": "John Roderick Daniel Dodds",
+          "fm_uid": "2000498183",
+          "registration": "u21",
+          "matching_method": "high-confidence name"
+        },
+        {
+          "name": "Finney, George",
+          "fm_name": "George Finney",
+          "fm_uid": "2000288701",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Foster, Harvey John",
+          "fm_name": "Harvey Foster",
+          "fm_uid": "2000288696",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Gardner, Luis John",
+          "fm_name": "Luis John Gardner",
+          "fm_uid": "2000411485",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "George, Tyrique Aaron Delali Yusuff*",
+          "fm_name": "Tyrique Aaron Delali Yusuff George",
+          "fm_uid": "2000184619",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gokah, Reuben Emmanuel Delali",
+          "fm_name": "Reuben Gokah",
+          "fm_uid": "2000507889",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Graham, Braiden David Jay",
+          "fm_name": "Braiden Graham",
+          "fm_uid": "2000252560",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Hacker Davis, Luca Isaac",
+          "fm_name": "Luca Davis",
+          "fm_uid": "2000288700",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Lambert, Rocco Marlo",
+          "fm_name": "Rocco Marlo Lambert",
+          "fm_uid": "2000411489",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Loney, Ceiran",
+          "fm_name": "Ceiran Loney",
+          "fm_uid": "2000365564",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Lukjanciks, Douglass",
+          "fm_name": "Douglass Lukjanciks",
+          "fm_uid": "2000411492",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Matos, Melvin Wiafe Akenten",
+          "fm_name": "Melvin Wiafe Akenten Matos",
+          "fm_uid": "2000411484",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Morgan, George Charlie (Loan)",
+          "fm_name": "George Morgan",
+          "fm_uid": "2000288694",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Moses, Amari Junior Nankhonya",
+          "fm_name": "Amari Moses",
+          "fm_uid": "2000498188",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Murdock, Freddie James",
+          "fm_name": "Freddie Murdock",
+          "fm_uid": "2000498186",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Olayiwola, Malik Chibeke Babtunde",
+          "fm_name": "Malik Olayiwola",
+          "fm_uid": "2000498185",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Pickford, George John",
+          "fm_name": "George Pickford",
+          "fm_uid": "2000288702",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Pita, Shea",
+          "fm_name": "Shea Pita",
+          "fm_uid": "2000498187",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Samuels-Smith, Odin Darren",
+          "fm_name": "Odin Samuels-Smith",
+          "fm_uid": "2000215454",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Sherif, Martin",
+          "fm_name": "Martin Sherif",
+          "fm_uid": "2000215448",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tambadou, Francis Gomez",
+          "fm_name": "Francis Gomez Tambadou",
+          "fm_uid": "2000411859",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tamen, William Nkwawu",
+          "fm_name": "William Tamen",
+          "fm_uid": "2000205311",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Thomas, Aled Osian",
+          "fm_name": "Aled Thomas",
+          "fm_uid": "2000288699",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Van Schoor, Joshua Mark",
+          "fm_name": "Joshua van Schoor",
+          "fm_uid": "2000288698",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        }
+      ],
+      "unmatched": [
+        "Mykolenko, Vitalii",
+        "Travers, Mark John*",
+        "Aduda, Rodney Christopher",
+        "Barratt, Arthur Columbus",
+        "Brookes, Harry Thomas",
+        "Evans, Lewis Alfie George",
+        "Hutchison, Kai Kingsley Akanna",
+        "Lee, Zachary George",
+        "Madueke, Divine Dozie",
+        "McDermott, Thomas Jack",
+        "McEveley, Harlow James",
+        "Moogan, Lucas Alan",
+        "Nsangou, Jonathan Alipson",
+        "Okorie Ndubuisi, Levi Emmanuel",
+        "Patrick, Adam Seve James",
+        "Patterson, Jack David",
+        "Pemberton, Dafi-tomos",
+        "Robert, Ray",
+        "Wilcox, Teddy"
+      ]
+    },
+    "Liverpool": {
+      "official_club": "Liverpool",
+      "registered_players": 25,
+      "official_listed_players": 84,
+      "fm_matches": 53,
+      "fm_matched_registered": 19,
+      "fm_matched_u21": 34,
+      "matched": [
+        {
+          "name": "Araujo da Silva, Ronald Federico",
+          "fm_name": "Ronald Federico Araujo Da Silva",
+          "fm_uid": "78085068",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Barcola, Bradley Jean Manuel Essolisam Addo",
+          "fm_name": "Bradley Barcola",
+          "fm_uid": "49056282",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Bradley, Conor*",
+          "fm_name": "Conor Bradley",
+          "fm_uid": "28127166",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Chambers, Luke*",
+          "fm_name": "Luke Chambers",
+          "fm_uid": "2000049215",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Ekitike, Hugo Timothée",
+          "fm_name": "Hugo Timothée Ekitiké",
+          "fm_uid": "49062667",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Endo, Wataru",
+          "fm_name": "Wataru Endo",
+          "fm_uid": "45030953",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gomez, Joseph David*",
+          "fm_name": "Joseph Gómez",
+          "fm_uid": "82082339",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Gravenberch, Ryan Jiro",
+          "fm_name": "Ryan Jiro Gravenberch",
+          "fm_uid": "37071197",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Isak, Alexander",
+          "fm_name": "Alexander Isak",
+          "fm_uid": "93070286",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Jaros, Vitezslav*",
+          "fm_name": "Vítězslav Jaroš",
+          "fm_uid": "28116414",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Kerkez, Milos",
+          "fm_name": "Miloš Kerkez",
+          "fm_uid": "2000011147",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mabaya, Isaac Angus*",
+          "fm_name": "Isaac Angus Mabaya",
+          "fm_uid": "2000108376",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mamardashvili, Giorgi",
+          "fm_name": "Giorgi Mamardashvili",
+          "fm_uid": "59138294",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McConnell, James William*",
+          "fm_name": "James William McConnell",
+          "fm_uid": "2000108364",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Munoz Villanueva, Victor",
+          "fm_name": "Víctor Muñoz Villanueva",
+          "fm_uid": "2000126470",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Szoboszlai, Dominik",
+          "fm_name": "Dominik Szoboszlai",
+          "fm_uid": "16202373",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Van Dijk, Virgil",
+          "fm_name": "Virgil van Dijk",
+          "fm_uid": "37024025",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Wirtz, Florian Richard",
+          "fm_name": "Florian Richard Wirtz",
+          "fm_uid": "91193048",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Woodman, Frederick John*",
+          "fm_name": "Frederick John Woodman",
+          "fm_uid": "28091347",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Adekoya, Noah Jonathan Francis Adedayo",
+          "fm_name": "Noah Adekoya",
+          "fm_uid": "2000285680",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Ayman, Alvin*",
+          "fm_name": "Alvin Ayman",
+          "fm_uid": "2000399893",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Cisse, Prince Kobe",
+          "fm_name": "Prince Kobé Cissé",
+          "fm_uid": "2000399858",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Clarke, Lucas James*",
+          "fm_name": "Lucas James Clarke",
+          "fm_uid": "2000502095",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Conde, Lenix Fode",
+          "fm_name": "Lenix Conde",
+          "fm_uid": "2000502098",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Cowley, Ryan Robert",
+          "fm_name": "Ryan Cowley",
+          "fm_uid": "2000399824",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Danns, Jayden Alexander*",
+          "fm_name": "Jayden Alexander Danns",
+          "fm_uid": "2000191846",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Evans O'Connor, Oliver James",
+          "fm_name": "Oliver O'Connor",
+          "fm_uid": "2000399794",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Ewing, Clae Louis Adrian*",
+          "fm_name": "Clae Ewing",
+          "fm_uid": "2000276770",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Figueroa Norales, Keyrol Alexis* (Loan)",
+          "fm_name": "Keyrol Alexis Figueroa Norales",
+          "fm_uid": "2000191843",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Forrester, La'more Lake Lee",
+          "fm_name": "La'more Lake Lee Forrester",
+          "fm_uid": "2000502106",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hall, Bailey*",
+          "fm_name": "Bailey Hall",
+          "fm_uid": "2000399741",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hickman, Ellis David",
+          "fm_name": "Ellis David Hickman",
+          "fm_uid": "2000502112",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Inglethorpe, Finn Alexander",
+          "fm_name": "Finn Inglethorpe",
+          "fm_uid": "2000502158",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Jacquet, Jeremy",
+          "fm_name": "Jérémy Jacquet",
+          "fm_uid": "2000094886",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Kelly, Kyle Damian* (Loan)",
+          "fm_name": "Kyle Damian Kelly",
+          "fm_uid": "2000222246",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Koumas, Lewis Terence*",
+          "fm_name": "Lewis Terence Koumas",
+          "fm_uid": "2000191802",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Laffey, Michael Mark Paul*",
+          "fm_name": "Michael Mark Paul Laffey",
+          "fm_uid": "2000191792",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Leoni, Giovanni",
+          "fm_name": "Giovanni Leoni",
+          "fm_uid": "2000259904",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Lucky Omoruyi, Wellity*",
+          "fm_name": "Wellity Lucky Omoruyi",
+          "fm_uid": "2000191774",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Misciur, Kornel Artur* (Loan)",
+          "fm_name": "Kornel Miściur",
+          "fm_uid": "2000276737",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Moran, Harry Sam",
+          "fm_name": "Harry Sam Moran",
+          "fm_uid": "2000502100",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Morrison, Kieran Yusuf* (Loan)",
+          "fm_name": "Kieran Morrison",
+          "fm_uid": "2000276761",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Nallo, Amara* (Loan)",
+          "fm_name": "Amara Nallo",
+          "fm_uid": "2000260919",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Ndiaye, El Hadji Mor Talla",
+          "fm_name": "El Hadji Mor Talla Ndiaye",
+          "fm_uid": "2000524865",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Ndukwe, Ifeanyi Arthur (Loan)",
+          "fm_name": "Ifeanyi Ndukwe",
+          "fm_uid": "2000368352",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Owen, Harvey Michael",
+          "fm_name": "Harvey Michael Owen",
+          "fm_uid": "2000502101",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Pecsi, Armin (Loan)",
+          "fm_name": "Ármin Pécsi",
+          "fm_uid": "2000133129",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Pitt, Lucas Rafael Philip Jose*",
+          "fm_name": "Lucas Pitt",
+          "fm_uid": "2000276738",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Powney Wain, Cian George",
+          "fm_name": "Cian George Powney Wain",
+          "fm_uid": "2000499521",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Scanlon, Calum Alexander* (Loan)",
+          "fm_name": "Calum Alexander Scanlon",
+          "fm_uid": "2000108358",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Williams, Cameron Finn",
+          "fm_name": "Cameron Finn Williams",
+          "fm_uid": "2000499492",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Wright, Matthew Arthur",
+          "fm_name": "Matthew Wright",
+          "fm_uid": "61094151",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Wright, William Stephen",
+          "fm_name": "William Wright",
+          "fm_uid": "2000388194",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        }
+      ],
+      "unmatched": [
+        "Becker, Alisson Ramses",
+        "Chiesa, Federico",
+        "Frimpong, Jeremie*",
+        "Gakpo, Cody",
+        "Mac Allister, Alexis",
+        "Tsimikas, Konstantinos",
+        "Abe, Joshua Oluwatobi",
+        "Bradshaw, Joseph Daniel*",
+        "Brughmans, Lucca Kiaba",
+        "Coxon, Zak Francis",
+        "Dixon, Joseph James",
+        "Ekiugbo, Shadrach Ogheneogaga",
+        "Esdaille, DJ",
+        "Evans, Noah McGinlay",
+        "Farkas, Erik Leonard",
+        "Garin, Isaiah Joel Norbert",
+        "Hawkins, Max Finley",
+        "Hilditch, James Gunnar George",
+        "Huth, Charlie Alexander",
+        "Izekor Garan, Japhect Imuetinyansa",
+        "Jikiemi, Olamilekan Oluwadarasimi Isaac",
+        "Majekodunmi, Anjolaoluwa Oladpupo Jotham",
+        "Murray-Holme, Hadyn Thomas",
+        "Ngumoha, Chima Rio*",
+        "Nyoni, Trey*",
+        "Onanuga, Daniel Folami Jesusemilore*",
+        "Phillips, Charlie Thomas",
+        "Sonni Lambie, Joshua Junior*",
+        "Trueman, Ben*",
+        "Upton, Joseph James",
+        "Yeguo, Aiden Jozef Bediako"
+      ]
+    },
+    "Man City": {
+      "official_club": "Manchester City",
+      "registered_players": 20,
+      "official_listed_players": 86,
+      "fm_matches": 54,
+      "fm_matched_registered": 14,
+      "fm_matched_u21": 40,
+      "matched": [
+        {
+          "name": "Ait-Nouri, Rayan",
+          "fm_name": "Rayan Aït-Nouri",
+          "fm_uid": "49047581",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Anderson, Elliot Junior*",
+          "fm_name": "Elliot Anderson",
+          "fm_uid": "28127254",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Bettinelli, Marcus*",
+          "fm_name": "Marcus Bettinelli",
+          "fm_uid": "28021778",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Donnarumma, Gianluigi",
+          "fm_name": "Gianluigi Donnarumma",
+          "fm_uid": "43252073",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dos Santos Gato Alves Dias, Ruben",
+          "fm_name": "Rúben Santos Gato Alves Dias",
+          "fm_uid": "55070299",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Fernandez, Enzo Jeremias",
+          "fm_name": "Enzo Jeremías Fernández",
+          "fm_uid": "14229525",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Foden, Philip Walter*",
+          "fm_name": "Phillip Walter Foden",
+          "fm_uid": "28108494",
+          "registration": "registered",
+          "matching_method": "high-confidence name"
+        },
+        {
+          "name": "Guehi, Addji Keaninkin Marc-Israel*",
+          "fm_name": "Addji Keaninkin Marc-Israel Guéhi",
+          "fm_uid": "28108033",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gvardiol, Josko",
+          "fm_name": "Joško Gvardiol",
+          "fm_uid": "24060473",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Haaland, Erling Braut",
+          "fm_name": "Erling Braut Haaland",
+          "fm_uid": "29179241",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Khusanov, Abdukodir",
+          "fm_name": "Abdukodir Khusanov",
+          "fm_uid": "2000168014",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Lewis, Rico Mark*",
+          "fm_name": "Rico Mark Lewis",
+          "fm_uid": "2000098727",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Rulli, Geronimo",
+          "fm_name": "Gerónimo Rulli",
+          "fm_uid": "14030119",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Semenyo, Antoine Serlom*",
+          "fm_name": "Antoine Serlom Semenyo",
+          "fm_uid": "29194724",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Alleyne, Max Lewis Rowe* (Loan)",
+          "fm_name": "Max Lewis Rowe Alleyne",
+          "fm_uid": "2000112986",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bouaddi, Ayyoub",
+          "fm_name": "Ayyoub Bouaddi",
+          "fm_uid": "2000381365",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Braithwaite, Kaden Elliot*",
+          "fm_name": "Kaden Elliot Braithwaite",
+          "fm_uid": "2000415453",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Brits, Thorsten Spike* (Loan)",
+          "fm_name": "Thorsten Brits",
+          "fm_uid": "2000266542",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Chabot, Max Edgar",
+          "fm_name": "Max-Edgar Chabot",
+          "fm_uid": "2000392591",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Charles, Pierce Joseph* (Loan)",
+          "fm_name": "Pierce Joseph Charles",
+          "fm_uid": "2000099950",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Courtman, Charlie*",
+          "fm_name": "Charlie Courtman",
+          "fm_uid": "2000436720",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dada-Mascoll, Isaiah Jelani Oladele Adedeji* (Loan)",
+          "fm_name": "Isaiah Jelani Oladele Adedeji Dada-Mascoll",
+          "fm_uid": "2000185040",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Detourbet, Mathys Alain Jean-Louis (Loan)",
+          "fm_name": "Mathys Detourbet",
+          "fm_uid": "2000269819",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Echeverri, Claudio Jeremias",
+          "fm_name": "Claudio Jeremías Echeverri",
+          "fm_uid": "2000094152",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Fapetu, Oluwafemi David Adetayo*",
+          "fm_name": "Oluwafemi David Adetayo Fapetu",
+          "fm_uid": "2000283424",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gorman, Finlay Ellis*",
+          "fm_name": "Finlay Gorman",
+          "fm_uid": "2000498739",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Gray, Charlie George* (Loan)",
+          "fm_name": "Charlie George Gray",
+          "fm_uid": "2000191862",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Grigg, Finley James*",
+          "fm_name": "Finley Grigg",
+          "fm_uid": "2000506287",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Henderson-Hall, Matthew James*",
+          "fm_name": "Matthew James Henderson-Hall",
+          "fm_uid": "2000296039",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Heskey, Jaden Emile Tyrone* (Loan)",
+          "fm_name": "Jaden Emile Tyrone Heskey",
+          "fm_uid": "2000185230",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Lamb, Teddie Jack*",
+          "fm_name": "Teddie Lamb",
+          "fm_uid": "2000511353",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Lawrence, Emilio Alford Anthony* (Loan)",
+          "fm_name": "Emilio Alford Anthony Lawrence",
+          "fm_uid": "2000225711",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Martin , Milo John James* (Loan)",
+          "fm_name": "Milo Martin",
+          "fm_uid": "2000511329",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "McAidoo, Ryan Kelly*",
+          "fm_name": "Ryan Kelly McAidoo",
+          "fm_uid": "2000416598",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "McFarlane, Christian Hector (Loan)",
+          "fm_name": "Christian Hector McFarlane",
+          "fm_uid": "2000165742",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mfuni, Stephen-Nevin Mutanda* (Loan)",
+          "fm_name": "Stephen-Nevin Mutanda Mfuni",
+          "fm_uid": "2000404708",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Midwood, Kylan Jo-Aiden Ian*",
+          "fm_name": "Kylan Midwood",
+          "fm_uid": "2000437793",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Miles, Harrison Frank*",
+          "fm_name": "Harrison Miles",
+          "fm_uid": "2000438102",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Mukasa, Divine Tayon Mahogany* (Loan)",
+          "fm_name": "Divine Tayon Mahogany Mukasa",
+          "fm_uid": "2000325860",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Nfonkeu Feuba, Brooklyn*",
+          "fm_name": "Brooklyn Nfonkeu Feuba",
+          "fm_uid": "2000296461",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Noble, Kian Lee*",
+          "fm_name": "Kian Lee Noble",
+          "fm_uid": "2000282868",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Nypan, Sverre Halseth (Loan)",
+          "fm_name": "Sverre Halseth Nypan",
+          "fm_uid": "2000254793",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "O'Reilly, Nico*",
+          "fm_name": "Nico O'Reilly",
+          "fm_uid": "2000101285",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Obin, Yohann Abraham Achi*",
+          "fm_name": "Yohann Obin",
+          "fm_uid": "2000510837",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Parker, Harrison Percival*",
+          "fm_name": "Harrison Percival Parker",
+          "fm_uid": "2000272785",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Samba, Floyd Veijeany Junior*",
+          "fm_name": "Floyd Samba",
+          "fm_uid": "2000511340",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Samba, Tyrone Prosper William*",
+          "fm_name": "Tyrone Prosper William Samba",
+          "fm_uid": "2000437952",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Samuel, Lakyle* (Loan)",
+          "fm_name": "Lakyle Samuel",
+          "fm_uid": "2000184227",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sangare, Mahamadou",
+          "fm_name": "Mahamadou Sangaré",
+          "fm_uid": "2000288733",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tevenan, Oliver Louis*",
+          "fm_name": "Oliver Louis Tevenan",
+          "fm_uid": "2000282906",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Thomas, Rhys Lloyd*",
+          "fm_name": "Rhys Lloyd Thomas",
+          "fm_uid": "2000282899",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Whatmuff, Oliver Jackson* (Loan)",
+          "fm_name": "Oliver Jackson Whatmuff",
+          "fm_uid": "2000417087",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Whisker, Timeo Medard George*",
+          "fm_name": "Timeo Whisker",
+          "fm_uid": "2000511337",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Wint, Jack Thomas Charles* (Loan)",
+          "fm_name": "Jack Thomas Charles Wint",
+          "fm_uid": "2000282495",
+          "registration": "u21",
+          "matching_method": "exact"
+        }
+      ],
+      "unmatched": [
+        "Andrade Elias, Allan",
+        "Cherki, Mathis Rayan",
+        "Doku, Jeremy Baffour",
+        "Kovacic, Mateo",
+        "Ndiaye, Iliman Cheikh Baroy*",
+        "Nunes, Matheus Luiz",
+        "Aiyegbusi , Tirenioluwa Ayobamidele Raphael*",
+        "Bah, Abdulai Juma (Loan)",
+        "Barrett, Marlow Rae",
+        "Cadamarteri, Caelan-Kole",
+        "Carrington, Theodore Victor Sheridan",
+        "De Oliveira Nunes Dos Reis, Vitor",
+        "Drake, Leke*",
+        "Dunbar-McDonald, Christian Ky-Andre*",
+        "Headley, Dante Ferdinand*",
+        "Hudson, Max*",
+        "Kilwa, Heaven Marcel",
+        "Lawrie, Freddie John*",
+        "Mathiesen, Toran Zade*",
+        "McMeekin, Keir Alastair Samuel",
+        "Monga, Jeremy Ngola*",
+        "Motsi, Darren Tadiwanashe",
+        "Nduka, Mishel Ifeanyi",
+        "Oliver, Dexter Jack*",
+        "Parker, Xavier Tau",
+        "Shire, Jaxon Paul*",
+        "Thornton, Archie Robert*",
+        "Turley, Alfie Frank*",
+        "Vickery, Ben Alexander Slack",
+        "Wadsworth, Sam Keith *",
+        "Wain, Jacob William*",
+        "Woode, Javahn Roger Ernest"
+      ]
+    },
+    "Coventry": {
+      "official_club": "Coventry City",
+      "registered_players": 24,
+      "official_listed_players": 69,
+      "fm_matches": 44,
+      "fm_matched_registered": 21,
+      "fm_matched_u21": 23,
+      "matched": [
+        {
+          "name": "Amenda, Aurele Florian",
+          "fm_name": "Aurèle Florian Amenda",
+          "fm_uid": "84161623",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bentley, Daniel Ian*",
+          "fm_name": "Daniel Ian Bentley",
+          "fm_uid": "29060276",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dasilva, Jay Rhys*",
+          "fm_name": "Jay Rhys Dasilva",
+          "fm_uid": "29125192",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Grimes, Matthew Jacob*",
+          "fm_name": "Matthew Jacob Grimes",
+          "fm_uid": "29086056",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hamer, Gustavo Martin Emilio",
+          "fm_name": "Gustavo Martin Emilio Hamer",
+          "fm_uid": "37050681",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hayden, Kaine Kesler*",
+          "fm_name": "Kaine Kesler Hayden",
+          "fm_uid": "28127068",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Latibeaudiere, Joel Owen*",
+          "fm_name": "Joel Owen Latibeaudiere",
+          "fm_uid": "28108493",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mason-Clark, Ephron Jardell*",
+          "fm_name": "Ephron Jardell Mason-Clark",
+          "fm_uid": "29163836",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Onyeka, Ogochukwu Frank",
+          "fm_name": "Ogochukwu Frank Onyeka",
+          "fm_uid": "27129125",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Overgaard, Victor Torp",
+          "fm_name": "Victor Torp Overgaard",
+          "fm_uid": "27118876",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Pinnock, Ethan Rupert*",
+          "fm_name": "Ethan Rupert Pinnock",
+          "fm_uid": "89040516",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Rudoni, Jack Edward*",
+          "fm_name": "Jack Edward Rudoni",
+          "fm_uid": "29191145",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Rushworth, Carl Andrew*",
+          "fm_name": "Carl Andrew Rushworth",
+          "fm_uid": "89065344",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sakamoto, Tatsuhiro",
+          "fm_name": "Tatsuhiro Sakamoto",
+          "fm_uid": "45116614",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Simms, Ellis Reco*",
+          "fm_name": "Ellis Reco Simms",
+          "fm_uid": "28116394",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Tchaouna, Loum",
+          "fm_name": "Loum Tchaouna",
+          "fm_uid": "2000006108",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Thomas, Bobby Craig*",
+          "fm_name": "Bobby Craig Thomas",
+          "fm_uid": "28116346",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Thomas-Asante, Solomon Brandon Michael Clarke*",
+          "fm_name": "Solomon Brandon Michael Clarke Thomas-Asante",
+          "fm_uid": "29162985",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Van Ewijk, Milan Fabrizio",
+          "fm_name": "Milan Fabrizio van Ewijk",
+          "fm_uid": "37075765",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Woolfenden, Luke Matthew*",
+          "fm_name": "Luke Matthew Woolfenden",
+          "fm_uid": "29156431",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Wright, Haji Amir",
+          "fm_name": "Haji Amir Wright",
+          "fm_uid": "20034959",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Andrews, Kai Bernard James* (Loan)",
+          "fm_name": "Kai Bernard James Andrews",
+          "fm_uid": "2000218867",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bassega, Nsemi Sostene",
+          "fm_name": "Nsemi Sostene Bassega",
+          "fm_uid": "2000380080",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Betjemann, Elliot George Joshua",
+          "fm_name": "Elliot Betjemann",
+          "fm_uid": "2000218863",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Briscoe, Elijah Brandon*",
+          "fm_name": "Elijah Brandon Briscoe",
+          "fm_uid": "2000414241",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Broad, Harvey Ronald (Loan)",
+          "fm_name": "Harvey Broad",
+          "fm_uid": "2000407245",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Cherif, Sidiki",
+          "fm_name": "Sidiki Chérif",
+          "fm_uid": "2000271175",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Cullinane, Billy-Ray",
+          "fm_name": "Billy-Ray Cullinane",
+          "fm_uid": "2000378588",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dausch, Aidan William",
+          "fm_name": "Aidan William Dausch",
+          "fm_uid": "2000218864",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dunn, Shay Leslie",
+          "fm_name": "Shay Dunn",
+          "fm_uid": "2000532252",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Gordon, Joshua David",
+          "fm_name": "Joshua Gordon",
+          "fm_uid": "2000325662",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Gray, Harrison Steven",
+          "fm_name": "Harrison Gray",
+          "fm_uid": "2000378222",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Madu, Ubachukwu Victor Oluebube*",
+          "fm_name": "Ubachukwu Victor Oluebube Madu",
+          "fm_uid": "2000383091",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mantle, David Michael",
+          "fm_name": "David Mantle",
+          "fm_uid": "2000325663",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Mfuni, Stephen-Nevin Mutanda*",
+          "fm_name": "Stephen-Nevin Mutanda Mfuni",
+          "fm_uid": "2000404708",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Moore, Isaac Burgess* (Loan)",
+          "fm_name": "Isaac Moore",
+          "fm_uid": "2000131092",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Perry, Callum Michael* (Loan)",
+          "fm_name": "Callum Perry",
+          "fm_uid": "2000218865",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Ruddy, Jack Peter*",
+          "fm_name": "Jack Peter Ruddy",
+          "fm_uid": "2000383084",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Shepherd, George David",
+          "fm_name": "George Shepherd",
+          "fm_uid": "2000530819",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Stretton, MacKenzie Jake (Loan)",
+          "fm_name": "MacKenzie Stretton",
+          "fm_uid": "2000325670",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Toluwaloju, Joshua Ayotunde (Loan)",
+          "fm_name": "Joshua Toluwaloju",
+          "fm_uid": "2000465256",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Varney, Oscar Robert (Loan)",
+          "fm_name": "Oscar Varney",
+          "fm_uid": "2000276587",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Williams, Thomas James",
+          "fm_name": "Thomas Williams",
+          "fm_uid": "2000050347",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Yirenkyi, Caleb Marfo",
+          "fm_name": "Caleb Marfo Yirenkyi",
+          "fm_uid": "2000339863",
+          "registration": "u21",
+          "matching_method": "exact"
+        }
+      ],
+      "unmatched": [
+        "Awoniyi, Taiwo Micheal*",
+        "Eccles, Joshua Elliot*",
+        "Wilson, Ben*",
+        "Agyman-Boadi, Ivan Safo",
+        "Batanwi, Tristen Vyss",
+        "Bengi, Cosar Deniz",
+        "Brophy, Tyler John William",
+        "Clarke, Brody Harry",
+        "Critchlow-Woyo, Tionne David Winston",
+        "Fletcher, Ollie-James Alan Albert",
+        "Holman, Jimmy Michael",
+        "Jones, Finley Christopher Ray",
+        "Jorgensen, Oscar Lewie-Bech",
+        "Kengema, Hassan",
+        "Lincoln, Kah'vanni Amarni",
+        "Meredith, Eliot Boyd",
+        "Nitu-Paka, Chaavy",
+        "Odei-Wontumi, Alexander-Jermaine Kwesi",
+        "Osborne, Lucas Neil",
+        "Petty, Billy James Rocco",
+        "Richards, Oscar David John",
+        "Richards-Dore, Rio",
+        "Stidder, Joshua Maxwel",
+        "Uzochukwu, Chukwudubem Ebube Chukwu Daniel Ebuka",
+        "West, Devon William"
+      ]
+    },
+    "Newcastle": {
+      "official_club": "Newcastle United",
+      "registered_players": 19,
+      "official_listed_players": 79,
+      "fm_matches": 51,
+      "fm_matched_registered": 15,
+      "fm_matched_u21": 36,
+      "matched": [
+        {
+          "name": "Barnes, Harvey Lewis*",
+          "fm_name": "Harvey Lewis Barnes",
+          "fm_uid": "28100207",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Botman, Sven Adriaan",
+          "fm_name": "Sven Botman",
+          "fm_uid": "37063649",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Burn, Daniel Johnson*",
+          "fm_name": "Daniel Johnson Burn",
+          "fm_uid": "29061164",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Dedic, Amar",
+          "fm_name": "Amar Dedić",
+          "fm_uid": "16283629",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Elanga, Anthony David Junior*",
+          "fm_name": "Anthony David Junior Elanga",
+          "fm_uid": "28121568",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Gillespie, Mark Joseph*",
+          "fm_name": "Mark Joseph Gillespie",
+          "fm_uid": "29036230",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hall, Lewis*",
+          "fm_name": "Lewis Hall",
+          "fm_uid": "2000108691",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Hornicek, Lukas",
+          "fm_name": "Lukáš Horníček",
+          "fm_uid": "83297510",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Murphy, Jacob Kai*",
+          "fm_name": "Jacob Kai Murphy",
+          "fm_uid": "29079830",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Osula, William Idamudia Daugaard*",
+          "fm_name": "William Idamudia Daugaard Osula",
+          "fm_uid": "28128173",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Pope, Nicholas David*",
+          "fm_name": "Nicholas David Pope",
+          "fm_uid": "29083750",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Ramsey, Jacob Matthew Decourcey*",
+          "fm_name": "Jacob Ramsey",
+          "fm_uid": "29193659",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Schar, Fabian Lukas",
+          "fm_name": "Fabian Lukas Schär",
+          "fm_uid": "98007212",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Willock, Joseph George*",
+          "fm_name": "Joseph Willock",
+          "fm_uid": "28106684",
+          "registration": "registered",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Wissa, Yoane",
+          "fm_name": "Yoane Wissa",
+          "fm_uid": "85140175",
+          "registration": "registered",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Bailey, Scott Patrick",
+          "fm_name": "Scott Bailey",
+          "fm_uid": "2000189865",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Bamba, Aladji Kairaba",
+          "fm_name": "Aladji Bamba",
+          "fm_uid": "2000188753",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Ca, Afner Bernardinho",
+          "fm_name": "Afner Bernardinho Cá",
+          "fm_uid": "2000391795",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Callaghan, Jack",
+          "fm_name": "Jack Callaghan",
+          "fm_uid": "2000495799",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Charlton, Dylan Harry",
+          "fm_name": "Dylan Charlton",
+          "fm_uid": "2000189866",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Cordero Campillo, Antonio Jose (Loan)",
+          "fm_name": "Antonio José Cordero Campillo",
+          "fm_uid": "2000291513",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Craggs, Luke Steven",
+          "fm_name": "Luke Craggs",
+          "fm_uid": "2000302078",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Diabate, Ousmane (Loan)",
+          "fm_name": "Ousmane Diabaté",
+          "fm_uid": "13129405",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Emerson, Johnny William",
+          "fm_name": "Johnny Emerson",
+          "fm_uid": "2000189872",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Epia, Aaron Ovie",
+          "fm_name": "Aaron Ovie Epia",
+          "fm_uid": "2000410007",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Finneran, Rory James (Loan)",
+          "fm_name": "Rory Finneran",
+          "fm_uid": "2000271404",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Fitzgerald, Kyle Wesley",
+          "fm_name": "Kyle Fitzgerald",
+          "fm_uid": "2000313523",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Gilligan, Luke",
+          "fm_name": "Luke Gilligan",
+          "fm_uid": "2000494873",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Goodbrand, Oliver William",
+          "fm_name": "Oliver Goodbrand",
+          "fm_uid": "2000445294",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Harper, Fraser Harrison",
+          "fm_name": "Fraser Harper",
+          "fm_uid": "2000292942",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Harris, Aidan Francis",
+          "fm_name": "Aidan Harris",
+          "fm_uid": "2000302058",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Hutchison, Alfie David",
+          "fm_name": "Alfie Hutchison",
+          "fm_uid": "2000478937",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Jaouen, Ewen Jean",
+          "fm_name": "Ewen Jaouen",
+          "fm_uid": "2000183134",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Johnson, Henry William",
+          "fm_name": "Henry William Johnson",
+          "fm_uid": "2000409969",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Jones, Tyler Stuart",
+          "fm_name": "Tyler Stuart Jones",
+          "fm_uid": "2000409979",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Miley, Lewis*",
+          "fm_name": "Lewis Miley",
+          "fm_uid": "2000189871",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Miley, Mason",
+          "fm_name": "Mason Miley",
+          "fm_uid": "2000494899",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Mills, Michael Asamoah",
+          "fm_name": "Michael Mills",
+          "fm_uid": "2000494885",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Moran, Isaac James",
+          "fm_name": "Isaac Moran",
+          "fm_uid": "2000494866",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Morgan, Noah Oliver",
+          "fm_name": "Noah Morgan",
+          "fm_uid": "2000494879",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Munda, Anthony Junior (Loan)",
+          "fm_name": "Anthony Junior Munda",
+          "fm_uid": "2000302060",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Ndiweni, Ethan Nyasha",
+          "fm_name": "Ethan Ndiweni",
+          "fm_uid": "2000494883",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Neave, Sean Thomas*",
+          "fm_name": "Sean Neave",
+          "fm_uid": "2000302080",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Pivas, Miodrag",
+          "fm_name": "Miodrag Pivaš",
+          "fm_uid": "2000112877",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Rodrigues Ferreira, Matheos",
+          "fm_name": "Matheos Ferreira",
+          "fm_uid": "2000409954",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Salia, Vakhtang",
+          "fm_name": "Vakhtang Salia",
+          "fm_uid": "2000336547",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Sanusi, Trevan Farooq",
+          "fm_name": "Trevan Sanusi",
+          "fm_uid": "2000302092",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Steur, Sean Johannes Maria",
+          "fm_name": "Sean Steur",
+          "fm_uid": "2000350903",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Toure, Bazoumana",
+          "fm_name": "Bazoumana Touré",
+          "fm_uid": "12095040",
+          "registration": "u21",
+          "matching_method": "exact"
+        },
+        {
+          "name": "Watts, Logan Mathew",
+          "fm_name": "Logan Watts",
+          "fm_uid": "2000302083",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        },
+        {
+          "name": "Wooster, Kacey Robert Mikie",
+          "fm_name": "Kacey Wooster",
+          "fm_uid": "2000286586",
+          "registration": "u21",
+          "matching_method": "unique expanded-name"
+        }
+      ],
+      "unmatched": [
+        "Apolinario De Lira, Joelinton Cassio",
+        "Gonzalez Iglesias, Nicolas",
+        "Livramento, Valentino*",
+        "Thiaw, Malick",
+        "Afumuzor, Chukwudi Theophilus Mduduzi",
+        "Alabi, Adedamola Samuel Ireoluwajoba",
+        "Benjamin, Theo Junior",
+        "Bloomer, Guy Thomas",
+        "Boothe, Christian Francis",
+        "Dowell, Roman Toma",
+        "Durrant, Jake Thomas",
+        "Fernandez-Pardo, Matias",
+        "Healy-Matthews, Kyle Joseph",
+        "Holland, Oliver Henry",
+        "Kouossu, Jayden Pressley",
+        "Mair, George William",
+        "Mukumbira, Leon Ngonidzashe",
+        "Old, Thomas Sam",
+        "Park, Seungsoo",
+        "Patterson, Jack James",
+        "Pinnington, Samuel James",
+        "Seldon, Alfie Thomas",
+        "Shahar, Leo Oren",
+        "Thompson, Kyran Anthony",
+        "Waddani, Mohamed",
+        "Walpole, Alexander Guy",
+        "Yeutembip, Aristide Lesecond Bakinan",
+        "Yildiz, Baran"
+      ]
+    }
+  }
+}

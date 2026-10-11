@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-10-10",
+  "fixture_config": "configs/pl_2026-10-11.json",
+  "matches": 1748,
+  "source_urls": [
+    "https://www.football-data.co.uk/mmz4281/2324/E0.csv",
+    "https://www.football-data.co.uk/mmz4281/2425/E0.csv",
+    "https://www.football-data.co.uk/mmz4281/2526/E0.csv",
+    "https://www.football-data.co.uk/mmz4281/2526/E1.csv",
+    "https://www.football-data.co.uk/mmz4281/2627/E0.csv",
+    "https://www.reuters.com/sports/soccer/guimaraes-grabs-winner-arsenal-rally-beat-leeds-2026-10-10/"
+  ],
+  "leakage_policy": "completed matches dated at or before cutoff; no bookmaker odds, no future dates; FM26 June 2026 snapshot only used on August 2026 and later observations; one forecast per future fixture"
+}

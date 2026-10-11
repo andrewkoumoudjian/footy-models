@@ -1,0 +1,138 @@
+{
+  "fixtures": [
+    {
+      "away": "Nott'm Forest",
+      "away_expected_goals": 1.2779429121193537,
+      "away_win": 0.34968150578000323,
+      "base_probabilities": [
+        0.3638501715407433,
+        0.26889076211582663,
+        0.36725906634343
+      ],
+      "date": "2026-10-11",
+      "draw": 0.3265349382297813,
+      "fm_away_attack": -0.288221034,
+      "fm_away_coverage": 1.0,
+      "fm_away_defense": -0.329433855,
+      "fm_home_attack": -0.454402852,
+      "fm_home_coverage": 1.0,
+      "fm_home_defense": -0.363048574,
+      "home": "Crystal Palace",
+      "home_expected_goals": 1.2307037185827798,
+      "home_win": 0.32378355599021547,
+      "modal_score": "1-1"
+    },
+    {
+      "away": "Everton",
+      "away_expected_goals": 0.783834596325099,
+      "away_win": 0.2283494456660275,
+      "base_probabilities": [
+        0.42997602675961283,
+        0.31925693219182844,
+        0.25076704104855924
+      ],
+      "date": "2026-10-11",
+      "draw": 0.4026478817876574,
+      "fm_away_attack": -0.376524064,
+      "fm_away_coverage": 1.0,
+      "fm_away_defense": -0.301373249,
+      "fm_home_attack": -0.666666667,
+      "fm_home_coverage": 0.333333333,
+      "fm_home_defense": -0.666666667,
+      "home": "Hull",
+      "home_expected_goals": 1.018740598102126,
+      "home_win": 0.3690026725463151,
+      "modal_score": "1-0"
+    },
+    {
+      "away": "Man City",
+      "away_expected_goals": 1.6871352813496738,
+      "away_win": 0.437815992439084,
+      "base_probabilities": [
+        0.33707875782774027,
+        0.2382307503021169,
+        0.42469049187014296
+      ],
+      "date": "2026-10-11",
+      "draw": 0.28023191002496467,
+      "fm_away_attack": 0.994324421,
+      "fm_away_coverage": 1.0,
+      "fm_away_defense": 1.068082378,
+      "fm_home_attack": 0.815657754,
+      "fm_home_coverage": 1.0,
+      "fm_home_defense": 0.814988223,
+      "home": "Liverpool",
+      "home_expected_goals": 1.3807190158078704,
+      "home_win": 0.28195209753595135,
+      "modal_score": "1-1"
+    },
+    {
+      "away": "Newcastle",
+      "away_expected_goals": 1.5877355847987655,
+      "away_win": 0.47220300656342273,
+      "base_probabilities": [
+        0.2884687135109915,
+        0.25199630142648116,
+        0.45953498506252705
+      ],
+      "date": "2026-10-12",
+      "draw": 0.29617699719853746,
+      "fm_away_attack": 0.165294118,
+      "fm_away_coverage": 1.0,
+      "fm_away_defense": 0.223903807,
+      "fm_home_attack": 0.0,
+      "fm_home_coverage": 0.0,
+      "fm_home_defense": 0.0,
+      "home": "Coventry",
+      "home_expected_goals": 1.1306190486311491,
+      "home_win": 0.2316199962380399,
+      "modal_score": "1-1"
+    }
+  ],
+  "limitations": [
+    "FM club membership may be stale after summer 2026 transfers; no confirmed starting XI or injuries",
+    "Missing FM club coverage is zero feature adjustment, NOT zero player quality",
+    "FM coefficient is conservative heuristic, not validated incremental prediction; compare holdout ablation",
+    "Independent Poisson goal counts omit match-state correlations"
+  ],
+  "model": "Time-decayed ridge-regularized Poisson goals + 2026 pre-season Football Manager CA/role composite priors + footy-match OutcomeCalibrator",
+  "training": {
+    "championship_matches": 552,
+    "fm_coefficient_selection": "fixed ex ante; not estimated or selected from holdout results; FM is not independently validated",
+    "fm_log_goal_coefficient": 0.16,
+    "half_life_days": 270,
+    "pl_matches": 1196,
+    "snapshot": "FM26 / TM joined player-roster snapshot June 2026; no injury/start information"
+  },
+  "validation": {
+    "calibrated_results_only": {
+      "brier": 0.6068387788455487,
+      "logloss": 1.0139317485537453,
+      "n": 56
+    },
+    "calibrated_results_plus_fm": {
+      "brier": 0.5948970933115577,
+      "logloss": 0.992251054515485,
+      "n": 56
+    },
+    "calibration_draw_bias": 0.35,
+    "calibration_samples": 380,
+    "calibration_temperature": 0.8,
+    "evaluation_samples": 56,
+    "fm_brier_improvement_day_bootstrap_95pct": [
+      -0.015257476905454752,
+      0.04496739958207361
+    ],
+    "protocol": "chronological day-excluded fits; calibration from historical matches before current season, holdout from current season; pre-season FM26 snapshot fixed",
+    "raw_results_only": {
+      "brier": 0.6181729097041194,
+      "logloss": 1.0339571006710888,
+      "n": 56
+    },
+    "raw_results_plus_fm": {
+      "brier": 0.6046139269835297,
+      "logloss": 1.0102708937771998,
+      "n": 56
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "as_of": "2026-10-10",
+  "matches": 4,
+  "paths_per_fixture": 72,
+  "root_seed": 42,
+  "engine": "footy-match::simulate_second_resolved_dynamic_mental_match",
+  "eligible_fm26_players": 323,
+  "league_registration": "https://www.premierleague.com/en/news/4706139/see-all-the-202627-premier-league-squad-lists",
+  "team_availability": "https://www.theguardian.com/football/2026/oct/09/premier-league-team-news-predicted-lineups-for-the-weekend-action",
+  "input_sha256": {
+    "matched_registration": "e6cc3db9a6042c36f655529f0717684a8b0806fa7ff309984c7d32ce10868b88",
+    "dated_team_results": "205a39774fcc46d5f8093643aef5c9c4d0472640b12fc32d91785109de289a96",
+    "eligible_player_inputs": "1da0330903e33a0fc7dca0a4696d9e55cff4844202d6912407fa8b85cc7edfd3",
+    "availability_config": "f9ad196202b6337159e79f0712404da46e28625b6d9453f91979f14667eee0f3",
+    "baseline_team_forecast": "c4c67b014b510cc0d00814f597fa77c9d4af90ca1f06ee7d480aeea2716809ec",
+    "fm26_raw_local": "b91eaccd9be04278d863a80ef26473455932acdaf8f2b321196c50ada08b74cb"
+  },
+  "source_exclusion_policy": "exclude registered players on loan and Guardian-confirmed injured or suspended by verified FM UID; keep doubtful uncertain",
+  "interpretation": "exploratory player-level scenario; per-player event rates and selection not validated on current Premier League tracking"
+}

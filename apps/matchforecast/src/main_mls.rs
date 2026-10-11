@@ -953,3 +953,105 @@ fn main() {
         }
     }
 }
+
+/// Premier League driver: reuses the MLS production *player-level* primitives
+/// and the actual second-resolved simulation engine, with dated official
+/// registered squads and their FM26 attributes. No current lineup confirmed.
+pub(crate) fn run_premier_league() {
+    use serde_json::{json, Value};
+    use std::path::Path;
+    let mut paths = 120_u32;
+    let mut seed = 42_u64;
+    let mut only: Option<String> = None;
+    let mut output_path = "artifacts/premier-league-2026-10-11/player_paths.json".to_string();
+    let mut iter = std::env::args().skip(1);
+    while let Some(flag) = iter.next() {
+        match flag.as_str() {
+            "--paths" => paths = iter.next().expect("--paths value").parse().expect("valid paths"),
+            "--seed" => seed = iter.next().expect("--seed value").parse().expect("valid seed"),
+            "--only" => only = Some(iter.next().expect("--only team substring")),
+            "--output" => output_path = iter.next().expect("--output destination"),
+            _ => panic!("unknown argument: {flag}"),
+        }
+    }
+    assert!(paths > 0 && paths <= 10000);
+    let as_of = date_from("2026-10-11");
+    let windows = LeagueWindows::build("data/pl/asof_team_stats.csv", as_of);
+    let players = load_players("data/pl/player_fm_join.csv", 0.0, as_of);
+    let baseline: Value = serde_json::from_str(&std::fs::read_to_string("data/pl/forecasts.json").expect("read baseline"))
+        .expect("parse baseline");
+    let mut out = Vec::new();
+    for (idx, fixture) in baseline["fixtures"].as_array().expect("fixtures").iter().enumerate() {
+        let home_name = fixture["home"].as_str().expect("home");
+        let away_name = fixture["away"].as_str().expect("away");
+        if only.as_ref().is_some_and(|filter| !home_name.contains(filter) && !away_name.contains(filter)) {
+            continue;
+        }
+        let home = windows.team(home_name);
+        let away = windows.team(away_name);
+        let home_count = players.iter().filter(|p| p.team == home_name).count();
+        let away_count = players.iter().filter(|p| p.team == away_name).count();
+        assert!(home_count >= 14 && away_count >= 14,
+            "insufficient matched FM26 players {home_name}={home_count} {away_name}={away_count}");
+        let mut input = build_input(MatchId(1_000_000 + idx as u64), &home, &away, &players, None, None);
+        // The existing result model contributes a pre-match intensity anchor,
+        // not the W/D/L result; the engine still simulates goals through the
+        // player/team event graph and game-state feedback for every path.
+        let hg = fixture["home_expected_goals"].as_f64().expect("home target");
+        let ag = fixture["away_expected_goals"].as_f64().expect("away target");
+        let reference = ((hg + ag) / 2.0).clamp(0.6, 2.4);
+        input.goal_process.goals_per_team_match = reference;
+        input.goal_process.home_advantage_multiplier = 1.0;
+        input.goal_process.path_log_rate_sigma = 0.20;
+        input.environment.home_residual_attack_log_adjustment = (hg / reference).ln().clamp(-0.35, 0.35);
+        input.environment.away_residual_attack_log_adjustment = (ag / reference).ln().clamp(-0.35, 0.35);
+        let home_ids: Vec<_> = input.home_lineup.candidates.iter().map(|p| p.player).collect();
+        let away_ids: Vec<_> = input.away_lineup.candidates.iter().map(|p| p.player).collect();
+        let lookup = |id: PlayerId| players.iter().find(|p| p.id == id.0);
+        let mental = mental_model(&home, &away, &home_ids, &away_ids,
+            &|id| lookup(id).and_then(|p| p.fm_dirtiness),
+            &|id| lookup(id).and_then(|p| p.fm_consistency));
+        assert!(input.validate(),"invalid player input {home_name} vs {away_name}");
+        let prediction = simulate_second_resolved_dynamic_mental_match(&input, &mental,
+            DynamicMentalTransitionParameters::default(),
+            SecondResolvedSimulationParameters::default(), paths, seed + idx as u64)
+            .unwrap_or_else(||panic!("simulation rejected {home_name} vs {away_name}"));
+        let event_windows: Vec<_> = prediction.windows_15min.iter().map(|w| json!({
+            "minute_start":w.start_minute,"minute_end":w.end_minute,
+            "p_any_goal":w.probability_any_goal,"p_home_goal":w.probability_home_goal,
+            "p_away_goal":w.probability_away_goal,"p_red_card":w.probability_red_card,
+            "p_substitution":w.probability_substitution,
+            "expected_home_goals":w.expected_home_goals,"expected_away_goals":w.expected_away_goals,
+            "expected_home_shots":w.expected_home_shots,"expected_away_shots":w.expected_away_shots,
+            "end_of_window_outcomes":[w.end_home_lead,w.end_draw,w.end_away_lead],
+        })).collect();
+        let player_info: Vec<_> = prediction.player_metrics.iter().filter(|p|p.metric.0 == M_SHOT)
+            .map(|p|json!({"uid":p.player.0,"name":lookup(p.player).map_or("unknown",|x|x.name.as_str()),
+                "start_probability":p.start_probability.get(),"appearance_probability":p.appearance_probability.get(),
+                "expected_minutes":p.expected_minutes,"expected_shots":p.unconditional_total.mean})).collect();
+        let o=&prediction.outcome;
+        println!("{home_name} vs {away_name}: {} paths | H {:.3} D {:.3} A {:.3} | goals {:.2}-{:.2}",
+            prediction.paths,o.home_win.get(),o.draw.get(),o.away_win.get(),o.home_goals.mean,o.away_goals.mean);
+        out.push(json!({"date":fixture["date"],"home":home_name,"away":away_name,
+            "paths":prediction.paths,"seed":seed+idx as u64,
+            "registered_fm_players":{"home":home_count,"away":away_count},
+            "home_win":o.home_win.get(),"draw":o.draw.get(),"away_win":o.away_win.get(),
+            "expected_home_goals":o.home_goals.mean,"expected_away_goals":o.away_goals.mean,
+            "match_state_events_per_path":prediction.mean_state_events_per_path,
+            "same_second_collision_probability":prediction.same_second_collision_probability.get(),
+            "15_minute_windows":event_windows,"players":player_info,
+            "comparison_results_fm_model":{"home_win":fixture["home_win"],
+                "draw":fixture["draw"],"away_win":fixture["away_win"]}}));
+    }
+    let artifact=json!({"as_of":"2026-10-10","model":"simulate_second_resolved_dynamic_mental_match",
+        "status":"exploratory player-level pre-match scenario; not a statistically validated EPL event forecast",
+        "roster":"2026/27 registered squad list + matched FM26 attributes",
+        "caveats":["No confirmed lineups or 2026/27 player minutes; starts are random with CA/exposure priors",
+            "FM-derived event processes have not been validated on EPL player events",
+            "Player goal process anchored to independently refitted results+FM benchmark",
+            "P(any shot) per window is simulated player-event process; goals/red cards/subs are path-observed"],
+        "fixtures":out});
+    let path=Path::new(&output_path);
+    std::fs::create_dir_all(path.parent().unwrap()).expect("create artifact directory");
+    std::fs::write(path, serde_json::to_string_pretty(&artifact).unwrap()+"\n").expect("write paths");
+}

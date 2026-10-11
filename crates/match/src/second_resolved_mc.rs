@@ -81,6 +81,40 @@ pub struct SecondResolvedDynamicMentalForecast {
     pub mean_state_events_per_path: f64,
     pub simulated_match_seconds: u32,
     pub paths: u32,
+    /// Path-observed event probabilities in actual six 15-minute clock windows.
+    pub windows_15min: Vec<SecondResolvedWindowForecast>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SecondResolvedWindowForecast {
+    pub start_minute: u16,
+    pub end_minute: u16,
+    pub probability_any_goal: f64,
+    pub probability_home_goal: f64,
+    pub probability_away_goal: f64,
+    pub probability_red_card: f64,
+    pub probability_substitution: f64,
+    pub expected_home_goals: f64,
+    pub expected_away_goals: f64,
+    pub expected_home_shots: f64,
+    pub expected_away_shots: f64,
+    pub end_home_lead: f64,
+    pub end_draw: f64,
+    pub end_away_lead: f64,
+}
+
+#[derive(Debug, Clone, Default)]
+struct PathWindow {
+    home_goals: u32, away_goals: u32, red_cards: u32, substitutions: u32,
+    home_shots: f64, away_shots: f64,
+    cumulative_home: u32, cumulative_away: u32,
+}
+
+#[derive(Debug, Clone, Default)]
+struct WindowAggregate {
+    any_goal: u32, home_goal: u32, away_goal: u32, red_card: u32, substitution: u32,
+    home_goals: u64, away_goals: u64, home_shots: f64, away_shots: f64,
+    home_lead: u32, draw: u32, away_lead: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -275,6 +309,9 @@ pub fn simulate_second_resolved_dynamic_mental_match(
     let mut event_counts = BTreeMap::<SecondResolvedStateEventKind, u64>::new();
     let mut total_state_events = 0_u64;
     let mut collision_paths = 0_u32;
+    let mut windows = [WindowAggregate::default(), WindowAggregate::default(), WindowAggregate::default(),
+        WindowAggregate::default(), WindowAggregate::default(), WindowAggregate::default()];
+    let home_player_ids: BTreeSet<PlayerId> = home_squad.iter().copied().collect();
     let mut home_lineups = LineupAggregate::default();
     let mut away_lineups = LineupAggregate::default();
     for model in &input.event_models { metric_aggregate.entry((model.player, model.metric)).or_default(); }
@@ -327,6 +364,8 @@ pub fn simulate_second_resolved_dynamic_mental_match(
         let mut path_metrics = BTreeMap::<(PlayerId, MetricId), PathMetric>::new();
         let mut score_home = 0_u32;
         let mut score_away = 0_u32;
+        let mut path_windows = [PathWindow::default(), PathWindow::default(), PathWindow::default(),
+            PathWindow::default(), PathWindow::default(), PathWindow::default()];
         let mut path_collision = false;
         let mut second = MatchSecond::KICKOFF;
 
@@ -361,7 +400,9 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                 let end_fraction = next.as_ref().map(|value| value.fraction).unwrap_or(1.0).clamp(cursor, 1.0);
                 let elapsed = end_fraction - cursor;
                 if elapsed > 0.0 {
-                    let personal = advance_player_metrics(&snapshot, elapsed, &mut path_metrics, &mut rng);
+                    let personal = advance_player_metrics(&snapshot, elapsed, &mut path_metrics,
+                        &mut rng, &mut path_windows[(second.0 as usize / 900).min(5)],
+                        &home_player_ids);
                     apply_personal_feedback(&home, &personal, &mut mental_players, transition, elapsed);
                     apply_personal_feedback(&away, &personal, &mut mental_players, transition, elapsed);
                     advance_continuous_mental(
@@ -380,6 +421,13 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                 events_this_second = events_this_second.saturating_add(1);
                 if events_this_second >= 2 { path_collision = true; }
                 total_state_events = total_state_events.saturating_add(1);
+                let window = &mut path_windows[(second.0 as usize / 900).min(5)];
+                match &event.event {
+                    StateEvent::HomeGoal => window.home_goals += 1,
+                    StateEvent::AwayGoal => window.away_goals += 1,
+                    StateEvent::Red { .. } => window.red_cards += 1,
+                    StateEvent::Injury { .. } | StateEvent::TacticalSub { .. } => window.substitutions += 1,
+                }
                 apply_state_event(
                     event.event, input, mental_model, transition,
                     &home_squad, &away_squad,
@@ -391,6 +439,25 @@ pub fn simulate_second_resolved_dynamic_mental_match(
             second = MatchSecond(second.0.saturating_add(1));
         }
 
+        let (mut home_running, mut away_running) = (0_u32, 0_u32);
+        for (aggregate, window) in windows.iter_mut().zip(&mut path_windows) {
+            home_running += window.home_goals;
+            away_running += window.away_goals;
+            window.cumulative_home = home_running;
+            window.cumulative_away = away_running;
+            aggregate.any_goal += u32::from(window.home_goals + window.away_goals > 0);
+            aggregate.home_goal += u32::from(window.home_goals > 0);
+            aggregate.away_goal += u32::from(window.away_goals > 0);
+            aggregate.red_card += u32::from(window.red_cards > 0);
+            aggregate.substitution += u32::from(window.substitutions > 0);
+            aggregate.home_goals += u64::from(window.home_goals);
+            aggregate.away_goals += u64::from(window.away_goals);
+            aggregate.home_shots += window.home_shots;
+            aggregate.away_shots += window.away_shots;
+            if home_running > away_running { aggregate.home_lead += 1; }
+            else if home_running < away_running { aggregate.away_lead += 1; }
+            else { aggregate.draw += 1; }
+        }
         if path_collision { collision_paths = collision_paths.saturating_add(1); }
         home_goals.push(f64::from(score_home));
         away_goals.push(f64::from(score_away));
@@ -483,8 +550,25 @@ pub fn simulate_second_resolved_dynamic_mental_match(
         kind,
         mean_per_path: count as f64 / f64::from(paths),
     }).collect();
+    let windows_15min = windows.iter().enumerate().map(|(i,w)| {
+        let d = f64::from(paths);
+        SecondResolvedWindowForecast {
+            start_minute:(i*15) as u16,end_minute:((i+1)*15) as u16,
+            probability_any_goal:f64::from(w.any_goal)/d,
+            probability_home_goal:f64::from(w.home_goal)/d,
+            probability_away_goal:f64::from(w.away_goal)/d,
+            probability_red_card:f64::from(w.red_card)/d,
+            probability_substitution:f64::from(w.substitution)/d,
+            expected_home_goals:w.home_goals as f64/d,
+            expected_away_goals:w.away_goals as f64/d,
+            expected_home_shots:w.home_shots/d, expected_away_shots:w.away_shots/d,
+            end_home_lead:f64::from(w.home_lead)/d,
+            end_draw:f64::from(w.draw)/d,
+            end_away_lead:f64::from(w.away_lead)/d,
+        }
+    }).collect();
     Some(SecondResolvedDynamicMentalForecast {
-        outcome,
+        outcome, windows_15min,
         home_lineup,
         away_lineup,
         player_metrics,
@@ -707,6 +791,8 @@ fn advance_player_metrics(
     elapsed_seconds: f64,
     path_metrics: &mut BTreeMap<(PlayerId, MetricId), PathMetric>,
     rng: &mut Rng64,
+    window: &mut PathWindow,
+    home_players: &BTreeSet<PlayerId>,
 ) -> BTreeMap<PlayerId, f64> {
     let exposure = elapsed_seconds / f64::from(REGULATION_MATCH_SECONDS);
     let mut signal_sum = BTreeMap::<PlayerId, f64>::new();
@@ -721,6 +807,10 @@ fn advance_player_metrics(
             StatFamily::Count => f64::from(poisson(mean, rng)),
             StatFamily::ContinuousNonNegative => gamma_increment(mean, variance, rng),
         };
+        if key.1.0 == 1 {
+            if home_players.contains(&key.0) {window.home_shots += realized;}
+            else {window.away_shots += realized;}
+        }
         let value = path_metrics.entry(*key).or_default();
         value.total += realized;
         value.seconds += elapsed_seconds;
