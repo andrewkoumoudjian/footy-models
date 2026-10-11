@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Hard validation of the committed player MC snapshot and eligible roster mapping."""
-import json,math
+import argparse,json,math
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-root=ROOT/'artifacts/premier-league-2026-10-11'
-result=json.loads((root/'player_paths.json').read_text())
-roster=json.loads((root/'fm_matched_squads.json').read_text())
-assert len(result['fixtures'])==4
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--source',default='artifacts/premier-league-2026-10-11/player_paths.json')
+parser.add_argument('--audit',default='artifacts/premier-league-2026-10-11/fm_matched_squads.json')
+a=parser.parse_args()
+result=json.loads((ROOT/a.source).read_text())
+roster=json.loads((ROOT/a.audit).read_text())
+assert len(result['fixtures'])>0
 names=set()
 for f in result['fixtures']:
     assert f['paths']>0 and len(f['15_minute_windows'])==6
@@ -26,10 +29,10 @@ for f in result['fixtures']:
     assert abs(home_total-f['expected_home_goals'])<1e-4
     assert abs(away_total-f['expected_away_goals'])<1e-4
     print(f['home'],f['away'],f['paths'],'paths',f'home={f["home_win"]:.3f} draw={f["draw"]:.3f} away={f["away_win"]:.3f}')
-assert len(roster['teams'])==8
+assert len(roster['teams'])>=2
 seen={}
 for club,r in roster['teams'].items():
     for p in r['matched']:
         assert p['fm_uid'] not in seen or p['registration']=='u21' or seen[p['fm_uid']]['registration']=='u21'
         seen[p['fm_uid']]=p
-print('Validated matchweek simulation snapshot and eight registered squad identity sets.')
+print('Validated matchweek simulation snapshot and matched official squad identity sets.')

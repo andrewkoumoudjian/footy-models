@@ -21,7 +21,11 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 SQUADS_URL='https://www.premierleague.com/en/news/4706139/see-all-the-202627-premier-league-squad-lists'
 FM_FILE=Path('/home/drewclaw/fm26-data/fm26_men_full_attrs.csv')
-TEAMS={
+TEAM_ALIASES={
+    'Arsenal':'Arsenal','Aston Villa':'Aston Villa','Bournemouth':'AFC Bournemouth',
+    'Brentford':'Brentford','Brighton':'Brighton & Hove Albion','Chelsea':'Chelsea',
+    'Fulham':'Fulham','Ipswich':'Ipswich Town','Leeds':'Leeds United',
+    'Man United':'Manchester United','Sunderland':'Sunderland','Tottenham':'Tottenham Hotspur',
     'Crystal Palace':'Crystal Palace','Nott\'m Forest':'Nottingham Forest',
     'Hull':'Hull City','Everton':'Everton','Liverpool':'Liverpool',
     'Man City':'Manchester City','Coventry':'Coventry City','Newcastle':'Newcastle United'
@@ -39,10 +43,10 @@ def official_name(s):
         return given.strip()+' '+surname.strip()
     return s
 
-def fetch_official(cache,offline=False):
+def fetch_official(cache,offline=False,teams=None,url=SQUADS_URL):
     if not offline:
         import requests
-        response=requests.get(SQUADS_URL,timeout=25,headers={'User-Agent':'Mozilla/5.0'})
+        response=requests.get(url,timeout=25,headers={'User-Agent':'Mozilla/5.0'})
         response.raise_for_status()
         cache.parent.mkdir(parents=True,exist_ok=True)
         cache.write_text(response.text,encoding='utf-8')
@@ -53,7 +57,7 @@ def fetch_official(cache,offline=False):
     roster={}
     for h in body.find_all('h5'):
         club=h.get_text(' ',strip=True)
-        if club not in TEAMS.values():continue
+        if club not in (teams or TEAM_ALIASES).values():continue
         buckets=[]
         group=None
         for paragraph in h.find_next_siblings():
@@ -73,7 +77,7 @@ def fetch_official(cache,offline=False):
                     buckets.append({'official_name':val,'match_name':official_name(val),
                                     'registration':group})
         roster[club]=buckets
-    if set(roster)!=set(TEAMS.values()):raise ValueError('incomplete official squad source')
+    if set(roster)!=set((teams or TEAM_ALIASES).values()):raise ValueError(f'incomplete official squad source: missing {set((teams or TEAM_ALIASES).values())-set(roster)}')
     return roster
 
 def best_match(src, exact, token_index, records):
@@ -121,9 +125,25 @@ def run():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--offline',action='store_true')
     parser.add_argument('--fm-file',default=str(FM_FILE),help='path to FM26 full men attributes CSV')
+    parser.add_argument('--fixtures',help='fixture config; match only teams in these matches')
+    parser.add_argument('--as-of',default='2026-10-10',help='as-of YYYY-MM-DD')
+    parser.add_argument('--registration-url',default=SQUADS_URL)
+    parser.add_argument('--html-cache',default='data/pl/raw/registered_pl_2026_27.html')
     parser.add_argument('--output',default='data/pl/squads_2026-10-10.json')
     a=parser.parse_args()
-    roster=fetch_official(ROOT/'data/pl/raw/registered_pl_2026_27.html',a.offline)
+    cutoff=date.fromisoformat(a.as_of)
+    if not date(2026,9,1)<=cutoff<date(2027,7,1) and a.registration_url==SQUADS_URL:
+        raise ValueError('2026/27 official squad list cannot be assumed valid in another season; provide --registration-url')
+    clubs=TEAM_ALIASES.copy()
+    if a.fixtures:
+        config=json.loads((ROOT/a.fixtures).read_text())
+        if a.as_of=='2026-10-10' and config.get('as_of')!='2026-10-10':
+            raise ValueError('pass --as-of from fixture config (stale date mismatch)')
+        requested={name for f in config['fixtures'] for name in (f['home'],f['away'])}
+        unsupported=requested-set(clubs)
+        if unsupported:raise ValueError(f'unknown Premier League team aliases: {sorted(unsupported)}')
+        clubs={k:v for k,v in clubs.items() if k in requested}
+    roster=fetch_official(ROOT/a.html_cache,a.offline,clubs,a.registration_url)
     legacy={}
     with (ROOT/'data/fm_tm_joined.csv').open(encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
@@ -145,8 +165,8 @@ def run():
             n=norm(row['name']);exact[n].append(record)
             for token in set(n.split()):
                 if len(token)>3:token_index[token].append(idx)
-    output={'as_of':'2026-10-10','registration_source':SQUADS_URL,'fm_source':'FM26 binary-derived complete men attributes','teams':{}}
-    for short,club in TEAMS.items():
+    output={'as_of':str(cutoff),'registration_source':a.registration_url,'fm_source':'FM26 binary-derived complete men attributes','teams':{}}
+    for short,club in clubs.items():
         entries=[]
         seen=set()
         for p in roster[club]:

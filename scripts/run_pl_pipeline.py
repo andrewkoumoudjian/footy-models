@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""One-command, auditable Premier League FM26 -> match engine -> timelines pipeline.
+
+- full: historical result refresh/refit, authoritative registered club matching,
+  dated injuries, player priors, stateful match simulation, snapshot & timeline.
+- render-only: regenerate charts/report from a committed snapshot without raw data.
+- dry-run: print exactly what would be executed; do not write files.
+
+Do not use later information in pre-match snapshots; full runs require a dated
+availability file. This does *not* claim the EPL player model is well calibrated.
+"""
+import argparse
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+from datetime import date,timedelta
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[1]
+
+def digest(path):
+    h=hashlib.sha256()
+    with path.open('rb') as f:
+        for block in iter(lambda:f.read(1<<20),b''):h.update(block)
+    return h.hexdigest()
+
+def execute(args, dry=False):
+    print('+',' '.join(str(x) for x in args),flush=True)
+    if not dry:subprocess.run([str(x) for x in args],cwd=ROOT,check=True)
+
+def snapshot_audit(src,dest):
+    data=json.loads(src.read_text())
+    teams={}
+    for team,r in data['teams'].items():
+        teams[team]={
+            'official_club':r['official_club'],
+            'registered_players':sum(p['registration']=='registered' for p in r['players']),
+            'official_listed_players':r['registered_count'],
+            'fm_matches':r['matched_count'],
+            'fm_matched_registered':r['matched_25'],
+            'fm_matched_u21':r['matched_u21'],
+            'matched':[{'name':p['official_name'],'fm_name':p['fm_name'],'fm_uid':p['fm_uid'],
+                        'registration':p['registration'],'matching_method':p['match_method']}
+                       for p in r['players'] if p.get('fm_uid')],
+            'unmatched':r['unmatched']}
+    dest.write_text(json.dumps({'as_of':data['as_of'],'registration_source':data['registration_source'],
+                                'model':'FM26 full attribute database name/UID mapping','teams':teams},
+                               indent=2,ensure_ascii=False)+'\n')
+
+def main():
+    ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--fixtures',default='configs/pl_2026-10-11.json')
+    ap.add_argument('--availability',default='configs/pl_availability_2026-10-11.json')
+    ap.add_argument('--fm-file',help='raw FM26 men attributes CSV (full pipeline only)')
+    ap.add_argument('--registration-url',help='official registered squad source for the season')
+    ap.add_argument('--html-cache',help='optional season-specific cached official roster HTML')
+    ap.add_argument('--offline',action='store_true',help='use cached football results + squad HTML')
+    ap.add_argument('--paths',type=int,default=72)
+    ap.add_argument('--seed',type=int,default=42)
+    ap.add_argument('--snapshot-dir',help='override artifacts/<matchweek>')
+    ap.add_argument('--images-dir',help='override assets/predictions/<matchweek>')
+    ap.add_argument('--report',help='override docs/premier-league-player-forecasts-<date>.md')
+    ap.add_argument('--render-only',action='store_true',help='no FM/raw results necessary; use saved player_paths.json')
+    ap.add_argument('--dry-run',action='store_true',help='show plan; change nothing')
+    opt=ap.parse_args()
+    config=json.loads((ROOT/opt.fixtures).read_text())
+    cutoff=date.fromisoformat(config['as_of'])
+    dates=[date.fromisoformat(f['date']) for f in config['fixtures']]
+    if not dates or any(d<=cutoff for d in dates):
+        ap.error('all fixture kickoffs must be strictly after as-of cutoff')
+    stamp=min(dates).isoformat()
+    snapshot=Path(opt.snapshot_dir or f'artifacts/premier-league-{stamp}')
+    images=Path(opt.images_dir or f'assets/predictions/{stamp}')
+    artifact=ROOT/snapshot
+    source=snapshot/'player_paths.json'
+    season_year=cutoff.year if cutoff.month>=7 else cutoff.year-1
+    season_cache=opt.html_cache or f'data/pl/raw/registered_pl_{season_year}_{(season_year+1)%100:02d}.html'
+    roster=Path(f'data/pl/squads_{cutoff}.json')
+    benchmark=Path('data/pl/forecasts.json')
+    script=Path('scripts')
+    python=sys.executable
+    run=lambda command:execute(command,opt.dry_run)
+    if not opt.render_only:
+        if opt.offline and opt.registration_url and not opt.html_cache:
+            ap.error('custom season registration URL in offline mode requires --html-cache for that season')
+        if not opt.fm_file or not Path(opt.fm_file).is_file():
+            ap.error('full pipeline requires an existing --fm-file; use --render-only for saved snapshot')
+        if opt.paths < 1 or opt.paths > 10000:ap.error('--paths must be 1..10000')
+        if opt.seed < 0:ap.error('--seed must be nonnegative')
+        availability=json.loads((ROOT/opt.availability).read_text())
+        if availability.get('as_of')!=str(cutoff):
+            ap.error('availability file must be explicitly date-frozen to the selected as-of')
+        if not opt.dry_run:artifact.mkdir(parents=True,exist_ok=True)
+        train=[python,script/'forecast_premier_league.py','--fixtures',opt.fixtures,'--release']
+        if opt.offline:train.append('--offline')
+        run(train)
+        match=[python,script/'match_premier_league_fm26.py','--fixtures',opt.fixtures,
+               '--fm-file',opt.fm_file,'--as-of',str(cutoff),'--html-cache',season_cache,'--output',roster]
+        if opt.registration_url:match+=['--registration-url',opt.registration_url]
+        if opt.offline:match.append('--offline')
+        run(match)
+        run([python,script/'prepare_pl_player_inputs.py','--fixtures',opt.fixtures,
+             '--squads',roster,'--availability',opt.availability])
+        run(['cargo','run','--quiet','--release','-p','footy-matchforecast',
+             '--bin','footy-matchforecast-pl','--','--paths',str(opt.paths),
+             '--seed',str(opt.seed),'--as-of',str(cutoff+timedelta(days=1)),
+             '--snapshot-as-of',str(cutoff),'--results','data/pl/asof_team_stats.csv',
+             '--players','data/pl/player_fm_join.csv','--baseline',benchmark,
+             '--output',source])
+        if not opt.dry_run:
+            shutil.copyfile(ROOT/benchmark,artifact/'team_benchmark.json')
+            shutil.copyfile(ROOT/'data/pl/provenance.json',artifact/'team_benchmark_provenance.json')
+            snapshot_audit(ROOT/roster,artifact/'fm_matched_squads.json')
+            local_sources={'team_results':ROOT/'data/pl/asof_team_stats.csv',
+               'player_inputs':ROOT/'data/pl/player_fm_join.csv',
+               'official_roster_match':ROOT/roster,'availability':ROOT/opt.availability,
+               'baseline':ROOT/benchmark,'raw_fm26':Path(opt.fm_file)}
+            hashes={key:digest(path) for key,path in local_sources.items()}
+            manifest={'as_of':str(cutoff),'fixtures':config['fixtures'],
+                'paths_per_fixture':opt.paths,'seed':opt.seed,
+                'engine':'footy-match::simulate_second_resolved_dynamic_mental_match',
+                'source_sha256':hashes,'availability_source':availability.get('source'),
+                'git_revision':subprocess.run(['git','rev-parse','HEAD'],cwd=ROOT,text=True,capture_output=True,check=True).stdout.strip(),
+                'raw_data_in_git':False,
+                'limitations':'No confirmed starting XIs or contemporaneous per-player event tracking; FM-derived scenario priors'}
+            (artifact/'run_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+    elif not opt.dry_run and not (ROOT/source).is_file():
+        ap.error(f'no committed simulation artifact at {source}')
+    run([python,script/'validate_pl_snapshot.py','--source',source,'--audit',snapshot/'fm_matched_squads.json'])
+    run([python,script/'render_pl_timeline.py','--source',source,'--out-dir',images])
+    report=opt.report or f'docs/premier-league-player-forecasts-{stamp}.md'
+    run([python,script/'write_pl_timeline_report.py','--source',source,'--derived',images/'momentum_15min.json',
+         '--output',report])
+    print(f'SNAPSHOT {source} | IMAGES {images} | REPORT {report}')
+
+if __name__=='__main__':main()

@@ -1,0 +1,8 @@
+# Installed by pip for the Premier League player + FM26 pipeline and timelines.
+requests>=2.31,<3
+beautifulsoup4>=4.12,<5
+plotly>=6.9,<7
+Pillow>=11,<13  # PNG dimension validation; renderer itself uses Plotly/Kaleido
+kaleido>=1.5,<2
+# Static PNG/SVG image exports require a Chromium/Chrome binary supported by kaleido.
+# HTML-only plotting is available via scripts/render_pl_timeline.py --no-png.

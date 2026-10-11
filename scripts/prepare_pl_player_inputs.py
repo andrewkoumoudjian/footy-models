@@ -6,18 +6,19 @@ attribute prior comes from UID-matched data. Match-level player event rates and
 participation weights remain explicitly imputed due absent 2026/27 PL player
 appearance/event feed. Never present those inputs as observed player statistics.
 """
+import argparse
 import csv
 import json
-from collections import defaultdict
 from datetime import date,datetime
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/pl'
-CONFIG=json.loads((ROOT/'configs/pl_2026-10-11.json').read_text())
+CONFIG_PATH=ROOT/'configs/pl_2026-10-11.json'
+CONFIG=json.loads(CONFIG_PATH.read_text())
 CUTOFF=date.fromisoformat(CONFIG['as_of'])
-SQUADS=json.loads((OUT/'squads_2026-10-10.json').read_text())
-AVAILABILITY=json.loads((ROOT/'configs/pl_availability_2026-10-11.json').read_text())
+SQUADS=None  # loaded only after CLI fixture date and paths are validated
+AVAILABILITY=None  # never silently reuse an old injury report
 ALIASES={'Nottingham Forest':"Nott'm Forest",'Hull City':'Hull','Newcastle United':'Newcastle',
          'Manchester City':'Man City','Manchester United':'Man United','Liverpool FC':'Liverpool'}
 
@@ -35,7 +36,7 @@ def write_results():
             if d>CUTOFF or not row.get('FTHG') or not row.get('FTAG'):continue
             home,away=canon(row['HomeTeam']),canon(row['AwayTeam'])
             rows[(d,home,away)]=dict(row)
-    for r in CONFIG['manual_results']:
+    for r in CONFIG.get('manual_results',[]):
         d=date.fromisoformat(r['date'])
         if d>CUTOFF:continue
         key=(d,canon(r['home']),canon(r['away']))
@@ -123,11 +124,29 @@ def prepare_players():
         'snapshot_as_of':CUTOFF.isoformat(),'source':SQUADS['registration_source'],
         'player_rate_inputs':'FM attribute-derived heuristics; NOT fitted on actual PL per-player events',
         'participation_inputs':'CA-ranked fallback plus available pre-season 2025/26 historical minute exposure; no observed current appearances',
-        'squad_availability':'registration only; current injuries, fitness and suspensions unverified',
+        'squad_availability':'registered squad and specified dated availability exclusions; doubtful lineups remain uncertain',
         'availability_source':AVAILABILITY['source'],'availability_source_published':AVAILABILITY['source_published'],
         'teams':statuses},indent=2,ensure_ascii=False)+'\n')
     return len(outrows),statuses
 
 if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--fixtures',default='configs/pl_2026-10-11.json')
+    parser.add_argument('--squads',help='UID-matched official roster JSON')
+    parser.add_argument('--availability',help='dated availability exclusions JSON; required to avoid implicitly reusing old team news')
+    parser.add_argument('--data-dir',default='data/pl')
+    args=parser.parse_args()
+    OUT=ROOT/args.data_dir
+    CONFIG=json.loads((ROOT/args.fixtures).read_text())
+    CUTOFF=date.fromisoformat(CONFIG['as_of'])
+    if not args.availability:
+        raise SystemExit('Refusing to reuse stale availability. Pass --availability dated JSON explicitly.')
+    AVAILABILITY=json.loads((ROOT/args.availability).read_text())
+    if date.fromisoformat(AVAILABILITY['as_of'])!=CUTOFF:
+        raise SystemExit('Availability as-of must match fixture as-of; refresh it for a new date')
+    SQUADS=json.loads((ROOT/(args.squads or f'data/pl/squads_{CUTOFF}.json')).read_text())
+    if date.fromisoformat(SQUADS['as_of'])!=CUTOFF:
+        raise SystemExit('Squad mapping as-of does not match fixture as-of')
+    OUT.mkdir(parents=True,exist_ok=True)
     matches=write_results();players,s=prepare_players();print('matches',matches,'FM player rows',players)
     for team,x in s.items():print(team,x['fm_matched'],x['matched_senior'],'unmatched',len(x['fm_unmatched']))

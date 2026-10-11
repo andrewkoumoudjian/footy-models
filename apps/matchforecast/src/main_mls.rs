@@ -965,6 +965,7 @@ pub(crate) fn run_premier_league() {
     let mut only: Option<String> = None;
     let mut output_path = "artifacts/premier-league-2026-10-11/player_paths.json".to_string();
     let mut as_of_date = "2026-10-11".to_string();
+    let mut snapshot_as_of = "2026-10-10".to_string();
     let mut results_path = "data/pl/asof_team_stats.csv".to_string();
     let mut players_path = "data/pl/player_fm_join.csv".to_string();
     let mut baseline_path = "data/pl/forecasts.json".to_string();
@@ -976,6 +977,7 @@ pub(crate) fn run_premier_league() {
             "--only" => only = Some(iter.next().expect("--only team substring")),
             "--output" => output_path = iter.next().expect("--output destination"),
             "--as-of" => as_of_date = iter.next().expect("--as-of value"),
+            "--snapshot-as-of" => snapshot_as_of = iter.next().expect("--snapshot-as-of value"),
             "--results" => results_path = iter.next().expect("--results input"),
             "--players" => players_path = iter.next().expect("--players input"),
             "--baseline" => baseline_path = iter.next().expect("--baseline JSON"),
@@ -989,10 +991,14 @@ pub(crate) fn run_premier_league() {
     let players = load_players(&players_path, 0.0, as_of);
     let baseline: Value = serde_json::from_str(&std::fs::read_to_string(&baseline_path).expect("read baseline"))
         .expect("parse baseline");
+    assert!(snapshot_as_of < as_of_date, "model must start after the input cutoff date");
     let mut out = Vec::new();
     for (idx, fixture) in baseline["fixtures"].as_array().expect("fixtures").iter().enumerate() {
         let home_name = fixture["home"].as_str().expect("home");
         let away_name = fixture["away"].as_str().expect("away");
+        let fixture_date = fixture["date"].as_str().expect("fixture date");
+        assert!(fixture_date > snapshot_as_of.as_str(),
+            "future fixture must occur after the data-as-of cutoff");
         if only.as_ref().is_some_and(|filter| !home_name.contains(filter) && !away_name.contains(filter)) {
             continue;
         }
@@ -1052,7 +1058,7 @@ pub(crate) fn run_premier_league() {
             "comparison_results_fm_model":{"home_win":fixture["home_win"],
                 "draw":fixture["draw"],"away_win":fixture["away_win"]}}));
     }
-    let artifact=json!({"as_of":"2026-10-10","model":"simulate_second_resolved_dynamic_mental_match",
+    let artifact=json!({"as_of":snapshot_as_of,"model":"simulate_second_resolved_dynamic_mental_match",
         "status":"exploratory player-level pre-match scenario; not a statistically validated EPL event forecast",
         "roster":"2026/27 registered squad list + matched FM26 attributes",
         "caveats":["No confirmed lineups or 2026/27 player minutes; starts are random with CA/exposure priors",
