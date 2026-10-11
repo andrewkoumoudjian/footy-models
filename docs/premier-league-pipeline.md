@@ -73,6 +73,20 @@ The Rust core now exposes **90 observed-in-simulation minute aggregates** and sp
 
 For genuine out-of-sample **historical event** evidence, run `python3 scripts/backtest_pl_event_oos.py`, then `python3 scripts/write_pl_oos_report.py` and inspect [the strictly held-out evaluation](premier-league-player-event-oos-validation.md). This is a *separate historical-rate baseline* on 2015/16 StatsBomb matches, without FM26 features. Its held-out goal and assist predictions failed to beat the simple reference reliably. Until the 2026 FM26 simulator itself is run on compatible time-aligned player records from the past, player-level accuracy remains **unverified**.
 
+## Same-engine historical walk-forward backtest (observed-stat-only contract)
+
+`scripts/run_pl_pipeline.py --historical-same-engine-oos` runs the **actual Rust engine** on the
+cached 2015/16 StatsBomb subset with a strictly causal observed-stat-only input contract (no FM26,
+no current squads). `scripts/build_pl_hist_inputs.py` builds player pools, per-90 rates, team
+windows and labels only from event-covered matches before each kickoff;
+`footy-matchforecast-pl-hist` simulates every evaluable fixture through
+`simulate_second_resolved_dynamic_mental_match`; `scripts/score_pl_hist_backtest.py` scores
+chronological held-out fixtures against causal Poisson, previous-only player-rate and
+previous-only timing baselines with matchday-block bootstrap intervals, and writes
+`artifacts/validation/pl-hist-same-engine-oos.json` with the engine fingerprint. This validates or
+fails to validate the *engine* on historical inputs; it is **not** evidence for the FM26-enhanced
+2026 pipeline. See [the backtest and calibration status](historical-same-engine-backtest.md).
+
 The stored **8-path four-fixture demonstration** is in [`artifacts/validation/pl-player-minute-fourfixture-8paths.json`](../artifacts/validation/pl-player-minute-fourfixture-8paths.json), with minute-level HTML and player CSVs in [`assets/validation/pl-minute-sample-8paths`](../assets/validation/pl-minute-sample-8paths). These are smoke-test output artifacts, not fit-for-use performance probabilities. `scripts/render_pl_oos_comparison.py` produces the [24-game actual vs expected held-out goal/assist timing comparison](../assets/validation/pl-2015-16-event-oos.png), distinctly labelled as a non-FM historical-rate benchmark.
 
 ## Versioned forecast targets and release/calibration gates

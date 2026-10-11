@@ -106,6 +106,13 @@ def main():
     ap.add_argument('--render-only',action='store_true',help='no FM/raw results necessary; use saved player_paths.json')
     ap.add_argument('--historical-event-oos',action='store_true',
                     help='also score separate 2015/16 StatsBomb event-rate baseline on held-out matches')
+    ap.add_argument('--historical-same-engine-oos',action='store_true',
+                    help='also run the observed-stat-only same-engine 2015/16 walk-forward backtest '
+                         '(build inputs, run footy-matchforecast-pl-hist, score OOS)')
+    ap.add_argument('--historical-paths',type=int,default=200,
+                    help='paths per fixture for the same-engine historical backtest')
+    ap.add_argument('--historical-jobs',type=int,default=0,
+                    help='worker threads for the historical backtest (0 = auto)')
     ap.add_argument('--matching-engine-oos',
                     help='optional fully verified same-Rust-engine historical OOS report (no cross-model substitution)')
     ap.add_argument('--dry-run',action='store_true',help='show plan; change nothing')
@@ -208,6 +215,15 @@ def main():
         run([python,script/'backtest_pl_event_oos.py','--holdout-matches','24'])
         run([python,script/'write_pl_oos_report.py'])
         run([python,script/'calibrate_assist_prior_oos.py','--holdout-matches','24'])
+    if opt.historical_same_engine_oos:
+        # Observed-stat-only same-engine walk-forward backtest of the Rust match engine on the
+        # cached StatsBomb 2015/16 subset. Local raw data required; the report records the engine
+        # fingerprint so it can never be confused with a different model family.
+        run([python,script/'build_pl_hist_inputs.py'])
+        run([str(ROOT/'target/release/footy-matchforecast-pl-hist'),
+             '--paths',str(opt.historical_paths),'--jobs',str(opt.historical_jobs),
+             '--output','artifacts/validation/pl-hist-same-engine-paths.json'])
+        run([python,script/'score_pl_hist_backtest.py'])
     if not opt.render_only:
         release=[python,script/'check_forecast_release.py',
                  '--snapshot',source,'--output',snapshot/'release_gates.json']

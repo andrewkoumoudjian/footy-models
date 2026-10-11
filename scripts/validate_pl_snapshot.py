@@ -58,6 +58,32 @@ for f in result['fixtures']:
         assert abs(assigned+missing-f['expected_home_goals']-f['expected_away_goals'])<1e-6
         assists=sum(p['expected_assists_proxy'] for p in f['player_minute_events'])
         assert assists<=assigned+1e-6
+    if 'scoreline_distribution' in f:
+        # Joint exact-score coherence: probabilities sum to one and the outcome marginals agree
+        # with the reported W/D/L probabilities.
+        cells=f['scoreline_distribution']
+        assert cells, f['home']
+        total=sum(cell[2] for cell in cells)
+        assert abs(total-1)<1e-5,(f['home'],total)
+        assert all(cell[2]>=0 for cell in cells)
+        home_win=sum(cell[2] for cell in cells if cell[0]>cell[1])
+        draw=sum(cell[2] for cell in cells if cell[0]==cell[1])
+        away_win=sum(cell[2] for cell in cells if cell[0]<cell[1])
+        assert abs(home_win-f['home_win'])<1e-5 and abs(draw-f['draw'])<1e-5 and abs(away_win-f['away_win'])<1e-5
+        home_mean=sum(cell[0]*cell[2] for cell in cells)
+        away_mean=sum(cell[1]*cell[2] for cell in cells)
+        assert abs(home_mean-f['expected_home_goals'])<1e-4 and abs(away_mean-f['expected_away_goals'])<1e-4
+    if 'player_goal_occurrence' in f:
+        for row in f['player_goal_occurrence']:
+            assert 0<=row['p_score_at_least_once']<=1
+            assert row['expected_attributed_goals']>=row['p_score_at_least_once']-1e-9
+        attributed=sum(row['expected_attributed_goals'] for row in f['player_goal_occurrence'])
+        missing=f.get('unattributed_goals_per_match',0.0)
+        assert abs(attributed+missing-f['expected_home_goals']-f['expected_away_goals'])<1e-6,(f['home'],attributed,missing)
+    if 'player_assist_occurrence' in f:
+        for row in f['player_assist_occurrence']:
+            assert 0<=row['p_assist_at_least_once']<=1
+            assert row['expected_attributed_assists']>=row['p_assist_at_least_once']-1e-9
     print(f['home'],f['away'],f['paths'],'paths',f'home={f["home_win"]:.3f} draw={f["draw"]:.3f} away={f["away_win"]:.3f}')
 assert len(roster['teams'])>=2
 seen={}

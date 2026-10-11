@@ -7,7 +7,7 @@
 //! snapshot from the pipeline's generated inputs.
 
 #[path = "form.rs"]
-mod form;
+pub(crate) mod form;
 
 use footy_core::{AttributeId, ClubId, Confidence, Date, MatchId, MetricId, PlayerId, RoleId};
 use footy_forecast::{NextMatchParticipationModel, PlayerParticipationFeatures, StatFamily};
@@ -27,55 +27,55 @@ use footy_match::{
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write as _;
 
-const M_SHOT: u16 = 1;
-const M_XG: u16 = 2;
-const M_XA: u16 = 3;
-const M_PASS: u16 = 4;
-const M_PROGC: u16 = 5;
+pub(crate) const M_SHOT: u16 = 1;
+pub(crate) const M_XG: u16 = 2;
+pub(crate) const M_XA: u16 = 3;
+pub(crate) const M_PASS: u16 = 4;
+pub(crate) const M_PROGC: u16 = 5;
 const A_FINISH: u16 = 1;
 const A_TECH: u16 = 2;
 const A_DEFEND: u16 = 3;
 
-struct TeamData {
-    name: String,
-    club: ClubId,
-    matches: usize,
-    gf_pm: f64,
-    ga_pm: f64,
-    xga_pm: f64,
-    shots_pm: f64,
-    sot_pm: f64,
-    sot_face_pm: f64,
+pub(crate) struct TeamData {
+    pub(crate) name: String,
+    pub(crate) club: ClubId,
+    pub(crate) matches: usize,
+    pub(crate) gf_pm: f64,
+    pub(crate) ga_pm: f64,
+    pub(crate) xga_pm: f64,
+    pub(crate) shots_pm: f64,
+    pub(crate) sot_pm: f64,
+    pub(crate) sot_face_pm: f64,
 }
 
-struct PlayerRow {
-    id: u64,
-    name: String,
-    team: String,
-    minutes: f64,
-    selection_listings: f64,
-    selection_appearances: f64,
-    selection_starts: f64,
-    selection_minutes: f64,
-    selection_start_minutes: f64,
-    team_fixtures: f64,
-    last_listed_date: Option<Date>,
-    days_since_last_appearance: f64,
-    days_since_last_listed: f64,
-    shots_p90: f64,
-    xg_p90: f64,
-    xa_p90: f64,
-    passes_p90: f64,
-    prog_carries_p90: f64,
-    fm_ca: Option<f64>,
-    fm_finishing: Option<f64>,
-    fm_technique: Option<f64>,
-    fm_defending: Option<f64>,
-    fm_consistency: Option<f64>,
-    fm_dirtiness: Option<f64>,
+pub(crate) struct PlayerRow {
+    pub(crate) id: u64,
+    pub(crate) name: String,
+    pub(crate) team: String,
+    pub(crate) minutes: f64,
+    pub(crate) selection_listings: f64,
+    pub(crate) selection_appearances: f64,
+    pub(crate) selection_starts: f64,
+    pub(crate) selection_minutes: f64,
+    pub(crate) selection_start_minutes: f64,
+    pub(crate) team_fixtures: f64,
+    pub(crate) last_listed_date: Option<Date>,
+    pub(crate) days_since_last_appearance: f64,
+    pub(crate) days_since_last_listed: f64,
+    pub(crate) shots_p90: f64,
+    pub(crate) xg_p90: f64,
+    pub(crate) xa_p90: f64,
+    pub(crate) passes_p90: f64,
+    pub(crate) prog_carries_p90: f64,
+    pub(crate) fm_ca: Option<f64>,
+    pub(crate) fm_finishing: Option<f64>,
+    pub(crate) fm_technique: Option<f64>,
+    pub(crate) fm_defending: Option<f64>,
+    pub(crate) fm_consistency: Option<f64>,
+    pub(crate) fm_dirtiness: Option<f64>,
 }
 
-type Row = HashMap<String, String>;
+pub(crate) type Row = HashMap<String, String>;
 
 fn require_delimited_columns(path: &str, delimiter: char, required: &[&str]) -> Result<(), String> {
     let text = std::fs::read_to_string(path).map_err(|error| format!("read {path}: {error}"))?;
@@ -119,7 +119,7 @@ fn validate_live_artifacts(as_of_text: &str) -> Result<String, String> {
     Ok(form_path)
 }
 
-fn read_csv(path: &str) -> Vec<Row> {
+pub(crate) fn read_csv(path: &str) -> Vec<Row> {
     let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("read {path}: {e}"));
     let mut lines = text.lines();
     let header: Vec<String> = lines.next().expect("header").split(',').map(String::from).collect();
@@ -135,11 +135,11 @@ fn read_csv(path: &str) -> Vec<Row> {
         .collect()
 }
 
-fn f(row: &Row, key: &str) -> f64 {
+pub(crate) fn f(row: &Row, key: &str) -> f64 {
     row.get(key).and_then(|value| value.parse::<f64>().ok()).unwrap_or(0.0)
 }
 
-fn date_from(text: &str) -> Date {
+pub(crate) fn date_from(text: &str) -> Date {
     let parts: Vec<&str> = text.split('-').collect();
     Date::from_ymd(parts[0].parse().unwrap(), parts[1].parse().unwrap(), parts[2].parse().unwrap()).unwrap()
 }
@@ -153,7 +153,7 @@ fn optional_date_from(text: &str) -> Option<Date> {
     Date::from_ymd(year, month, day).ok()
 }
 
-fn stable(text: &str) -> u32 {
+pub(crate) fn stable(text: &str) -> u32 {
     let bytes = format!("club:{text}");
     let mut hash: u32 = 0x811c9dc5;
     for byte in bytes.as_bytes() {
@@ -215,14 +215,14 @@ fn write_player_forecast(
     Ok(path)
 }
 
-struct LeagueWindows {
+pub(crate) struct LeagueWindows {
     /// team -> rows of matches involving that team (strictly before cutoff)
-    teams: BTreeMap<String, Vec<Row>>,
-    cutoff: Date,
+    pub(crate) teams: BTreeMap<String, Vec<Row>>,
+    pub(crate) cutoff: Date,
 }
 
 impl LeagueWindows {
-    fn build(path: &str, cutoff: Date) -> Self {
+    pub(crate) fn build(path: &str, cutoff: Date) -> Self {
         let mut teams: BTreeMap<String, Vec<Row>> = BTreeMap::new();
         for row in read_csv(path) {
             if date_from(&row["date"]) >= cutoff {
@@ -234,7 +234,7 @@ impl LeagueWindows {
         Self { teams, cutoff }
     }
 
-    fn team(&self, name: &str) -> TeamData {
+    pub(crate) fn team(&self, name: &str) -> TeamData {
         let empty = Vec::new();
         let rows = self.teams.get(name).unwrap_or(&empty);
         if rows.is_empty() {
@@ -293,7 +293,20 @@ impl LeagueWindows {
     }
 }
 
-fn load_players(path: &str, min_minutes: f64, as_of: Date) -> Vec<PlayerRow> {
+pub(crate) fn load_players(path: &str, min_minutes: f64, as_of: Date) -> Vec<PlayerRow> {
+    load_players_with_freshness(path, min_minutes, as_of, Some(45))
+}
+
+/// Historical variant: the 45-day registered-squad freshness rule is a 2026 production heuristic.
+/// For a sparse historical event subset it would silently discard every player of a club whose
+/// matches happen not to be covered recently, so historical callers pass `None` and let the
+/// selection model's own recency weighting handle availability.
+pub(crate) fn load_players_with_freshness(
+    path: &str,
+    min_minutes: f64,
+    as_of: Date,
+    freshness_days: Option<i64>,
+) -> Vec<PlayerRow> {
     read_csv(path)
         .into_iter()
         .map(|row| {
@@ -336,16 +349,19 @@ fn load_players(path: &str, min_minutes: f64, as_of: Date) -> Vec<PlayerRow> {
             }
         })
         .filter(|row| {
-            let fresh = row.last_listed_date.map_or(false, |date| {
-                let age = as_of.days_since(date);
-                age >= 0 && age <= 45
-            });
+            let fresh = match freshness_days {
+                Some(limit) => row.last_listed_date.map_or(false, |date| {
+                    let age = as_of.days_since(date);
+                    age >= 0 && age <= limit
+                }),
+                None => true,
+            };
             row.minutes >= min_minutes && !row.team.is_empty() && fresh
         })
         .collect()
 }
 
-fn formation(id: u16) -> FormationTemplate {
+pub(crate) fn formation(id: u16) -> FormationTemplate {
     FormationTemplate {
         id,
         slots: (0_u8..11)
@@ -359,7 +375,7 @@ fn formation(id: u16) -> FormationTemplate {
     }
 }
 
-fn squad(
+pub(crate) fn squad(
     players: &[PlayerRow],
     team_name: &str,
     club: ClubId,
@@ -457,7 +473,7 @@ fn squad(
     candidates
 }
 
-fn channel_graph() -> CausalChannelGraph {
+pub(crate) fn channel_graph() -> CausalChannelGraph {
     CausalChannelGraph {
         metric_loadings: vec![
             MetricChannelLoading { metric: MetricId(M_PASS), channel: TeamProcessChannel::Possession, weight: 0.4 },
@@ -481,7 +497,7 @@ fn channel_graph() -> CausalChannelGraph {
     }
 }
 
-fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<SpecificPlayerEventModel> {
+pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<SpecificPlayerEventModel> {
     players
         .iter()
         .filter(|p| p.team == team_name)
@@ -569,7 +585,7 @@ fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<SpecificPlaye
         .collect()
 }
 
-fn anchor_shot_volume(models: &mut [SpecificPlayerEventModel], target_pm: f64) {
+pub(crate) fn anchor_shot_volume(models: &mut [SpecificPlayerEventModel], target_pm: f64) {
     if !target_pm.is_finite() || target_pm <= 0.0 {
         return;
     }
@@ -613,7 +629,7 @@ fn attributes_and_states_for(players: &[PlayerRow], team_name: &str) -> (Vec<Pla
     (attribute_states, matchup_states)
 }
 
-fn ensure_candidate_primitives(
+pub(crate) fn ensure_candidate_primitives(
     lineup: &LineupProjectionInput,
     attribute_states: &mut Vec<PlayerAttributeState>,
     player_states: &mut Vec<PlayerMatchupState>,
@@ -664,7 +680,7 @@ fn ensure_candidate_primitives(
     }
 }
 
-fn mental_model(home: &TeamData, away: &TeamData, home_ids: &[PlayerId], away_ids: &[PlayerId],
+pub(crate) fn mental_model(home: &TeamData, away: &TeamData, home_ids: &[PlayerId], away_ids: &[PlayerId],
                 dirtiness_of: &dyn Fn(PlayerId) -> Option<f64>, consistency_of: &dyn Fn(PlayerId) -> Option<f64>) -> MentalMatchModel {
     let measure = |value: f64| MentalMeasure::new(value, Confidence::new(0.7).unwrap_or(Confidence::ONE)).expect("measure");
     let form_bias = |team: &TeamData| ((team.gf_pm - team.ga_pm) * 0.06).clamp(-0.25, 0.25);
@@ -1057,6 +1073,21 @@ pub fn run_premier_league() {
             .map(|p|json!({"uid":p.player.0,"name":lookup(p.player).map_or("unknown",|x|x.name.as_str()),
                 "start_probability":p.start_probability.get(),"appearance_probability":p.appearance_probability.get(),
                 "expected_minutes":p.expected_minutes,"expected_shots":p.unconditional_total.mean})).collect();
+        // Same-path joint scoreline table and per-player credited-goal/assist occurrence. These are
+        // path-observed marginals of the identical complete match histories, never separately
+        // invented overlays.
+        let scoreline: Vec<_> = prediction.scoreline_distribution.iter()
+            .map(|cell| json!([cell.home_goals, cell.away_goals, cell.probability])).collect();
+        let goal_occurrence: Vec<_> = prediction.player_goal_occurrence.iter()
+            .map(|row| json!({"uid": row.player.0,
+                "name": lookup(row.player).map_or("unknown", |value| value.name.as_str()),
+                "p_score_at_least_once": row.occurrence_probability,
+                "expected_attributed_goals": row.expected_per_match})).collect();
+        let assist_occurrence: Vec<_> = prediction.player_assist_occurrence.iter()
+            .map(|row| json!({"uid": row.player.0,
+                "name": lookup(row.player).map_or("unknown", |value| value.name.as_str()),
+                "p_assist_at_least_once": row.occurrence_probability,
+                "expected_attributed_assists": row.expected_per_match})).collect();
         let o=&prediction.outcome;
         println!("{home_name} vs {away_name}: {} paths | H {:.3} D {:.3} A {:.3} | goals {:.2}-{:.2}",
             prediction.paths,o.home_win.get(),o.draw.get(),o.away_win.get(),o.home_goals.mean,o.away_goals.mean);
@@ -1070,6 +1101,9 @@ pub fn run_premier_league() {
             "15_minute_windows":event_windows,"minutes_1min":minute_windows,
             "player_minute_events":player_minute_events,
             "unattributed_goals_per_match":prediction.unattributed_goals_per_match,
+            "scoreline_distribution":scoreline,
+            "player_goal_occurrence":goal_occurrence,
+            "player_assist_occurrence":assist_occurrence,
             "players":player_info,
             "comparison_results_fm_model":{"home_win":fixture["home_win"],
                 "draw":fixture["draw"],"away_win":fixture["away_win"]}}));

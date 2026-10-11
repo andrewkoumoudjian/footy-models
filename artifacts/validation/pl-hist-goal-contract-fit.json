@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "source_predictions": "artifacts/validation/pl-hist-same-engine-paths.json",
+  "paths": 200,
+  "fit_fixtures": 31,
+  "fit_end_date": "2016-02-07",
+  "oos_start_date": "2016-02-13",
+  "fit_observed_goals": 75,
+  "fit_predicted_goals": 88.74,
+  "fit_goal_scale": 0.8451656524678838,
+  "fit_observed_home_away_ratio": 1.0833333333333333,
+  "fit_predicted_home_away_ratio": 1.1782032400589102,
+  "home_ratio_correction": 0.9194791666666666,
+  "recommended_flags": {
+    "--goal-rate-scale": 0.8452,
+    "--home-advantage-multiplier": 1.0022
+  },
+  "note": "fitted on fit-period fixtures only; evaluate on the frozen chronological OOS window"
+}
