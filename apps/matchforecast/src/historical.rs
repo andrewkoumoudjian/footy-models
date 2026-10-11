@@ -357,6 +357,7 @@ fn summarise_fixture(
             "p_away_goal": window.probability_away_goal,
             "p_red_card": window.probability_red_card,
             "p_substitution": window.probability_substitution,
+            "p_completed_substitution": window.probability_completed_substitution,
             "expected_home_goals": window.expected_home_goals,
             "expected_away_goals": window.expected_away_goals,
             "expected_home_shots": window.expected_home_shots,

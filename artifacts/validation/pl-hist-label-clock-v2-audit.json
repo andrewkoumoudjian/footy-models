@@ -1,0 +1,27 @@
+{
+  "contract": "statsbomb_asof_features_fixed_elapsed_label_rebuild_v2",
+  "source": "StatsBomb 2015/16 event-covered Premier League fixture archive",
+  "legacy_manifest_sha256": "67076a454ef5fc28b0771f8ba6b9c4492408708e30f5a00cf0ea758fa0ffc04b",
+  "corrected_manifest_sha256": "53112ce5508195fb774bc079a6b9a5fcb730c3d9f0d0488752e31b59274d82e9",
+  "input_features_byte_identical": true,
+  "feature_files_verified": 75,
+  "fixtures_verified": 74,
+  "events": {
+    "goals_events": 189,
+    "goals_updated_minutes": 178,
+    "subs_events": 417,
+    "subs_updated_minutes": 395,
+    "assists_events": 123,
+    "assists_updated_minutes": 116,
+    "reds_events": 9,
+    "reds_updated_minutes": 8
+  },
+  "changed_15min_bins_by_kind": {
+    "subs": 64,
+    "goals": 13,
+    "assists": 10
+  },
+  "fixtures_with_corrected_event_minutes": 74,
+  "no_lookahead_feature_rule": "all features from event-covered matches with date < fixture date; same-day excluded",
+  "caution": "Only post-match event label timing changed; model inputs unchanged. Elapsed-clock v2 audits replace v1 for timing comparisons but do not reset an already-observed OOS selection window."
+}

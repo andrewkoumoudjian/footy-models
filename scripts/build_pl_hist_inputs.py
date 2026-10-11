@@ -27,8 +27,10 @@ Definitions used in labels (documented, not invented):
 - progressive carry: carry gaining >= 10 yards toward goal (StatsBomb x
   increases toward goal) or ending inside the penalty area (x >= 102)
 - minutes: summed lineup position intervals, capped at 90
-- event minute index: `min(89, max(0, minute - 1))` so minute 15 falls in the
-  first 0-15 window and stoppage time is conserved in the last bin
+- legacy v1 event minute index: min(89, max(0, minute - 1)), kept for
+  exact reproduction; assigns 45:00 to 30-45 incorrectly.
+- corrected v2 elapsed index: min(89, max(0, minute)), assigning 45:00
+  to 45-60, consistent with the Rust clock. Stoppage capped at 89.
 """
 from __future__ import annotations
 
@@ -59,10 +61,37 @@ def clock_seconds(text):
 
 
 def minute_index(event):
+    """Legacy historical v1 minute; do not use for new model labels."""
     minute = event.get("minute")
     if minute is None:
         return 89
     return min(89, max(0, int(minute) - 1))
+
+def elapsed_minute_index(event):
+    """Correct StatsBomb zero-based elapsed-clock regulation minute, v2."""
+    minute, second = event.get("minute"), event.get("second")
+    if not isinstance(minute, int) or minute < 0:
+        raise ValueError("StatsBomb event requires a nonnegative integer minute")
+    if not isinstance(second, int) or not 0 <= second < 60:
+        raise ValueError("StatsBomb event requires source second between 0 and 59")
+    return min(89, minute)
+
+
+def event_time_label(event, *, clock_contract):
+    if clock_contract == "legacy_v1":
+        return {"minute_index": minute_index(event)}
+    if clock_contract != "elapsed_v2":
+        raise ValueError("unknown StatsBomb event clock contract")
+    index = elapsed_minute_index(event)
+    period = event.get("period")
+    if not isinstance(period, int) or not 1 <= period <= 5:
+        raise ValueError("StatsBomb event requires a valid period")
+    return {
+        "minute_index": index,
+        "source_elapsed_minute": event["minute"],
+        "source_second": event["second"],
+        "source_period": period,
+    }
 
 
 def parse_lineups(payload, club):
@@ -92,7 +121,7 @@ def parse_lineups(payload, club):
     return rows
 
 
-def parse_events(meta, events):
+def parse_events(meta, events, *, clock_contract="legacy_v1"):
     """Per-match observations and labels from one StatsBomb event payload."""
     home = meta["home_team"]["home_team_name"]
     away = meta["away_team"]["away_team_name"]
@@ -152,7 +181,8 @@ def parse_events(meta, events):
                     teams[team]["goals"] += 1
                     goals.append({
                         "team": team, "player_id": row and int(event["player"]["id"]),
-                        "minute_index": minute_index(event), "own_goal": False,
+                        **event_time_label(event, clock_contract=clock_contract),
+                        "own_goal": False,
                     })
             key_pass = shot.get("key_pass_id")
             pass_event = passes_by_id.get(key_pass)
@@ -166,21 +196,22 @@ def parse_events(meta, events):
             goals.append({
                 "team": other,
                 "player_id": (event.get("player") or {}).get("id"),
-                "minute_index": minute_index(event), "own_goal": True,
+                **event_time_label(event, clock_contract=clock_contract),
+                "own_goal": True,
             })
         elif kind == "Bad Behaviour":
             card = ((event.get("bad_behaviour") or {}).get("card") or {}).get("name")
             if card in RED_CARDS:
                 reds.append({
                     "team": team, "player_id": (event.get("player") or {}).get("id"),
-                    "minute_index": minute_index(event),
+                    **event_time_label(event, clock_contract=clock_contract),
                 })
         elif kind == "Foul Committed":
             card = ((event.get("foul_committed") or {}).get("card") or {}).get("name")
             if card in RED_CARDS:
                 reds.append({
                     "team": team, "player_id": (event.get("player") or {}).get("id"),
-                    "minute_index": minute_index(event),
+                    **event_time_label(event, clock_contract=clock_contract),
                 })
         elif kind == "Substitution":
             substitution = event.get("substitution") or {}
@@ -188,7 +219,7 @@ def parse_events(meta, events):
                 "team": team,
                 "player_off": (substitution.get("outgoing") or {}).get("id"),
                 "player_on": (substitution.get("incoming") or {}).get("id"),
-                "minute_index": minute_index(event),
+                **event_time_label(event, clock_contract=clock_contract),
             })
         elif kind == "Pass" and (event.get("pass") or {}).get("goal_assist") is True:
             pass
@@ -203,7 +234,7 @@ def parse_events(meta, events):
                 row["assists"] += 1
                 assists.append({
                     "team": team, "player_id": int(event["player"]["id"]),
-                    "minute_index": minute_index(event),
+                    **event_time_label(event, clock_contract=clock_contract),
                 })
     return {"teams": teams, "players": players, "goals": goals, "assists": assists, "reds": reds, "subs": subs}
 
@@ -253,9 +284,19 @@ def write_csv(path, header, rows):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--data", default=str(DEFAULT_DATA))
-    parser.add_argument("--out", default=str(DEFAULT_OUT))
+    parser.add_argument("--out", help="Destination; default depends on selected label clock")
+    parser.add_argument(
+        "--clock-contract", choices=("legacy_v1", "elapsed_v2"),
+        default="legacy_v1", help="Legacy reproduces frozen files; elapsed_v2 is corrected",
+    )
     args = parser.parse_args()
-    data_dir, out_dir = Path(args.data), Path(args.out)
+    data_dir = Path(args.data)
+    out_dir = Path(args.out) if args.out else (
+        DEFAULT_OUT if args.clock_contract == "legacy_v1"
+        else data_dir / "pl_hist_elapsed_v2"
+    )
+    if args.clock_contract == "elapsed_v2" and out_dir.resolve() == DEFAULT_OUT.resolve():
+        parser.error("corrected labels cannot overwrite the frozen default legacy path")
     if not (data_dir / "matches/pl_2015_16.json").is_file():
         raise SystemExit(
             f"missing {data_dir/'matches/pl_2015_16.json'}; "
@@ -278,7 +319,7 @@ def main():
             raise SystemExit(f"covered fixture {mid} is missing from matches/pl_2015_16.json")
         events = json.loads((data_dir / f"events/{mid}.json").read_text())
         lineups = json.loads((data_dir / f"lineups/{mid}.json").read_text())
-        parsed = parse_events(meta, events)
+        parsed = parse_events(meta, events, clock_contract=args.clock_contract)
         lineup_rows = {}
         for team_payload in lineups:
             lineup_rows[team_payload["team_name"]] = parse_lineups(team_payload, team_payload["team_name"])
@@ -340,6 +381,12 @@ def main():
             "teams": observations[mid]["parsed"]["teams"],
             "players": [],
         }
+        if args.clock_contract == "elapsed_v2":
+            label["label_clock_contract"] = "statsbomb_elapsed_v2"
+            label["event_time_description"] = (
+                "StatsBomb elapsed minute, source minute/second and period retained; "
+                "regulation index min(89,elapsed minute); stoppage capped at 89"
+            )
         coverage = {}
         all_candidate_rows = []
         for club in (entry["home"], entry["away"]):
@@ -441,18 +488,22 @@ def main():
         })
 
     (out_dir / "fixtures.json").write_text(json.dumps({
-        "schema_version": 1,
+        "schema_version": 2 if args.clock_contract == "elapsed_v2" else 1,
         "source": "StatsBomb open data, English Premier League 2015/16 (local event JSON)",
         "feature_contract": "observed_stats_only_no_fm26_no_current_squads",
+        **({"label_clock_contract": "statsbomb_elapsed_v2"}
+           if args.clock_contract == "elapsed_v2" else {}),
         "no_lookahead_rule": "all features from event-covered matches with date < fixture date; same-day excluded",
         "fixtures": fixture_records,
     }, indent=1) + "\n")
     report = {
-        "schema_version": 1,
+        "schema_version": 2 if args.clock_contract == "elapsed_v2" else 1,
         "covered_matches": len(covered),
         "season_metadata_matches": len(matches),
         "evaluable_fixtures": sum(1 for f in fixture_records if f["evaluable"]),
         "feature_contract": "observed_stats_only_no_fm26_no_current_squads",
+        **({"label_clock_contract": "statsbomb_elapsed_v2"}
+           if args.clock_contract == "elapsed_v2" else {}),
         "max_feature_date_before_fixture": all(
             value == "none" or value < fixture["date"]
             for value, fixture in zip(max_feature_dates, fixture_records)

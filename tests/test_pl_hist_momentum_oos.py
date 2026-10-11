@@ -95,6 +95,30 @@ class HistMomentumTest(unittest.TestCase):
                 fit_only_sub_prior=[0.2] * 6,
             )
 
+    def test_completed_substitution_field_preferred_over_attempt_trigger(self):
+        f, outcome = forecast(), label()
+        raw = events() + [
+            {"type": {"name": "Substitution"}, "team": {"name": "Home"},
+             "minute": 45, "second": 0},
+        ]
+        raw[2]["shot"] = {"outcome": {"name": "Goal"}}
+        outcome["subs"] = [{"team": "Home", "minute_index": 44}]
+        for w in f["windows_15min"]:
+            w["p_substitution"] = 0.99
+            w["p_completed_substitution"] = 0.20
+        scored = score_fixture(
+            f, outcome, raw, source_elapsed=True,
+            fit_only_sub_prior=[0.10] * 6,
+        )
+        self.assertEqual(scored["forecast_substitution_target"], "completed_replacements")
+        self.assertEqual(scored["expected_any_substitution_triggers"], [0.2] * 6)
+        del f["windows_15min"][0]["p_completed_substitution"]
+        with self.assertRaisesRegex(ValueError, "mixed attempted/completed"):
+            score_fixture(
+                f, outcome, raw, source_elapsed=True,
+                fit_only_sub_prior=[0.10] * 6,
+            )
+
     def test_oos_never_splits_same_calendar_date(self):
         fixtures = [
             {"date": date, "match_id": i}

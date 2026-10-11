@@ -254,12 +254,23 @@ def score_fixture(
             for event in events
         ) != len(label["subs"]):
             raise ValueError("raw source substitution label count mismatch")
-        predicted_subs = [float(w["p_substitution"]) for w in expected]
+        completed_flags = ["p_completed_substitution" in w for w in expected]
+        if any(completed_flags) and not all(completed_flags):
+            raise ValueError("mixed attempted/completed substitution forecast contracts")
+        completed_contract = all(completed_flags)
+        prediction_key = (
+            "p_completed_substitution" if completed_contract else "p_substitution"
+        )
+        predicted_subs = [float(w[prediction_key]) for w in expected]
         if any(not 0 <= p <= 1 for p in predicted_subs + fit_only_sub_prior):
             raise ValueError("invalid event probability")
         result.update({
             "actual_completed_substitution_bins": actual_subs,
             "expected_any_substitution_triggers": predicted_subs,
+            "forecast_substitution_target": (
+                "completed_replacements" if completed_contract
+                else "attempted_substitution_or_injury_events"
+            ),
             "substitution_proxy_brier_sum_engine": sum(
                 (p - float(y)) ** 2 for p, y in zip(predicted_subs, actual_subs)
             ),
@@ -308,6 +319,9 @@ def summarize(rows):
         ) / goals,
     }
     if "substitution_proxy_brier_sum_engine" in rows[0]:
+        targets = {x["forecast_substitution_target"] for x in rows}
+        if len(targets) != 1:
+            raise ValueError("mixed substitution event definitions in scored fixtures")
         bins = sums("substitution_bins")
         summary["substitution_trigger_vs_completed_brier_engine"] = (
             sums("substitution_proxy_brier_sum_engine") / bins
@@ -319,6 +333,8 @@ def summarize(rows):
             sums("substitution_proxy_brier_sum_engine")
             - sums("substitution_proxy_brier_sum_fit_only")
         ) / bins
+        if targets == {"completed_replacements"}:
+            summary["substitution_forecast_is_completed_event_matched"] = True
     return summary
 
 

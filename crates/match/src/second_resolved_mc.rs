@@ -116,7 +116,12 @@ pub struct SecondResolvedWindowForecast {
     pub probability_home_goal: f64,
     pub probability_away_goal: f64,
     pub probability_red_card: f64,
+    /// P(at least one attempted tactical change or injury event).
+    /// Historical name retained for backwards-compatible output.
     pub probability_substitution: f64,
+    /// P(at least one genuinely completed tactical/forced substitution).
+    /// A failed replacement attempt must not count here.
+    pub probability_completed_substitution: f64,
     pub expected_home_goals: f64,
     pub expected_away_goals: f64,
     pub expected_home_shots: f64,
@@ -166,6 +171,7 @@ struct PlayerMinuteAggregate { shots: f64, goals: u32, assists: u32 }
 #[derive(Debug, Clone, Default)]
 struct PathWindow {
     home_goals: u32, away_goals: u32, red_cards: u32, substitutions: u32,
+    completed_substitutions: u32,
     home_shots: f64, away_shots: f64,
     cumulative_home: u32, cumulative_away: u32,
 }
@@ -173,6 +179,7 @@ struct PathWindow {
 #[derive(Debug, Clone, Default)]
 struct WindowAggregate {
     any_goal: u32, home_goal: u32, away_goal: u32, red_card: u32, substitution: u32,
+    completed_substitution: u32,
     home_goals: u64, away_goals: u64, home_shots: f64, away_shots: f64,
     home_lead: u32, draw: u32, away_lead: u32,
 }
@@ -534,6 +541,7 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                         window.substitutions += 1; minute_window.substitutions += 1;
                     }
                 }
+                let subs_before = (home.substitutions, away.substitutions);
                 apply_state_event(
                     event.event, input, mental_model, transition,
                     &home_squad, &away_squad,
@@ -541,6 +549,10 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                     &mut home_mental, &mut away_mental, &mut mental_players,
                     &mut score_home, &mut score_away, &mut event_counts, &mut rng,
                 )?;
+                let completed = u32::from(home.substitutions > subs_before.0)
+                    + u32::from(away.substitutions > subs_before.1);
+                window.completed_substitutions += completed;
+                minute_window.completed_substitutions += completed;
             }
             second = MatchSecond(second.0.saturating_add(1));
         }
@@ -698,6 +710,7 @@ fn accumulate_path_windows(aggregates: &mut [WindowAggregate], path: &mut [PathW
         aggregate.away_goal += u32::from(window.away_goals > 0);
         aggregate.red_card += u32::from(window.red_cards > 0);
         aggregate.substitution += u32::from(window.substitutions > 0);
+        aggregate.completed_substitution += u32::from(window.completed_substitutions > 0);
         aggregate.home_goals += u64::from(window.home_goals);
         aggregate.away_goals += u64::from(window.away_goals);
         aggregate.home_shots += window.home_shots;
@@ -721,6 +734,7 @@ fn summarize_clock_windows(aggregates: &[WindowAggregate], paths: u32, size_minu
             probability_away_goal:f64::from(w.away_goal)/d,
             probability_red_card:f64::from(w.red_card)/d,
             probability_substitution:f64::from(w.substitution)/d,
+            probability_completed_substitution:f64::from(w.completed_substitution)/d,
             expected_home_goals:w.home_goals as f64/d,
             expected_away_goals:w.away_goals as f64/d,
             expected_home_shots:w.home_shots/d, expected_away_shots:w.away_shots/d,
@@ -1864,6 +1878,48 @@ mod tests {
         assert_eq!(first.scoreline_distribution, second.scoreline_distribution);
         assert_eq!(first.player_goal_occurrence, second.player_goal_occurrence);
         assert_eq!(first.player_assist_occurrence, second.player_assist_occurrence);
+    }
+
+    #[test]
+    fn completed_substitutions_never_exceed_attempted_triggers() {
+        let input = test_input();
+        let mental = test_mental(&input);
+        let forecast = simulate_second_resolved_dynamic_mental_match(
+            &input, &mental, DynamicMentalTransitionParameters::default(),
+            SecondResolvedSimulationParameters::default(), 3, 44,
+        ).expect("simulated paths");
+        for bin in forecast.windows_15min.iter().chain(&forecast.minutes_1min) {
+            assert!(bin.probability_completed_substitution >= 0.0);
+            assert!(
+                bin.probability_completed_substitution <= bin.probability_substitution + 1e-12,
+                "a completed substitution requires a scheduled/injury event first",
+            );
+        }
+    }
+
+    #[test]
+    fn failed_replacement_attempt_is_not_a_completed_substitution() {
+        let mut input = test_input();
+        input.in_match.red_card_probability_per90 = 0.0;
+        input.in_match.injury_probability_per90 = 0.0;
+        for candidate in input.home_lineup.candidates.iter_mut()
+            .chain(input.away_lineup.candidates.iter_mut())
+        {
+            candidate.substitute_probability = 0.0;
+            candidate.expected_minutes_if_start = 62.0;
+            candidate.minutes_sigma = 1.0;
+        }
+        assert!(input.validate());
+        let mental = test_mental(&input);
+        let forecast = simulate_second_resolved_dynamic_mental_match(
+            &input, &mental, DynamicMentalTransitionParameters::default(),
+            SecondResolvedSimulationParameters::default(), 3, 47,
+        ).expect("paths with scheduled attempts but zero eligible replacements");
+        assert!(
+            forecast.windows_15min.iter().any(|x| x.probability_substitution > 0.0),
+            "at least one scheduled replacement attempt should be observed",
+        );
+        assert!(forecast.windows_15min.iter().all(|x| x.probability_completed_substitution == 0.0));
     }
 
     #[test]

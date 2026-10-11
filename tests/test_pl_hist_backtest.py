@@ -14,7 +14,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from build_pl_hist_inputs import clock_seconds, minute_index, parse_events, parse_lineups  # noqa: E402
+from build_pl_hist_inputs import (
+    clock_seconds, minute_index, elapsed_minute_index, event_time_label,
+    parse_events, parse_lineups,
+)  # noqa: E402
 from score_pl_hist_backtest import apply_calibrator, discrete_crps, occurrence_from_mean, poisson_pmf, score_grid  # noqa: E402
 
 REPORT = ROOT / "artifacts/validation/pl-hist-same-engine-oos.json"
@@ -31,6 +34,84 @@ class StatsBombLabelTests(unittest.TestCase):
         self.assertEqual(minute_index({"minute": 90}), 89)
         self.assertEqual(minute_index({"minute": 96}), 89)
         self.assertEqual(minute_index({}), 89)
+
+    def test_new_elapsed_clock_is_explicit_and_not_television_display_minute(self):
+        for minute, expected in [
+            (0, 0), (14, 14), (15, 15),
+            (44, 44), (45, 45), (60, 60),
+            (89, 89), (90, 89), (96, 89),
+        ]:
+            event = {"minute": minute, "second": 0, "period": 2}
+            self.assertEqual(elapsed_minute_index(event), expected)
+            self.assertEqual(
+                event_time_label(event, clock_contract="elapsed_v2")["minute_index"],
+                expected,
+            )
+            self.assertEqual(
+                event_time_label(event, clock_contract="legacy_v1")["minute_index"],
+                min(89, max(0, minute - 1)),
+            )
+        self.assertEqual(
+            event_time_label(
+                {"minute": 45, "second": 23, "period": 2},
+                clock_contract="elapsed_v2",
+            ),
+            {
+                "minute_index": 45, "source_elapsed_minute": 45,
+                "source_second": 23, "source_period": 2,
+            },
+        )
+        for bad in (
+            {"minute": 45},
+            {"minute": 45, "second": 60, "period": 2},
+            {"minute": -1, "second": 0, "period": 1},
+            {"minute": 45, "second": 0, "period": -1},
+        ):
+            with self.assertRaises(ValueError):
+                event_time_label(bad, clock_contract="elapsed_v2")
+        with self.assertRaisesRegex(ValueError, "unknown"):
+            event_time_label(
+                {"minute": 45, "second": 0, "period": 2},
+                clock_contract="new_unexpected",
+            )
+
+    def test_v2_source_clock_modifies_only_event_time_labels_not_counts(self):
+        meta = {
+            "home_team": {"home_team_name": "A"},
+            "away_team": {"away_team_name": "B"},
+        }
+        events = [
+            {
+                "type": {"name": "Shot"}, "team": {"name": "A"},
+                "player": {"id": 1, "name": "Striker"},
+                "minute": 45, "second": 0, "period": 2,
+                "shot": {"statsbomb_xg": 0.35, "outcome": {"name": "Goal"}},
+            },
+            {
+                "type": {"name": "Substitution"}, "team": {"name": "B"},
+                "player": {"id": 2, "name": "Defender"},
+                "minute": 45, "second": 0, "period": 2,
+                "substitution": {
+                    "outgoing": {"id": 2}, "incoming": {"id": 3},
+                },
+            },
+            {
+                "type": {"name": "Bad Behaviour"}, "team": {"name": "B"},
+                "player": {"id": 4, "name": "Booked"},
+                "minute": 90, "second": 12, "period": 2,
+                "bad_behaviour": {"card": {"name": "Red Card"}},
+            },
+        ]
+        legacy = parse_events(meta, events)
+        corrected = parse_events(meta, events, clock_contract="elapsed_v2")
+        self.assertEqual(legacy["teams"], corrected["teams"])
+        self.assertEqual(legacy["players"], corrected["players"])
+        self.assertEqual([x["minute_index"] for x in legacy["goals"]], [44])
+        self.assertEqual([x["minute_index"] for x in corrected["goals"]], [45])
+        self.assertEqual([x["minute_index"] for x in legacy["subs"]], [44])
+        self.assertEqual([x["minute_index"] for x in corrected["subs"]], [45])
+        self.assertEqual([x["minute_index"] for x in corrected["reds"]], [89])
+        self.assertEqual(corrected["reds"][0]["source_elapsed_minute"], 90)
 
     def test_clock_seconds_parses_provider_timestamps(self):
         self.assertEqual(clock_seconds("00:00"), 0)

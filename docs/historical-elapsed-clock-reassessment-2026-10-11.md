@@ -24,6 +24,38 @@ Recorded official label totals are independently cross-checked.
 This deliberately saves a **new** report rather than changing the
 frozen [v1 historical evidence](../artifacts/validation/pl-hist-momentum-oos.json).
 
+### Versioned v2 label materialization is implemented
+
+The [historical data builder](../scripts/build_pl_hist_inputs.py)
+now supports `--clock-contract elapsed_v2`. It creates an **entirely
+separate** `data/statsbomb/pl_hist_elapsed_v2` directory (the legacy
+v1 directory is left unchanged). The v2 fixture and label files
+declare a schema version and the precise label clock contract.
+Every goal, card, assist and substitution event retains the
+original source minute, second and period alongside its corrected
+regulation-minute index. Bad or missing source timestamps fail closed.
+
+The [cross-version audit](../scripts/audit_pl_hist_label_clock.py)
+checks all 74 matches and all 75 causal team/player input files.
+**Every pre-match input file is byte-identical between v1 and v2.**
+Across the 74 fixtures, the event-clock corrections were:
+
+| Event class | Total events | Changed minute index | Changed 15-minute bin |
+| --- | ---: | ---: | ---: |
+| Goals (including own goals) | 189 | 178 | 13 |
+| Completed substitutions | 417 | 395 | 64 |
+| Registered assists | 123 | 116 | 10 |
+| Red cards | 9 | 8 | 0 |
+
+Reproduction:
+
+    python3 scripts/build_pl_hist_inputs.py --clock-contract elapsed_v2
+    python3 scripts/audit_pl_hist_label_clock.py
+
+The [audit manifest](../artifacts/validation/pl-hist-label-clock-v2-audit.json)
+includes exact source-file fingerprints, counts, bin corrections
+and an explicit no-lookahead assertion.
+
 ## Same forecasts, different clock interpretation
 
 On 25 chronological OOS fixtures (68 recorded goals), the score changes:
@@ -89,3 +121,19 @@ training datasets or retroactively relabel archived v1 results.
 Upcoming player-event classifiers should use raw source elapsed
 time, a consistent convention for period starts, and exact
 stoppage-time handling wherever the forecast horizon supports it.
+
+### Engine event semantics fixed for subsequent experiments
+
+The Rust simulator now exports **both** `p_substitution`
+(the original backwards-compatible attempted substitution/injury
+event) and `p_completed_substitution` (actual successful tactical
+or injury-forced replacement, counted only after the lineup state
+changes). Failed attempts no longer inflate the latter.
+This is a **new field**, not a change to event generation, RNG,
+goal rates or the already frozen historical prediction file.
+The historical scorer prefers the completed field when present,
+but the old 200-path forecast contains only attempted events.
+Thus the v2 Brier table above must still be treated as a
+**mismatched proxy comparison** until a newly frozen, properly
+versioned simulation exports successful substitutions throughout
+its original out-of-sample period.
