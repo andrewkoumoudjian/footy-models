@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "forecast_input_as_of": "2026-10-10",
+  "scope": "dated 8-club EPL forecast candidate set, not the full league",
+  "registered_and_u21_listings": 600,
+  "roster_rows_with_fm_uid": 391,
+  "roster_unique_fm_uids": 390,
+  "simulated_player_rows": 323,
+  "simulated_player_classification": {
+    "player:db": 157,
+    "player:derived": 76,
+    "staff:db": 75,
+    "staff:staff": 15
+  },
+  "player_rows_without_observed_start_history": 323,
+  "player_rows_without_last_appearance_date": 323,
+  "team_result_rows": 1196,
+  "team_result_min_date": "2023-08-11",
+  "team_result_max_date": "2026-10-10",
+  "original_completed_E0_results": 1190,
+  "additional_dated_results_not_in_cached_E0": 6,
+  "original_E0_results_with_both_measured_xg": 50,
+  "team_history_xg_proxy_rows": 1146,
+  "source_hashes": {
+    "registered_squads": "e6cc3db9a6042c36f655529f0717684a8b0806fa7ff309984c7d32ce10868b88",
+    "generated_player_inputs": "1da0330903e33a0fc7dca0a4696d9e55cff4844202d6912407fa8b85cc7edfd3",
+    "generated_team_inputs": "205a39774fcc46d5f8093643aef5c9c4d0472640b12fc32d91785109de289a96",
+    "raw_fm": "b91eaccd9be04278d863a80ef26473455932acdaf8f2b321196c50ada08b74cb"
+  },
+  "not_a_calibration_result": true,
+  "provenance_limitations": [
+    "FM staff/derived records require independent person/role verification",
+    "No player event/lineup observations enter current live player inputs",
+    "Source-missing xG was imputed from realized goals without a flag",
+    "Raw external source publish-time and past roster-availability are not audited here"
+  ]
+}
