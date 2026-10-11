@@ -209,6 +209,11 @@ pub struct SpecificGoalProcess {
     pub goals_per_team_match: f64,
     pub home_advantage_multiplier: f64,
     pub path_log_rate_sigma: f64,
+    /// Correlation between the two teams' per-path log goal rates. Zero reproduces the
+    /// legacy independent sampling exactly (same RNG draws); positive values model shared
+    /// match tempo (open/closed game affects both attacks together). Opt-in experiment
+    /// parameter: stays 0.0 until walk-forward OOS evidence supports a nonzero value.
+    pub path_rate_correlation: f64,
     pub max_abs_segment_log_adjustment: f64,
     /// Player events and score state are recomputed this many times. Six = 15-minute blocks.
     pub segments: u8,
@@ -219,6 +224,8 @@ impl SpecificGoalProcess {
         self.goals_per_team_match.is_finite() && self.goals_per_team_match > 0.0
             && self.home_advantage_multiplier.is_finite() && self.home_advantage_multiplier > 0.0
             && non_negative(self.path_log_rate_sigma)
+            && self.path_rate_correlation.is_finite()
+            && (-0.5..=0.9).contains(&self.path_rate_correlation)
             && self.max_abs_segment_log_adjustment.is_finite() && self.max_abs_segment_log_adjustment > 0.0
             && self.segments > 0
     }
@@ -461,8 +468,13 @@ pub fn simulate_primitive_match(input: &PrimitiveMatchSimulationInput, paths: u3
         for value in home_start.starters.iter().chain(away_start.starters.iter()) {
             path_players.entry(value.player).or_default().started = true;
         }
-        let path_home_rate = sample_log_rate(input.goal_process.goals_per_team_match * input.goal_process.home_advantage_multiplier, input.goal_process.path_log_rate_sigma, &mut rng);
-        let path_away_rate = sample_log_rate(input.goal_process.goals_per_team_match, input.goal_process.path_log_rate_sigma, &mut rng);
+        let (path_home_rate, path_away_rate) = sample_correlated_log_rates(
+            input.goal_process.goals_per_team_match * input.goal_process.home_advantage_multiplier,
+            input.goal_process.goals_per_team_match,
+            input.goal_process.path_log_rate_sigma,
+            input.goal_process.path_rate_correlation,
+            &mut rng,
+        );
         let mut home_goals = 0_u32;
         let mut away_goals = 0_u32;
 
@@ -894,6 +906,39 @@ fn sample_log_rate(mean: f64, sigma: f64, rng: &mut Rng64) -> f64 {
     (mean.ln() - 0.5 * sigma.powi(2) + sigma * rng.normal()).exp()
 }
 
+/// Per-path team goal-rate pair with optional shared-tempo correlation. A correlation of
+/// exactly zero takes the legacy two-independent-draw path so identical seeds reproduce
+/// identical streams bit-for-bit; nonzero correlation adds one shared normal draw plus two
+/// idiosyncratic draws (shared variance fraction = rho, idiosyncratic = 1 - rho).
+fn sample_correlated_log_rates(
+    home_mean: f64,
+    away_mean: f64,
+    sigma: f64,
+    correlation: f64,
+    rng: &mut Rng64,
+) -> (f64, f64) {
+    if sigma <= f64::EPSILON {
+        return (home_mean.max(f64::MIN_POSITIVE), away_mean.max(f64::MIN_POSITIVE));
+    }
+    if correlation.abs() <= f64::EPSILON {
+        return (sample_log_rate(home_mean, sigma, rng), sample_log_rate(away_mean, sigma, rng));
+    }
+    let rho = correlation.clamp(-0.5, 0.9);
+    let shared = rng.normal();
+    let home_idiosyncratic = rng.normal();
+    let away_idiosyncratic = rng.normal();
+    let shared_scale = (rho.abs() * sigma * sigma).sqrt();
+    let idiosyncratic_scale = ((1.0 - rho.abs()) * sigma * sigma).sqrt();
+    let sign = rho.signum();
+    let home_log = home_mean.ln() - 0.5 * sigma.powi(2)
+        + shared_scale * shared
+        + idiosyncratic_scale * home_idiosyncratic;
+    let away_log = away_mean.ln() - 0.5 * sigma.powi(2)
+        + sign * shared_scale * shared
+        + idiosyncratic_scale * away_idiosyncratic;
+    (home_log.exp(), away_log.exp())
+}
+
 fn poisson(lambda: f64, rng: &mut Rng64) -> u32 {
     if !lambda.is_finite() || lambda <= 0.0 { return 0; }
     if lambda < 30.0 {
@@ -1001,7 +1046,7 @@ mod tests {
             home_context: SpecificTeamContext { club: ClubId(1), residual_attack_log_adjustment: 0.0, residual_defense_log_adjustment: 0.0, metric_modifiers: Vec::new() },
             away_context: SpecificTeamContext { club: ClubId(2), residual_attack_log_adjustment: 0.0, residual_defense_log_adjustment: 0.0, metric_modifiers: Vec::new() },
             environment: SpecificMatchEnvironment { home_residual_attack_log_adjustment: 0.0, away_residual_attack_log_adjustment: 0.0, metric_modifiers: Vec::new() },
-            goal_process: SpecificGoalProcess { goals_per_team_match: 1.3, home_advantage_multiplier: 1.08, path_log_rate_sigma: 0.05, max_abs_segment_log_adjustment: 1.5, segments: 6 },
+            goal_process: SpecificGoalProcess { goals_per_team_match: 1.3, home_advantage_multiplier: 1.08, path_log_rate_sigma: 0.05, path_rate_correlation: 0.0, max_abs_segment_log_adjustment: 1.5, segments: 6 },
             matchup_spatial_sigma: 0.25, max_player_rate_log_adjustment: 1.0,
         }
     }
@@ -1081,5 +1126,61 @@ mod tests {
         let result = simulate_primitive_player_absence(&input(), PlayerId(1), 300, 9).unwrap();
         assert_eq!(result.player, PlayerId(1));
         assert_ne!(result.baseline.home_lineup.players, result.without_player.home_lineup.players);
+    }
+
+    #[test]
+    fn zero_correlation_preserves_independent_rate_stream() {
+        let mut first = Rng64::new(99);
+        let mut second = Rng64::new(99);
+        let (home, away) = sample_correlated_log_rates(1.4, 1.2, 0.2, 0.0, &mut first);
+        let expected_home = sample_log_rate(1.4, 0.2, &mut second);
+        let expected_away = sample_log_rate(1.2, 0.2, &mut second);
+        assert!((home - expected_home).abs() < 1e-12);
+        assert!((away - expected_away).abs() < 1e-12);
+    }
+
+    #[test]
+    fn positive_correlation_co_moves_path_rates() {
+        let samples = 4_000;
+        let mut independent = Rng64::new(7);
+        let mut shared = Rng64::new(7);
+        let mut independent_log_home = Vec::with_capacity(samples);
+        let mut independent_log_away = Vec::with_capacity(samples);
+        let mut shared_log_home = Vec::with_capacity(samples);
+        let mut shared_log_away = Vec::with_capacity(samples);
+        for _ in 0..samples {
+            let (home, away) = sample_correlated_log_rates(1.4, 1.2, 0.25, 0.0, &mut independent);
+            independent_log_home.push(home.ln());
+            independent_log_away.push(away.ln());
+            let (home, away) = sample_correlated_log_rates(1.4, 1.2, 0.25, 0.6, &mut shared);
+            shared_log_home.push(home.ln());
+            shared_log_away.push(away.ln());
+        }
+        assert!(correlation(&shared_log_home, &shared_log_away) > correlation(&independent_log_home, &independent_log_away) + 0.2);
+    }
+
+    #[test]
+    fn goal_process_rejects_implausible_correlation() {
+        let mut process = SpecificGoalProcess {
+            goals_per_team_match: 1.3,
+            home_advantage_multiplier: 1.08,
+            path_log_rate_sigma: 0.1,
+            path_rate_correlation: 0.95,
+            max_abs_segment_log_adjustment: 1.5,
+            segments: 6,
+        };
+        assert!(!process.valid());
+        process.path_rate_correlation = 0.4;
+        assert!(process.valid());
+    }
+
+    fn correlation(left: &[f64], right: &[f64]) -> f64 {
+        let n = left.len() as f64;
+        let mean_left = left.iter().sum::<f64>() / n;
+        let mean_right = right.iter().sum::<f64>() / n;
+        let covariance = left.iter().zip(right).map(|(a, b)| (a - mean_left) * (b - mean_right)).sum::<f64>() / n;
+        let variance_left = left.iter().map(|a| (a - mean_left).powi(2)).sum::<f64>() / n;
+        let variance_right = right.iter().map(|b| (b - mean_right).powi(2)).sum::<f64>() / n;
+        covariance / (variance_left * variance_right).sqrt().max(f64::MIN_POSITIVE)
     }
 }

@@ -234,6 +234,27 @@ pub fn simulate_match(
 
 fn validate_paths(paths: u32) -> Option<()> { (paths > 0).then_some(()) }
 
+/// Monte Carlo standard errors for home/draw/away outcome probabilities estimated from
+/// `paths` complete paths with the given class counts. Multinomial sampling covariance:
+/// SE(p_k) = sqrt(p_k (1 - p_k) / n). Reporting these is mandatory context for low-path
+/// forecasts (e.g. 72 paths imply ~±6pp per class at p=0.4) and must precede any decision
+/// to spend more paths: widen paths only when MC error dominates epistemic uncertainty.
+pub fn multinomial_outcome_standard_errors(counts: [u32; 3], paths: u32) -> Option<[f64; 3]> {
+    if paths == 0 || counts.iter().sum::<u32>() != paths {
+        return None;
+    }
+    let n = f64::from(paths);
+    let mut errors = [0.0_f64; 3];
+    for (index, count) in counts.iter().enumerate() {
+        let probability = f64::from(*count) / n;
+        if !(0.0..=1.0).contains(&probability) {
+            return None;
+        }
+        errors[index] = (probability * (1.0 - probability) / n).sqrt();
+    }
+    Some(errors)
+}
+
 fn valid_non_negative(value: f64) -> bool { value.is_finite() && value >= 0.0 }
 
 fn sample_non_negative_normal(mean: f64, sigma: f64, rng: &mut Rng64) -> f64 {
@@ -321,5 +342,18 @@ mod tests {
         let probability = forecast.home_win.get() + forecast.draw.get() + forecast.away_win.get();
         assert!((probability - 1.0).abs() < 1e-6);
         assert!(forecast.home_expected_points >= 0.0 && forecast.home_expected_points <= 3.0);
+    }
+
+    #[test]
+    fn outcome_standard_errors_match_hand_computation() {
+        // p = (0.5, 0.25, 0.25) over n = 100: SE = sqrt(p(1-p)/100).
+        let errors = multinomial_outcome_standard_errors([50, 25, 25], 100).unwrap();
+        assert!((errors[0] - 0.05).abs() < 1e-12);
+        assert!((errors[1] - (0.25_f64 * 0.75 / 100.0).sqrt()).abs() < 1e-12);
+        assert!((errors[2] - errors[1]).abs() < 1e-12);
+        // Degenerate and inconsistent inputs are rejected, not silently scored.
+        assert_eq!(multinomial_outcome_standard_errors([1, 0, 0], 0), None);
+        assert_eq!(multinomial_outcome_standard_errors([50, 25, 24], 100), None);
+        assert_eq!(multinomial_outcome_standard_errors([100, 0, 0], 100).unwrap(), [0.0, 0.0, 0.0]);
     }
 }

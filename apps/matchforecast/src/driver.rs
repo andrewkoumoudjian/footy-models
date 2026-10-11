@@ -867,6 +867,7 @@ fn build_input(
             goals_per_team_match: blended_rate,
             home_advantage_multiplier: 1.09,
             path_log_rate_sigma: 0.28,
+            path_rate_correlation: 0.0,
             max_abs_segment_log_adjustment: 1.2,
             segments: 6,
         },

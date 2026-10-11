@@ -749,6 +749,7 @@ fn build_input(
             goals_per_team_match: blended_rate,
             home_advantage_multiplier: 1.09,
             path_log_rate_sigma: 0.28,
+            path_rate_correlation: 0.0,
             max_abs_segment_log_adjustment: 1.2,
             segments: 6,
         },
@@ -1189,9 +1190,10 @@ fn main() {
         } else {
             2
         };
-        // Fit on prior out-of-sample forecasts only. Six observations is intentionally the minimum:
-        // before that, two calibration parameters are too weakly identified to trust.
-        let calibrator = if use_result_calibration && calibration_history.len() >= 6 {
+        // Fit on prior out-of-sample forecasts only. Fifteen observations is the minimum:
+        // with two free parameters, smaller windows overfit, and the shrunk fit
+        // additionally pulls weak evidence toward identity.
+        let calibrator = if use_result_calibration && calibration_history.len() >= 15 {
             OutcomeCalibrator::fit(&calibration_history).unwrap_or_default()
         } else {
             OutcomeCalibrator::default()

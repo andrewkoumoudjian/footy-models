@@ -175,6 +175,9 @@ pub struct GoalProcessParameters {
     pub goals_per_team_match: f64,
     pub home_advantage_multiplier: f64,
     pub path_log_rate_sigma: f64,
+    /// Shared-tempo correlation between per-path home/away log goal rates. Zero keeps the
+    /// legacy independent sampling bit-identical; nonzero is opt-in pending OOS evidence.
+    pub path_rate_correlation: f64,
     /// Prevents one bad calibration coefficient from creating absurd exponential intensities.
     pub max_abs_log_adjustment: f64,
     /// Score-state feedback is applied over equal segments; six corresponds to 15-minute blocks.
@@ -190,6 +193,8 @@ impl GoalProcessParameters {
             && self.home_advantage_multiplier.is_finite()
             && self.home_advantage_multiplier > 0.0
             && non_negative(self.path_log_rate_sigma)
+            && self.path_rate_correlation.is_finite()
+            && (-0.5..=0.9).contains(&self.path_rate_correlation)
             && self.max_abs_log_adjustment.is_finite()
             && self.max_abs_log_adjustment > 0.0
             && self.segments > 0
@@ -408,8 +413,13 @@ pub fn simulate_specific_match(
         ).clamp(-input.goal_process.max_abs_log_adjustment, input.goal_process.max_abs_log_adjustment);
         let home_mean = input.goal_process.goals_per_team_match * input.goal_process.home_advantage_multiplier * home_adjustment.exp();
         let away_mean = input.goal_process.goals_per_team_match * away_adjustment.exp();
-        let home_path_rate = sample_log_rate(home_mean, input.goal_process.path_log_rate_sigma, &mut rng);
-        let away_path_rate = sample_log_rate(away_mean, input.goal_process.path_log_rate_sigma, &mut rng);
+        let (home_path_rate, away_path_rate) = sample_correlated_log_rates(
+            home_mean,
+            away_mean,
+            input.goal_process.path_log_rate_sigma,
+            input.goal_process.path_rate_correlation,
+            &mut rng,
+        );
         let (home, away) = simulate_score_state(home_path_rate, away_path_rate, input.goal_process, &mut rng);
         home_goals.push(f64::from(home));
         away_goals.push(f64::from(away));
@@ -597,6 +607,34 @@ fn sample_log_rate(mean: f64, log_sigma: f64, rng: &mut Rng64) -> f64 {
     (mean.ln() - 0.5 * log_sigma.powi(2) + log_sigma * rng.normal()).exp()
 }
 
+fn sample_correlated_log_rates(
+    home_mean: f64,
+    away_mean: f64,
+    sigma: f64,
+    correlation: f64,
+    rng: &mut Rng64,
+) -> (f64, f64) {
+    if sigma <= f64::EPSILON {
+        return (home_mean.max(f64::MIN_POSITIVE), away_mean.max(f64::MIN_POSITIVE));
+    }
+    if correlation.abs() <= f64::EPSILON {
+        return (sample_log_rate(home_mean, sigma, rng), sample_log_rate(away_mean, sigma, rng));
+    }
+    let rho = correlation.clamp(-0.5, 0.9);
+    let shared = rng.normal();
+    let home_idiosyncratic = rng.normal();
+    let away_idiosyncratic = rng.normal();
+    let shared_scale = (rho.abs() * sigma * sigma).sqrt();
+    let idiosyncratic_scale = ((1.0 - rho.abs()) * sigma * sigma).sqrt();
+    let home_log = home_mean.ln() - 0.5 * sigma.powi(2)
+        + shared_scale * shared
+        + idiosyncratic_scale * home_idiosyncratic;
+    let away_log = away_mean.ln() - 0.5 * sigma.powi(2)
+        + rho.signum() * shared_scale * shared
+        + idiosyncratic_scale * away_idiosyncratic;
+    (home_log.exp(), away_log.exp())
+}
+
 fn poisson(lambda: f64, rng: &mut Rng64) -> u32 {
     if !lambda.is_finite() || lambda <= 0.0 { return 0; }
     if lambda < 30.0 {
@@ -714,6 +752,7 @@ mod tests {
             environment: MatchEnvironment { home_attack_log_adjustment: 0.0, away_attack_log_adjustment: 0.0, metric_modifiers: Vec::new() },
             goal_process: GoalProcessParameters {
                 goals_per_team_match: 1.3, home_advantage_multiplier: 1.08, path_log_rate_sigma: 0.08,
+                path_rate_correlation: 0.0,
                 max_abs_log_adjustment: 1.5, segments: 6, trailing_attack_log_boost: 0.08, leading_attack_log_suppression: 0.05,
             },
             matchup_spatial_sigma: 0.25,

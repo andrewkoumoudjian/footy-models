@@ -434,6 +434,66 @@ pub fn compare_to_baselines(model: GemMetrics, baselines: &[BaselineResult]) -> 
     }).collect()
 }
 
+/// Proper-score summary for one match-outcome forecast (home/draw/away).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ProbabilityForecastScore {
+    pub brier: f64,
+    pub log_loss: f64,
+}
+
+/// Brier + log loss of a single W/D/L forecast against the true class (0/1/2).
+/// Returns `None` on non-normalized or non-finite input. Probabilities are floored
+/// at 1e-9 before the log, matching the backtest scoring convention.
+pub fn score_probability_forecast(probabilities: [f64; 3], actual: usize) -> Option<ProbabilityForecastScore> {
+    if actual >= 3
+        || probabilities.iter().any(|value| !value.is_finite() || *value < 0.0)
+        || (probabilities.iter().sum::<f64>() - 1.0).abs() > 1e-6
+    {
+        return None;
+    }
+    let brier = probabilities
+        .iter()
+        .enumerate()
+        .map(|(index, probability)| (probability - f64::from(index == actual)).powi(2))
+        .sum();
+    let log_loss = -probabilities[actual].max(1e-9).ln();
+    Some(ProbabilityForecastScore { brier, log_loss })
+}
+
+/// Head-to-head comparison of two W/D/L forecasts on the same realized outcome.
+/// Positive excess means the model is worse than the market benchmark.
+///
+/// External market odds (e.g. an authorized pre-match odds export) enter ONLY here,
+/// as a scored benchmark. They must never flow into the simulation inputs: the
+/// engine's job is to produce an independent football-state forecast, and feeding it
+/// market prices would erase the mispricing signal the platform exists to measure.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ForecastComparison {
+    pub model_brier: f64,
+    pub market_brier: f64,
+    pub brier_excess: f64,
+    pub model_log_loss: f64,
+    pub market_log_loss: f64,
+    pub log_loss_excess: f64,
+}
+
+pub fn compare_forecasts(
+    model: [f64; 3],
+    market: [f64; 3],
+    actual: usize,
+) -> Option<ForecastComparison> {
+    let model_score = score_probability_forecast(model, actual)?;
+    let market_score = score_probability_forecast(market, actual)?;
+    Some(ForecastComparison {
+        model_brier: model_score.brier,
+        market_brier: market_score.brier,
+        brier_excess: model_score.brier - market_score.brier,
+        model_log_loss: model_score.log_loss,
+        market_log_loss: market_score.log_loss,
+        log_loss_excess: model_score.log_loss - market_score.log_loss,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -566,5 +626,22 @@ mod tests {
         let metrics = gem_metrics(&rows, 0.5).unwrap();
         assert_eq!(metrics.hit_rate, 0.5);
         assert_eq!(metrics.downside_rate, 0.5);
+    }
+
+    #[test]
+    fn probability_scorer_matches_hand_computation() {
+        let score = score_probability_forecast([0.5, 0.25, 0.25], 0).unwrap();
+        assert!((score.brier - 0.375).abs() < 1e-12);
+        assert!((score.log_loss - (-0.5_f64.ln())).abs() < 1e-12);
+        assert!(score_probability_forecast([0.5, 0.5, 0.5], 0).is_none());
+        assert!(score_probability_forecast([0.5, 0.25, f64::NAN], 0).is_none());
+    }
+
+    #[test]
+    fn forecast_comparison_signs_excess_correctly() {
+        let comparison = compare_forecasts([0.7, 0.2, 0.1], [0.4, 0.3, 0.3], 0).unwrap();
+        assert!(comparison.brier_excess < 0.0);
+        assert!(comparison.log_loss_excess < 0.0);
+        assert!(compare_forecasts([0.7, 0.2, 0.1], [0.4, 0.3, 0.3], 3).is_none());
     }
 }

@@ -312,8 +312,13 @@ pub fn simulate_dynamic_mental_match(
         blend_team_with_active(&mut home_team_mental, &home, &path_mental, transition.active_lineup_blend); blend_team_with_active(&mut away_team_mental, &away, &path_mental, transition.active_lineup_blend);
         let mut path_players = BTreeMap::<PlayerId, PathPlayer>::new(); let mut path_metrics = BTreeMap::<(PlayerId, MetricId), PathMetric>::new();
         for starter in home_start.starters.iter().chain(away_start.starters.iter()) { path_players.entry(starter.player).or_default().started = true; }
-        let path_home_rate = sample_log_rate(input.goal_process.goals_per_team_match * input.goal_process.home_advantage_multiplier, input.goal_process.path_log_rate_sigma, &mut rng);
-        let path_away_rate = sample_log_rate(input.goal_process.goals_per_team_match, input.goal_process.path_log_rate_sigma, &mut rng);
+        let (path_home_rate, path_away_rate) = sample_correlated_log_rates(
+            input.goal_process.goals_per_team_match * input.goal_process.home_advantage_multiplier,
+            input.goal_process.goals_per_team_match,
+            input.goal_process.path_log_rate_sigma,
+            input.goal_process.path_rate_correlation,
+            &mut rng,
+        );
         let mut home_goals = 0_u32; let mut away_goals = 0_u32;
         for segment in 0..input.goal_process.segments {
             let end_minute = f64::from(segment + 1) * segment_minutes;
@@ -401,6 +406,24 @@ fn segment_probability(probability_per90: f64, minutes: f64) -> f64 { 1.0 - (1.0
 fn weighted_index<I>(weights: I, rng: &mut Rng64) -> Option<usize> where I: IntoIterator<Item = f64> { let values: Vec<f64> = weights.into_iter().map(|value| if value.is_finite() && value > 0.0 { value } else { 0.0 }).collect(); let total = values.iter().sum::<f64>(); if values.is_empty() || total <= 0.0 { return None; } let target = rng.uniform() * total; let mut cumulative = 0.0; for (index, value) in values.iter().enumerate() { cumulative += *value; if target <= cumulative { return Some(index); } } Some(values.len() - 1) }
 fn sample_non_negative_normal(mean: f64, sigma: f64, rng: &mut Rng64) -> f64 { if sigma <= f64::EPSILON { mean.max(0.0) } else { (mean + sigma * rng.normal()).max(0.0) } }
 fn sample_log_rate(mean: f64, sigma: f64, rng: &mut Rng64) -> f64 { if sigma <= f64::EPSILON { return mean.max(f64::MIN_POSITIVE); } (mean.ln() - 0.5 * sigma.powi(2) + sigma * rng.normal()).exp() }
+
+fn sample_correlated_log_rates(home_mean: f64, away_mean: f64, sigma: f64, correlation: f64, rng: &mut Rng64) -> (f64, f64) {
+    if sigma <= f64::EPSILON {
+        return (home_mean.max(f64::MIN_POSITIVE), away_mean.max(f64::MIN_POSITIVE));
+    }
+    if correlation.abs() <= f64::EPSILON {
+        return (sample_log_rate(home_mean, sigma, rng), sample_log_rate(away_mean, sigma, rng));
+    }
+    let rho = correlation.clamp(-0.5, 0.9);
+    let shared = rng.normal();
+    let home_idiosyncratic = rng.normal();
+    let away_idiosyncratic = rng.normal();
+    let shared_scale = (rho.abs() * sigma * sigma).sqrt();
+    let idiosyncratic_scale = ((1.0 - rho.abs()) * sigma * sigma).sqrt();
+    let home_log = home_mean.ln() - 0.5 * sigma.powi(2) + shared_scale * shared + idiosyncratic_scale * home_idiosyncratic;
+    let away_log = away_mean.ln() - 0.5 * sigma.powi(2) + rho.signum() * shared_scale * shared + idiosyncratic_scale * away_idiosyncratic;
+    (home_log.exp(), away_log.exp())
+}
 fn poisson(lambda: f64, rng: &mut Rng64) -> u32 { if !lambda.is_finite() || lambda <= 0.0 { return 0; } if lambda < 30.0 { let threshold = (-lambda).exp(); let mut product = 1.0; let mut count = 0_u32; loop { product *= rng.uniform(); if product <= threshold { return count; } count = count.saturating_add(1); } } (lambda + lambda.sqrt() * rng.normal()).round().max(0.0).min(f64::from(u32::MAX)) as u32 }
 fn summarize(values: &[f64]) -> Option<DistributionSummary> { if values.is_empty() || values.iter().any(|value| !value.is_finite()) { return None; } let mut sorted = values.to_vec(); sorted.sort_by(f64::total_cmp); let mean = sorted.iter().sum::<f64>() / sorted.len() as f64; let variance = if sorted.len() > 1 { sorted.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / (sorted.len() - 1) as f64 } else { 0.0 }; Some(DistributionSummary { p10: quantile(&sorted, 0.10), p25: quantile(&sorted, 0.25), p50: quantile(&sorted, 0.50), p75: quantile(&sorted, 0.75), p90: quantile(&sorted, 0.90), mean, standard_error: (variance / sorted.len() as f64).sqrt(), paths: sorted.len().min(u32::MAX as usize) as u32 }) }
 fn quantile(sorted: &[f64], probability: f64) -> f64 { if sorted.len() == 1 { return sorted[0]; } let position = probability * (sorted.len() - 1) as f64; let lower = position.floor() as usize; let upper = position.ceil() as usize; if lower == upper { sorted[lower] } else { let fraction = position - lower as f64; sorted[lower] * (1.0 - fraction) + sorted[upper] * fraction } }
@@ -437,7 +460,7 @@ mod tests {
             in_match: SpecificInMatchParameters { injury_probability_per90: 0.01, red_card_probability_per90: 0.01, max_substitutions: 5, minimum_tactical_substitution_minute: 45.0 },
             home_context: SpecificTeamContext { club: ClubId(1), residual_attack_log_adjustment: 0.0, residual_defense_log_adjustment: 0.0, metric_modifiers: Vec::new() }, away_context: SpecificTeamContext { club: ClubId(2), residual_attack_log_adjustment: 0.0, residual_defense_log_adjustment: 0.0, metric_modifiers: Vec::new() },
             environment: SpecificMatchEnvironment { home_residual_attack_log_adjustment: 0.0, away_residual_attack_log_adjustment: 0.0, metric_modifiers: vec![SpecificEnvironmentMetricModifier { metric, home_multiplier: 1.0, away_multiplier: 1.0 }] },
-            goal_process: SpecificGoalProcess { goals_per_team_match: 1.4, home_advantage_multiplier: 1.08, path_log_rate_sigma: 0.05, max_abs_segment_log_adjustment: 1.5, segments: 6 }, matchup_spatial_sigma: 0.25, max_player_rate_log_adjustment: 1.0,
+            goal_process: SpecificGoalProcess { goals_per_team_match: 1.4, home_advantage_multiplier: 1.08, path_log_rate_sigma: 0.05, path_rate_correlation: 0.0, max_abs_segment_log_adjustment: 1.5, segments: 6 }, matchup_spatial_sigma: 0.25, max_player_rate_log_adjustment: 1.0,
         };
         let team = |club| TeamMentalState { club, collective_morale: measure(0.0), collective_belief: measure(0.0), cohesion: measure(0.2), leadership: measure(0.2) };
         let mental_players: Vec<PlayerMentalState> = all.iter().enumerate().filter_map(|(index, player)| (include_all_mental_states || index % 3 != 0).then_some(player_mental(*player))).collect();

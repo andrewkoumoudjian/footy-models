@@ -417,15 +417,13 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                 sample_non_negative_normal(model.mean_per90, model.epistemic_sigma, &mut rng),
             );
         }
-        // Match-level goal-rate uncertainty is likewise one draw per team/path.
-        let home_goal_base = sample_log_rate(
+        // Match-level goal-rate uncertainty is likewise one draw per team/path, with an
+        // optional shared-tempo correlation (zero = legacy independent draws, bit-identical).
+        let (home_goal_base, away_goal_base) = sample_correlated_log_rates(
             input.goal_process.goals_per_team_match * input.goal_process.home_advantage_multiplier,
-            input.goal_process.path_log_rate_sigma,
-            &mut rng,
-        );
-        let away_goal_base = sample_log_rate(
             input.goal_process.goals_per_team_match,
             input.goal_process.path_log_rate_sigma,
+            input.goal_process.path_rate_correlation,
             &mut rng,
         );
 
@@ -1543,6 +1541,24 @@ fn sample_log_rate(mean: f64, sigma: f64, rng: &mut Rng64) -> f64 {
     (mean.ln() - 0.5 * sigma.powi(2) + sigma * rng.normal()).exp()
 }
 
+fn sample_correlated_log_rates(home_mean: f64, away_mean: f64, sigma: f64, correlation: f64, rng: &mut Rng64) -> (f64, f64) {
+    if sigma <= f64::EPSILON {
+        return (home_mean.max(f64::MIN_POSITIVE), away_mean.max(f64::MIN_POSITIVE));
+    }
+    if correlation.abs() <= f64::EPSILON {
+        return (sample_log_rate(home_mean, sigma, rng), sample_log_rate(away_mean, sigma, rng));
+    }
+    let rho = correlation.clamp(-0.5, 0.9);
+    let shared = rng.normal();
+    let home_idiosyncratic = rng.normal();
+    let away_idiosyncratic = rng.normal();
+    let shared_scale = (rho.abs() * sigma * sigma).sqrt();
+    let idiosyncratic_scale = ((1.0 - rho.abs()) * sigma * sigma).sqrt();
+    let home_log = home_mean.ln() - 0.5 * sigma.powi(2) + shared_scale * shared + idiosyncratic_scale * home_idiosyncratic;
+    let away_log = away_mean.ln() - 0.5 * sigma.powi(2) + rho.signum() * shared_scale * shared + idiosyncratic_scale * away_idiosyncratic;
+    (home_log.exp(), away_log.exp())
+}
+
 fn poisson(lambda: f64, rng: &mut Rng64) -> u32 {
     if !lambda.is_finite() || lambda <= 0.0 { return 0; }
     if lambda < 30.0 {
@@ -1729,6 +1745,7 @@ mod tests {
                 goals_per_team_match: 1.4,
                 home_advantage_multiplier: 1.09,
                 path_log_rate_sigma: 0.1,
+                path_rate_correlation: 0.0,
                 max_abs_segment_log_adjustment: 1.2,
                 segments: 6,
             },

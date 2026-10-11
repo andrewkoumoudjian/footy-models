@@ -25,7 +25,7 @@ use crate::driver::{
 };
 use footy_core::{MatchId, MetricId, PlayerId};
 use footy_match::{
-    simulate_second_resolved_dynamic_mental_match, DynamicMentalTransitionParameters, FormationPrior,
+    apply_dixon_coles, simulate_second_resolved_dynamic_mental_match, DynamicMentalTransitionParameters, FormationPrior,
     LineupProjectionInput, LineupSamplingParameters, OutcomeCalibrationSample, OutcomeCalibrator,
     PlayerMatchupState, PrimitiveMatchSimulationInput, SecondResolvedDynamicMentalForecast,
     SecondResolvedSimulationParameters, SpecificGoalProcess, SpecificInMatchParameters,
@@ -49,6 +49,10 @@ pub struct HistoricalInputContract {
     pub max_substitutions: u8,
     pub red_card_probability_per90: f64,
     pub injury_probability_per90: f64,
+    /// Shared-tempo correlation between per-path home/away log goal rates. Zero keeps the
+    /// legacy independent sampling; nonzero values are research-only until a frozen OOS
+    /// comparison shows a proper-score improvement with uncertainty.
+    pub path_rate_correlation: f64,
     /// Research-only: preserve each team's causal attacking/defensive strength in its
     /// own goal intensity instead of giving both teams the same blended anchor.
     pub team_strength_anchor: bool,
@@ -66,6 +70,7 @@ impl Default for HistoricalInputContract {
             max_substitutions: 3,
             red_card_probability_per90: 0.02,
             injury_probability_per90: 0.02,
+            path_rate_correlation: 0.0,
             team_strength_anchor: false,
         }
     }
@@ -238,6 +243,7 @@ pub(crate) fn build_historical_input(
             goals_per_team_match: blended_rate,
             home_advantage_multiplier: contract.home_advantage_multiplier,
             path_log_rate_sigma: contract.path_log_rate_sigma,
+            path_rate_correlation: contract.path_rate_correlation,
             max_abs_segment_log_adjustment: 1.2,
             segments: 6,
         },
@@ -369,12 +375,14 @@ fn summarise_fixture(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_fixture(
     fixture: &Value,
     windows: &LeagueWindows,
     players: &[PlayerRow],
     contract: HistoricalInputContract,
     selection_correction: &[(f64, f64)],
+    dixon_coles_rho: f64,
     paths: u32,
     seed: u64,
 ) -> Option<(Value, [f64; 3], usize)> {
@@ -410,7 +418,51 @@ fn run_fixture(
         f64::from(forecast.outcome.draw.get()),
         f64::from(forecast.outcome.away_win.get()),
     ];
-    Some((summarise_fixture(fixture, &forecast, players), raw, actual))
+    let mut summary = summarise_fixture(fixture, &forecast, players);
+    // Research-only Dixon–Coles layer: the raw path-observed table is immutable; the
+    // corrected table is exported alongside with its rho and applicability flag.
+    // Default rho = 0.0 skips the layer entirely (identity, no new keys beyond rho).
+    if let Some(object) = summary.as_object_mut() {
+        object.insert("dixon_coles_rho".to_string(), json!(dixon_coles_rho));
+        if dixon_coles_rho != 0.0 {
+            let home_mean = forecast.outcome.home_goals.mean;
+            let away_mean = forecast.outcome.away_goals.mean;
+            let cells: Vec<(u32, u32, f64)> = forecast
+                .scoreline_distribution
+                .iter()
+                .map(|cell| (u32::from(cell.home_goals), u32::from(cell.away_goals), cell.probability))
+                .collect();
+            match apply_dixon_coles(&cells, home_mean, away_mean, dixon_coles_rho) {
+                Some(adjusted) => {
+                    // Dixon-Coles preserves goal marginals for an independent Poisson
+                    // base, NOT an arbitrary empirical scoreline table. Explicitly
+                    // record the incoherence introduced by this optional diagnostic.
+                    let mut marginal_changes: BTreeMap<(u8, u32), f64> = BTreeMap::new();
+                    for (raw_cell, adjusted_cell) in cells.iter().zip(&adjusted) {
+                        let delta = adjusted_cell.2 - raw_cell.2;
+                        *marginal_changes.entry((0, raw_cell.0)).or_default() += delta;
+                        *marginal_changes.entry((1, raw_cell.1)).or_default() += delta;
+                    }
+                    let max_goal_marginal_shift = marginal_changes.values()
+                        .copied().map(f64::abs).fold(0.0, f64::max);
+                    object.insert("dixon_coles_max_goal_marginal_shift".to_string(), json!(max_goal_marginal_shift));
+                    object.insert("dixon_coles_is_alternative_scoreline_forecast_only".to_string(), json!(true));
+                    object.insert(
+                        "scoreline_distribution_dc".to_string(),
+                        adjusted
+                            .iter()
+                            .map(|(home, away, probability)| json!([home, away, probability]))
+                            .collect(),
+                    );
+                    object.insert("dixon_coles_applied".to_string(), json!(true));
+                }
+                None => {
+                    object.insert("dixon_coles_applied".to_string(), json!(false));
+                }
+            }
+        }
+    }
+    Some((summary, raw, actual))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -425,6 +477,9 @@ pub fn run_premier_league_historical() {
     let mut use_calibration = true;
     let mut selection_correction_path: Option<String> = None;
     let mut contract = HistoricalInputContract::default();
+    // Research-only Dixon–Coles rho applied as a post-hoc scoreline-table layer.
+    // 0.0 (default) disables it; nonzero values must earn production via frozen OOS.
+    let mut dixon_coles_rho = 0.0_f64;
     let mut iter = std::env::args().skip(1);
     while let Some(flag) = iter.next() {
         match flag.as_str() {
@@ -457,6 +512,12 @@ pub fn run_premier_league_historical() {
             }
             "--red-card-probability-per90" => {
                 contract.red_card_probability_per90 = iter.next().expect("value").parse().expect("number")
+            }
+            "--path-rate-correlation" => {
+                contract.path_rate_correlation = iter.next().expect("value").parse().expect("number")
+            }
+            "--dixon-coles-rho" => {
+                dixon_coles_rho = iter.next().expect("value").parse().expect("number")
             }
             "--team-strength-anchor" => contract.team_strength_anchor = true,
             _ => panic!("unknown argument: {flag}"),
@@ -519,7 +580,7 @@ pub fn run_premier_league_historical() {
     if worker_count <= 1 || work.len() <= 1 {
         for index in work {
             let (players, windows) = prepared[index].as_ref().expect("prepared");
-            raw_results[index] = run_fixture(&fixtures[index], windows, players, contract, &selection_correction, paths, seed);
+            raw_results[index] = run_fixture(&fixtures[index], windows, players, contract, &selection_correction, dixon_coles_rho, paths, seed);
         }
     } else {
         let chunk_size = work.len().div_ceil(worker_count);
@@ -533,12 +594,13 @@ pub fn run_premier_league_historical() {
                 let prepared_ref = &prepared;
                 let contract_ref = contract;
                 let correction_ref = &selection_correction;
+                let dixon_coles_ref = &dixon_coles_rho;
                 let shared_ref = std::sync::Arc::clone(&shared);
                 handles.push(scope.spawn(move || {
                     let mut local = Vec::new();
                     for index in chunk {
                         let (players, windows) = prepared_ref[*index].as_ref().expect("prepared");
-                        let result = run_fixture(&fixtures_ref[*index], windows, players, contract_ref, correction_ref, paths, seed);
+                        let result = run_fixture(&fixtures_ref[*index], windows, players, contract_ref, correction_ref, *dixon_coles_ref, paths, seed);
                         local.push((*index, result));
                     }
                     shared_ref.lock().expect("lock").extend(local);
@@ -570,7 +632,7 @@ pub fn run_premier_league_historical() {
             }));
             continue;
         };
-        let calibrator = if use_calibration && calibration_history.len() >= 6 {
+        let calibrator = if use_calibration && calibration_history.len() >= 15 {
             OutcomeCalibrator::fit(&calibration_history).unwrap_or_default()
         } else {
             OutcomeCalibrator::default()
@@ -602,12 +664,14 @@ pub fn run_premier_league_historical() {
             "away_attack_log_adjustment": contract.away_attack_log_adjustment,
             "goal_rate_scale": contract.goal_rate_scale,
             "path_log_rate_sigma": contract.path_log_rate_sigma,
+            "path_rate_correlation": contract.path_rate_correlation,
             "max_substitutions": contract.max_substitutions,
             "red_card_probability_per90": contract.red_card_probability_per90,
             "injury_probability_per90": contract.injury_probability_per90,
             "team_strength_anchor": contract.team_strength_anchor,
         },
         "calibration_enabled": use_calibration,
+        "dixon_coles_rho": dixon_coles_rho,
         "selection_correction_points": selection_correction.len(),
         "fixtures": fixtures_out,
         "skipped": skipped,
