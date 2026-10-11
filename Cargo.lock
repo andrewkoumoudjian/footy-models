@@ -133,6 +133,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "footy-plforecast"
+version = "0.1.0"
+dependencies = [
+ "footy-match",
+ "serde_json",
+]
+
+[[package]]
 name = "footy-query"
 version = "0.1.0"
 dependencies = [

@@ -22,6 +22,7 @@ mod second_resolved_mc;
 mod simulation;
 mod specific;
 mod specific_explain;
+mod team_goals;
 
 pub use calibration::*;
 pub use channels::*;
@@ -37,3 +38,4 @@ pub use second_resolved_api::*;
 pub use simulation::*;
 pub use specific::*;
 pub use specific_explain::*;
+pub use team_goals::*;

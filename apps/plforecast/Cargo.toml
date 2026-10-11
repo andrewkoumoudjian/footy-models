@@ -1,0 +1,9 @@
+[package]
+name = "footy-plforecast"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+footy-match = { path = "../../crates/match" }
+serde_json = { workspace = true }

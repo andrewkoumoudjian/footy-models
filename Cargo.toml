@@ -26,6 +26,7 @@ members = [
     "apps/mc",
     "apps/forward",
     "apps/matchforecast",
+    "apps/plforecast",
 ]
 
 [workspace.package]

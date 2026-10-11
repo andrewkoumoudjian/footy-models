@@ -1,0 +1,19 @@
+{
+  "as_of": "2026-10-10",
+  "fixtures": [
+    {"date":"2026-10-11","home":"Crystal Palace","away":"Nott'm Forest"},
+    {"date":"2026-10-11","home":"Hull","away":"Everton"},
+    {"date":"2026-10-11","home":"Liverpool","away":"Man City"},
+    {"date":"2026-10-12","home":"Coventry","away":"Newcastle"}
+  ],
+  "manual_results": [
+    {"date":"2026-10-10","home":"Arsenal","away":"Leeds","home_goals":2,"away_goals":1},
+    {"date":"2026-10-10","home":"Aston Villa","away":"Brentford","home_goals":2,"away_goals":2},
+    {"date":"2026-10-10","home":"Chelsea","away":"Bournemouth","home_goals":5,"away_goals":1},
+    {"date":"2026-10-10","home":"Ipswich","away":"Fulham","home_goals":2,"away_goals":1},
+    {"date":"2026-10-10","home":"Sunderland","away":"Brighton","home_goals":0,"away_goals":2},
+    {"date":"2026-10-10","home":"Man United","away":"Tottenham","home_goals":1,"away_goals":1}
+  ],
+  "manual_results_source": "https://www.reuters.com/sports/soccer/guimaraes-grabs-winner-arsenal-rally-beat-leeds-2026-10-10/",
+  "fixture_source": "https://www.premierleague.com/en/news/4688862/fixture-amendments-for-premier-league-matches-in-october-and-november"
+}
