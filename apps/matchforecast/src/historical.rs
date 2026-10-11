@@ -49,6 +49,9 @@ pub struct HistoricalInputContract {
     pub max_substitutions: u8,
     pub red_card_probability_per90: f64,
     pub injury_probability_per90: f64,
+    /// Research-only: preserve each team's causal attacking/defensive strength in its
+    /// own goal intensity instead of giving both teams the same blended anchor.
+    pub team_strength_anchor: bool,
 }
 
 impl Default for HistoricalInputContract {
@@ -63,6 +66,7 @@ impl Default for HistoricalInputContract {
             max_substitutions: 3,
             red_card_probability_per90: 0.02,
             injury_probability_per90: 0.02,
+            team_strength_anchor: false,
         }
     }
 }
@@ -100,6 +104,25 @@ fn corrected_start_probability(table: &[(f64, f64)], value: f64) -> f64 {
         }
     }
     table[table.len() - 1].1
+}
+
+/// Relative home/away goal intensity from pre-match team rates. Normalize the
+/// two values to an average of one: the experiment changes *allocation* of
+/// goals, not the (previously rejected) overall goal-level calibration.
+/// The shot-on-target proxy follows the same 0.30 coefficient as the original
+/// shared goal anchor. All six inputs are causal EWMA values from LeagueWindows.
+fn team_goal_strength_ratios(home: &TeamData, away: &TeamData) -> (f64, f64) {
+    let goal_home = 0.5 * (home.gf_pm + away.ga_pm);
+    let goal_away = 0.5 * (away.gf_pm + home.ga_pm);
+    let shot_home = 0.15 * (home.sot_pm + away.sot_face_pm);
+    let shot_away = 0.15 * (away.sot_pm + home.sot_face_pm);
+    let home_strength = 0.6 * goal_home + 0.4 * shot_home;
+    let away_strength = 0.6 * goal_away + 0.4 * shot_away;
+    let average = 0.5 * (home_strength + away_strength);
+    if !average.is_finite() || average <= 0.0 {
+        return (1.0, 1.0);
+    }
+    ((home_strength / average).max(1e-6), (away_strength / average).max(1e-6))
 }
 
 /// Observed-stat-only variant of the shared match-input builder. Identical engine entry point,
@@ -164,6 +187,11 @@ pub(crate) fn build_historical_input(
         / 4.0;
     let blended_rate = (env_rate * 0.6 + sot_rate.clamp(0.9, 2.4) * 0.4).clamp(1.05, 2.1)
         * contract.goal_rate_scale.max(1e-6);
+    let (home_strength, away_strength) = if contract.team_strength_anchor {
+        team_goal_strength_ratios(home, away)
+    } else {
+        (1.0, 1.0)
+    };
 
     let team_context = |team: &TeamData| SpecificTeamContext {
         club: team.club,
@@ -202,8 +230,8 @@ pub(crate) fn build_historical_input(
         home_context: team_context(home),
         away_context: team_context(away),
         environment: SpecificMatchEnvironment {
-            home_residual_attack_log_adjustment: contract.home_attack_log_adjustment,
-            away_residual_attack_log_adjustment: contract.away_attack_log_adjustment,
+            home_residual_attack_log_adjustment: contract.home_attack_log_adjustment + home_strength.ln(),
+            away_residual_attack_log_adjustment: contract.away_attack_log_adjustment + away_strength.ln(),
             metric_modifiers: Vec::new(),
         },
         goal_process: SpecificGoalProcess {
@@ -430,6 +458,7 @@ pub fn run_premier_league_historical() {
             "--red-card-probability-per90" => {
                 contract.red_card_probability_per90 = iter.next().expect("value").parse().expect("number")
             }
+            "--team-strength-anchor" => contract.team_strength_anchor = true,
             _ => panic!("unknown argument: {flag}"),
         }
     }
@@ -576,6 +605,7 @@ pub fn run_premier_league_historical() {
             "max_substitutions": contract.max_substitutions,
             "red_card_probability_per90": contract.red_card_probability_per90,
             "injury_probability_per90": contract.injury_probability_per90,
+            "team_strength_anchor": contract.team_strength_anchor,
         },
         "calibration_enabled": use_calibration,
         "selection_correction_points": selection_correction.len(),
@@ -594,4 +624,44 @@ pub fn run_premier_league_historical() {
         paths,
         output_path
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use footy_core::ClubId;
+
+    fn team(name: &str, gf: f64, ga: f64, sot: f64, faced: f64) -> TeamData {
+        TeamData {
+            name: name.to_owned(), club: ClubId(1), matches: 20,
+            gf_pm: gf, ga_pm: ga, xga_pm: ga,
+            shots_pm: 12.0, sot_pm: sot, sot_face_pm: faced,
+        }
+    }
+
+    #[test]
+    fn identical_team_history_keeps_the_existing_anchor() {
+        let a = team("A", 1.5, 1.2, 5.0, 4.0);
+        let (home, away) = team_goal_strength_ratios(&a, &a);
+        assert!((home - 1.0).abs() < 1e-12);
+        assert!((away - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn differential_anchor_conserves_total_goal_rate_and_reverses_with_sides() {
+        let strong = team("Strong", 2.1, 0.8, 6.2, 2.7);
+        let weak = team("Weak", 0.8, 2.0, 2.8, 6.0);
+        let (home, away) = team_goal_strength_ratios(&strong, &weak);
+        assert!(home > 1.0 && away < 1.0);
+        assert!((home + away - 2.0).abs() < 1e-12);
+        let (reversed_home, reversed_away) = team_goal_strength_ratios(&weak, &strong);
+        assert!((home - reversed_away).abs() < 1e-12);
+        assert!((away - reversed_home).abs() < 1e-12);
+    }
+
+    #[test]
+    fn invalid_strength_input_cannot_generate_non_finite_goal_hazards() {
+        let empty = team("Empty", 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(team_goal_strength_ratios(&empty, &empty), (1.0, 1.0));
+    }
 }

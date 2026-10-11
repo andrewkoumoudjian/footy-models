@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "source": "galsaar/EnglishPremierLeagueEPLResults results.csv.zip",
+  "archive_sha256": "8b33807404757fa4eca48374d35ac0a435f602906ff780afa146973714b3c873",
+  "fit_start_date": "2012-01-01",
+  "fit_end_date": "2016-02-07",
+  "oos_start_exclusive": "2016-02-07",
+  "oos_end_date": "2019-05-31",
+  "fit": {
+    "fixtures": 1583,
+    "red_fixtures": 222,
+    "match_red_probability": 0.1404671717171717,
+    "per_player_per90_probability": 0.006856669589773796
+  },
+  "oos": {
+    "n": 1270,
+    "observed_match_red_rate": 0.1094488188976378,
+    "engine_default_match_red_probability": 0.35882930392640755,
+    "fitted_match_red_probability": 0.1404671717171717,
+    "default_brier": 0.15966040125273434,
+    "fitted_brier": 0.09843191315118698,
+    "default_log_loss": 0.5079890096125762,
+    "fitted_log_loss": 0.34962351558382077,
+    "matched_day_bootstrap_95_brier_fitted_minus_default": [
+      -0.06890562036000152,
+      -0.053758766706049246
+    ]
+  },
+  "acceptance": "Research-only approximation; do not change simulator default before full same-engine OOS outcome validation.",
+  "assumption": "22 equally exposed field-player slots for 90 minutes; actual playing time, dismissals and match state are not accounted for in this benchmark."
+}

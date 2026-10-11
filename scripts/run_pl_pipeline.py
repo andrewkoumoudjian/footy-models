@@ -115,10 +115,24 @@ def main():
                     help='worker threads for the historical backtest (0 = auto)')
     ap.add_argument('--matching-engine-oos',
                     help='optional fully verified same-Rust-engine historical OOS report (no cross-model substitution)')
+    ap.add_argument('--polymarket-spec',
+                    help='verified regulation-time 1X2 event and YES token mapping; descriptive sidecar only')
+    ap.add_argument('--polymarket-histories',
+                    help='optional frozen three-token price histories for offline/reproducible market analysis')
+    ap.add_argument('--polymarket-output',
+                    help='output for optional market comparison (defaults to local untracked data, never frozen forecast JSON)')
     ap.add_argument('--dry-run',action='store_true',help='show plan; change nothing')
     opt=ap.parse_args()
     config=json.loads((ROOT/opt.fixtures).read_text())
     cutoff=date.fromisoformat(config['as_of'])
+    if opt.polymarket_histories and not opt.polymarket_spec:
+        ap.error('--polymarket-histories requires --polymarket-spec')
+    if opt.polymarket_spec and opt.render_only:
+        ap.error('market comparisons require a new pre-match run, never a frozen render-only artifact')
+    if opt.polymarket_spec and not opt.dry_run:
+        market_spec=json.loads((ROOT/opt.polymarket_spec).read_text())
+        if market_spec.get('snapshot_utc','')[:10] > str(cutoff):
+            ap.error('market snapshot cannot postdate the model as-of cutoff')
     dates=[date.fromisoformat(f['date']) for f in config['fixtures']]
     if not dates or any(d<=cutoff for d in dates):
         ap.error('all fixture kickoffs must be strictly after as-of cutoff')
@@ -230,6 +244,12 @@ def main():
         if opt.matching_engine_oos:
             release+=['--matching-engine-oos',opt.matching_engine_oos]
         run(release)
+    if opt.polymarket_spec:
+        market_output=opt.polymarket_output or f'data/pl/polymarket_reference_{cutoff}.json'
+        market_cmd=[python,script/'polymarket_prematch.py','--spec',opt.polymarket_spec,
+                    '--snapshot',source,'--output',market_output]
+        if opt.polymarket_histories: market_cmd+=['--histories',opt.polymarket_histories]
+        run(market_cmd)
     print(f'SNAPSHOT {source} | IMAGES {images} | REPORT {report}')
 
 if __name__=='__main__':main()
