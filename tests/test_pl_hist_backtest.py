@@ -19,6 +19,8 @@ from score_pl_hist_backtest import apply_calibrator, discrete_crps, occurrence_f
 
 REPORT = ROOT / "artifacts/validation/pl-hist-same-engine-oos.json"
 PATHS = ROOT / "artifacts/validation/pl-hist-same-engine-paths.json"
+CALIBRATED_REPORT = ROOT / "artifacts/validation/pl-hist-same-engine-oos-calibrated.json"
+SELECTION_REPORT = ROOT / "artifacts/validation/pl-hist-same-engine-oos-selection.json"
 
 
 class StatsBombLabelTests(unittest.TestCase):
@@ -148,6 +150,35 @@ class CommittedArtifactTests(unittest.TestCase):
             home_marginal = sum(probability for _, _, probability in
                                 ((h, a, p) for h, a, p in fixture["scoreline_distribution"] if h > a))
             self.assertAlmostEqual(home_marginal, fixture["home_win"], places=6)
+
+
+class ExperimentReportTests(unittest.TestCase):
+    """Frozen calibration experiments must record an unambiguous paired-difference convention."""
+
+    def check_experiment(self, report_path, experiment_text):
+        report = json.loads(report_path.read_text())
+        baseline = json.loads(REPORT.read_text())
+        self.assertFalse(report["tested_without_selection_or_tuning"])
+        self.assertIn(experiment_text, report["experiment"])
+        self.assertEqual(report["oos_start_date"], baseline["oos_start_date"])
+        self.assertEqual(report["oos_end_date"], baseline["oos_end_date"])
+        comparison = report["comparison"]
+        self.assertEqual(comparison["source"], "artifacts/validation/pl-hist-same-engine-paths.json")
+        self.assertIn("negative means the experiment run has lower loss", comparison["note"])
+        for key in ("wdl_log_loss_raw", "player_minutes_mae_engine"):
+            entry = comparison["metrics"][key]
+            expected = report["metrics"][key] - baseline["metrics"][key]
+            self.assertAlmostEqual(entry["mean_difference_predictions_minus_compare"], expected, places=6)
+            lower, upper = entry["matched_day_bootstrap_95"]
+            self.assertLessEqual(lower, upper)
+
+    @unittest.skipUnless(CALIBRATED_REPORT.is_file(), "calibrated experiment report not generated yet")
+    def test_calibrated_experiment_direction_convention(self):
+        self.check_experiment(CALIBRATED_REPORT, "goal scale")
+
+    @unittest.skipUnless(SELECTION_REPORT.is_file(), "selection experiment report not generated yet")
+    def test_selection_experiment_direction_convention(self):
+        self.check_experiment(SELECTION_REPORT, "selection")
 
 
 if __name__ == "__main__":

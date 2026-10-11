@@ -85,7 +85,10 @@ chronological held-out fixtures against causal Poisson, previous-only player-rat
 previous-only timing baselines with matchday-block bootstrap intervals, and writes
 `artifacts/validation/pl-hist-same-engine-oos.json` with the engine fingerprint. This validates or
 fails to validate the *engine* on historical inputs; it is **not** evidence for the FM26-enhanced
-2026 pipeline. See [the backtest and calibration status](historical-same-engine-backtest.md).
+2026 pipeline. Frozen fit-period calibration experiments are scored on the same held-out window in
+`pl-hist-same-engine-oos-calibrated.json` (global goal/home rescaling: rejected) and
+`pl-hist-same-engine-oos-selection.json` (selection-marginal correction: accepted as a research
+flag). See [the backtest and calibration status](historical-same-engine-backtest.md).
 
 The stored **8-path four-fixture demonstration** is in [`artifacts/validation/pl-player-minute-fourfixture-8paths.json`](../artifacts/validation/pl-player-minute-fourfixture-8paths.json), with minute-level HTML and player CSVs in [`assets/validation/pl-minute-sample-8paths`](../assets/validation/pl-minute-sample-8paths). These are smoke-test output artifacts, not fit-for-use performance probabilities. `scripts/render_pl_oos_comparison.py` produces the [24-game actual vs expected held-out goal/assist timing comparison](../assets/validation/pl-2015-16-event-oos.png), distinctly labelled as a non-FM historical-rate benchmark.
 

@@ -99,7 +99,10 @@ artifacts/validation/pl-hist-same-engine-oos.json
 Machine-readable report: `artifacts/validation/pl-hist-same-engine-oos.json`. Split: fit 31
 fixtures (ends 2016-02-07), held-out OOS 25 fixtures (2016-02-13 → 2016-05-17). All numbers below
 are OOS; intervals are 95% matchday-block bootstrap of (engine − causal reference), so an interval
-entirely below zero means the engine improved that proper score.
+entirely below zero means the engine improved that proper score. Frozen calibration experiments are
+scored on the same OOS fixtures in `pl-hist-same-engine-oos-calibrated.json` and
+`pl-hist-same-engine-oos-selection.json`; their paired differences are (experiment − baseline), so a
+negative difference means the experiment improved.
 
 | Target | Engine | Causal reference | Engine − reference [95% CI] | Verdict |
 |---|---:|---:|---|---|
@@ -129,13 +132,60 @@ Diagnostics:
 - The engine **over-predicted goals** on the fit period (88.7 predicted vs 75 observed) and its
   modeled home/away goal ratio (1.178) exceeded the fit-period observed ratio (1.083). The
   fit-period-only correction (`--goal-rate-scale 0.8452`, `--home-advantage-multiplier 1.0022`)
-  is recorded in `pl-hist-goal-contract-fit.json` and evaluated as a frozen OOS experiment.
+  is recorded in `pl-hist-goal-contract-fit.json` and was evaluated as a frozen OOS experiment
+  (**rejected**; see the experiment section below).
 - The frozen fit-period outcome calibrator degenerated to its grid edge (temperature 3.0) and made
   OOS W/D/L log loss worse (1.0786). It is **not** promoted.
 - **Selection is the largest miscalibration.** The lineup sampler compresses start probabilities
   toward the middle relative to the input priors (prior 0.9+ → realized 0.81, prior <0.1 →
   realized 0.002), so the engine's start/appearance Brier is clearly worse than the same prior
   without the sampler. This is the top roadmap item below.
+
+### Frozen calibration experiments (fit on the 31 fit fixtures, evaluated on the same 25 OOS fixtures)
+
+Both experiments reran the identical frozen engine with the same seeds and differ only in one
+recorded input parameter, so a paired comparison against the baseline is exact per fixture. Paired
+differences are (experiment − baseline); negative means the experiment improved that score.
+
+**1. Global goal-level + home-advantage rescaling — rejected.** This was the direct correction
+implied by the fit-period overprediction, and it makes the outcomes it was meant to fix worse. The
+frozen baseline was in fact already correctly levelled on OOS: 70.7 expected goals (H 38.5 / A 32.2)
+against 68 actual (H 37 / A 31), while the rescaled run produced only 56.5 expected goals against
+the same 68. The fit-period overprediction did not persist into the evaluation window — exactly the
+failure mode a frozen OOS window exists to catch.
+
+| Paired OOS metric (experiment − baseline) | Δ | 95% CI | Verdict |
+|---|---:|---|---|
+| W/D/L log loss | +0.0604 | [+0.0081, +0.1209] | **worse** |
+| 15-minute goal Brier | +0.0097 | [+0.0017, +0.0180] | **worse** |
+| Exact-score log loss | +0.1240 | [−0.0624, +0.3264] | worse point |
+| Team-goals CRPS | +0.0272 | [−0.0138, +0.0713] | worse point |
+| Player appearance Brier | +0.0014 | [+0.0000, +0.0027] | slightly worse |
+| Player goal-occurrence Brier | −0.0008 | [−0.0012, −0.0003] | **improved** |
+
+**2. Selection-marginal correction — accepted as a mechanism fix, target not promoted.** The
+fit-period isotonic table (`pl-hist-selection-correction.json`, 1,166 player points from the 31 fit
+fixtures) rewrites the sampler input so realized start marginals land on the input priors. On OOS it
+does what it was fitted to do: the sum of absolute prior−realized gaps over ten prior buckets falls
+from 0.678 to 0.455 and *every* bucket moves toward the diagonal (prior 0.89: realized 0.800 →
+0.836; prior 0.53: 0.611 → 0.560; prior 0.20: 0.077 → 0.094). Player minutes MAE improves by an
+established margin; the start/appearance Brier gains are directionally positive but not individually
+established on 25 fixtures; outcome-level point estimates lean slightly worse but are not
+established. No established deterioration anywhere, so the `--selection-correction` flag stays
+available for same-engine evaluations and is still not wired into any default path.
+
+| Paired OOS metric (experiment − baseline) | Δ | 95% CI | Verdict |
+|---|---:|---|---|
+| Player minutes MAE | −0.2579 | [−0.4252, −0.1027] | **improved** |
+| Player start Brier | −0.0016 | [−0.0040, +0.0007] | improved point |
+| Player appearance Brier | −0.0007 | [−0.0024, +0.0010] | improved point |
+| Player goal-occurrence Brier | −0.0004 | [−0.0008, +0.0000] | improved point |
+| W/D/L log loss | +0.0458 | [−0.0010, +0.0966] | worse point |
+| Team-goals CRPS | +0.0175 | [−0.0019, +0.0394] | worse point |
+
+The experiment path exports are deterministic but large and are not stored in the repository;
+regenerate them with the flags recorded in each report's `input_contract` and the commands in the
+Reproduce section.
 
 ## What is and is not validated
 
@@ -166,22 +216,21 @@ no unacceptable deterioration elsewhere).
 | Historical no-freshness player loader (coverage fix) | **Accepted** | Recovers 29 fixtures that the 45-day production rule wrongly discarded; causality unchanged |
 | Outcome temperature/draw-bias calibration | **Rejected, not promoted** | Frozen fit-period calibrator degenerated to temperature 3.0 and made OOS W/D/L log loss worse (1.0786 vs 0.9768 raw) |
 | Assist prior 0.68 → 0.61 (previous session) | **Rejected, retained** | Failed the paired loss gate; see `primary-assist-prior-2015-16-oos.json` |
-| Goal-level + home-advantage contract correction | *pending experiment* | Fit-period fit `pl-hist-goal-contract-fit.json`; frozen OOS evaluation in `pl-hist-same-engine-oos-calibrated.json` |
-| Lineup-sampler marginal compression | **Open (largest known selection defect)** | Fit-period diagnostic: prior 0.9+ starts 0.81 of paths, prior <0.1 starts 0.002; engine start Brier clearly worse than its own input prior |
+| Goal-level + home-advantage contract correction | **Rejected, not promoted** | Frozen OOS paired deltas (`pl-hist-same-engine-oos-calibrated.json`): W/D/L log loss +0.0604 [+0.0081, +0.1209] worse; 15-minute goal Brier +0.0097 [+0.0017, +0.0180] worse; only player goal occurrence improved (−0.0008 [−0.0012, −0.0003]). The fit-period overprediction did not persist: baseline OOS 70.7 expected goals vs 68 actual, rescaled 56.5. |
+| Lineup-sampler marginal compression (isotonic selection correction) | **Accepted as mechanism fix (research flag); target not promoted** | Frozen OOS (`pl-hist-same-engine-oos-selection.json`): every prior bucket moves toward the diagonal (sum of absolute gaps 0.678 → 0.455); minutes MAE −0.2579 [−0.4252, −0.1027] established; start Brier −0.0016 and appearance Brier −0.0007 directional; W/D/L +0.0458 [−0.0010, +0.0966] and team-goals CRPS +0.0175 [−0.0019, +0.0394] lean slightly worse but are not established. |
 
 ## Development roadmap, ordered by expected predictive benefit
 
-1. **Goal-process level and home-advantage calibration (experiment running).** The fit period shows
-   an ~18% goal overprediction and an over-strong home/away ratio; exact-score log loss is clearly
-   worse than causal Poisson. The fit-period-only correction is being evaluated on the frozen OOS
-   window. If accepted, fold the corrected contract into the shared input builder with a
-   versioned parameter record.
-2. **Selection-sampler marginal calibration.** The sampler compresses start probabilities toward
-   the middle relative to its own inputs (prior 0.9+ → realized 0.81, prior <0.1 → 0.002), and the
-   engine's start/appearance Brier is clearly worse than the un-sampled prior. Candidate fixes:
-   fit a monotone marginal-correction transform on historical lineups, or reweight/iterate the
-   sampler weights so realized marginals match calibrated inputs; both must be fit-period-only and
-   OOS-tested before promotion.
+1. **Goal-process calibration, conditional on match state (global rescaling rejected).** A single
+   global goal scale fitted on the fit period made W/D/L and 15-minute losses worse OOS because the
+   fit-period overprediction did not persist into the evaluation window. Any further level
+   calibration must be conditioned on match state/team strength and validated with the same frozen
+   protocol instead of applied as a global constant.
+2. **Selection-sampler marginal calibration (correction accepted as a research flag).** The
+   isotonic input-side correction verifiably reduces the sampler's marginal compression OOS and
+   improves player minutes MAE; the start/appearance Brier gains are directionally right but need
+   more held-out fixtures before the target itself can be promoted. Next: use the correction in
+   future same-engine evaluations and revisit the target gate with a larger OOS sample.
 3. **More same-engine historical data.** The single biggest evidence blocker: 25 held-out fixtures
    from two dominant clubs cannot clear the 200-fixture release policy or support league-wide
    claims. Additional dated event sources with lineups (more StatsBomb seasons/competitions,
@@ -192,8 +241,8 @@ no unacceptable deterioration elsewhere).
    labels grow.
 5. **Timing and score-state calibration.** 15-minute goal occurrence and one-minute goal occurrence
    already beat their causal references in point estimates (one-minute is established). Recalibrate
-   hazards by elapsed time and score state only after the selection and level fixes land, because
-   both change the goal mix.
+   hazards by elapsed time and score state only after the selection correction is in use and a
+   conditional level calibration lands, because both change the goal mix.
 6. **Team-process calibration.** Overdispersion, home advantage and match-state feedback estimated
    on large team-level result sets (e.g. the cached football-data seasons), then transferred to the
    engine's `goal_process` parameters as versioned inputs.
@@ -240,6 +289,9 @@ python3 scripts/score_pl_hist_backtest.py \
   --experiment "fit-period selection marginal correction" \
   --output artifacts/validation/pl-hist-same-engine-oos-selection.json
 ```
+
+Comparison blocks report paired differences as (experiment − baseline), so a negative difference
+means the experiment improved that score.
 
 Or as part of the integrated pipeline:
 

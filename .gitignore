@@ -11,5 +11,9 @@
 
 # Large generated Monte Carlo paths, Python bytecode
 /artifacts/**/*.tsv
+# Same-engine historical calibration experiment exports (deterministic; regenerate with the
+# documented flags; the baseline export is the committed test fixture)
+/artifacts/validation/pl-hist-same-engine-paths-calibrated.json
+/artifacts/validation/pl-hist-same-engine-paths-selection.json
 __pycache__/
 *.pyc

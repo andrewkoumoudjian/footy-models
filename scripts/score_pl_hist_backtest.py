@@ -716,12 +716,15 @@ def main():
             other_row = comparison_metrics(other_fixture, label, second["paths"])
             for key in keys:
                 if key in base_row:
-                    paired_by_date[date_by_id[mid]].append((key, other_row[key] - base_row[key]))
+                    paired_by_date[date_by_id[mid]].append((key, base_row[key] - other_row[key]))
         comparison = {
             "source": args.compare_predictions,
             "paths": second["paths"],
             "input_contract": second["input_contract"],
-            "note": "negative difference means the second (experiment) run has lower loss / better score",
+            "note": "mean difference is metrics(--predictions) minus metrics(--compare-predictions); "
+                    "with the documented experiment invocation (--predictions = experiment, "
+                    "--compare-predictions = baseline) negative means the experiment run has lower "
+                    "loss / better score",
             "metrics": {},
         }
         for key in keys:
@@ -730,7 +733,7 @@ def main():
             statistic = lambda values: mean(values) if values else float("nan")
             mean_difference = mean([value for values in per_date.values() for value in values])
             comparison["metrics"][key] = {
-                "mean_difference_second_minus_first": mean_difference,
+                "mean_difference_predictions_minus_compare": mean_difference,
                 "matched_day_bootstrap_95": bootstrap_ci(per_date, statistic, args.bootstrap),
             }
 

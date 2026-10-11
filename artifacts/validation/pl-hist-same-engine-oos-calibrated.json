@@ -1,0 +1,364 @@
+{
+  "schema_version": 1,
+  "model": "simulate_second_resolved_dynamic_mental_match",
+  "model_code_sha256": "fd95b9ee31195cc36fee1c53f88d4d6fe9d9e3c2659afed86c0df2f98d70c4fd",
+  "protocol": "same_engine_walk_forward_frozen_pre_kickoff",
+  "feature_contract": "observed_stats_only_no_fm26_no_current_squads",
+  "fit_end_date": "2016-02-07",
+  "oos_start_date": "2016-02-13",
+  "oos_end_date": "2016-05-17",
+  "tested_without_selection_or_tuning": false,
+  "same_fixture_engine_and_output_contract": true,
+  "paths_per_fixture": 200,
+  "fit_fixtures": 31,
+  "oos_fixtures": 25,
+  "frozen_calibration": {
+    "temperature": 1.7,
+    "draw_logit_bias": 0.15,
+    "fit_on_fixtures": 30
+  },
+  "metrics": {
+    "wdl_log_loss_raw": 1.0371916909256729,
+    "wdl_log_loss_calibrated": 1.087242823628127,
+    "wdl_log_loss_poisson": 0.8899111689701342,
+    "wdl_log_loss_league": 1.0106971810533458,
+    "wdl_brier_raw": 0.6285079971952441,
+    "wdl_brier_poisson": 0.5185756012666218,
+    "exact_score_log_loss_engine": 3.1379040095718516,
+    "exact_score_log_loss_poisson": 2.7523350867949974,
+    "exact_score_rps_engine": 0.6376705,
+    "exact_score_rps_poisson": 0.5523443823849995,
+    "team_goals_crps_engine": 0.6376705,
+    "team_goals_crps_poisson": 0.5523443823849996,
+    "team_goals_mae_engine": 0.9087000000000001,
+    "team_goals_mae_poisson": 0.8505821828328601,
+    "team_goals_count_log_loss_engine": 1.5156364070670125,
+    "team_goals_count_log_loss_poisson": 1.3761676126278148,
+    "player_appearance_brier_engine": 0.20832195946954252,
+    "player_appearance_brier_prior": 0.17613225565623225,
+    "player_assist_occurrence_brier_engine": 0.029111253270984898,
+    "player_assist_occurrence_brier_prior": 0.029071835218937338,
+    "player_goal_occurrence_brier_engine": 0.03613062238452806,
+    "player_goal_occurrence_brier_prior": 0.03815333232237189,
+    "player_minutes_mae_engine": 25.36153885866292,
+    "player_minutes_mae_prior": 24.2395281837744,
+    "player_shot_occurrence_brier_engine": 0.1610941119571822,
+    "player_shot_occurrence_brier_prior": 0.18212300929294095,
+    "player_shots_mae_engine": 0.5073230522595624,
+    "player_shots_mae_prior": 0.6147775449708639,
+    "player_start_brier_engine": 0.16868999774181578,
+    "player_start_brier_prior": 0.1557867926453892,
+    "window15_brier_engine": 0.22715733333333332,
+    "window15_brier_prior": 0.23262557620221927,
+    "minute_brier_engine": 0.02782833333333333,
+    "minute_brier_prior": 0.02893245847127408,
+    "state_brier_engine": 0.611724,
+    "state_brier_prior": 0.6263669251228989,
+    "red_brier_engine": 0.016628833333333332,
+    "red_brier_prior": 0.013711831615852323,
+    "sub_brier_engine": 0.17979350000000002,
+    "sub_brier_prior": 0.4692068195314884
+  },
+  "matched_day_bootstrap_95": {
+    "wdl_log_loss": [
+      0.044749392455561594,
+      0.2440722376601413
+    ],
+    "wdl_log_loss_vs_league": [
+      -0.03798336047119801,
+      0.09614260289605554
+    ],
+    "exact_score_log_loss": [
+      0.1952590529594051,
+      0.5922442648634898
+    ],
+    "team_goals_crps": [
+      0.027703661535477677,
+      0.1406305031973216
+    ],
+    "player_goal_occurrence_brier": [
+      -0.002692708103244329,
+      -0.0012445884875649568
+    ],
+    "player_assist_occurrence_brier": [
+      -0.0006948623786335773,
+      0.0008777065376336029
+    ],
+    "player_start_brier": [
+      0.00858652066421655,
+      0.018219093318853963
+    ],
+    "player_appearance_brier": [
+      0.025481063921438868,
+      0.03863353664387663
+    ],
+    "player_shots_mae": [
+      -0.11755543426082805,
+      -0.09762997263117607
+    ],
+    "window15_goal_brier": [
+      -0.025774470196075573,
+      0.016281192267158406
+    ],
+    "minute_goal_brier": [
+      -0.0016249367878890947,
+      -0.0005433835770996265
+    ],
+    "state_brier": [
+      -0.03542787254152915,
+      0.006081081668117143
+    ],
+    "red_card_brier": [
+      0.0003254082530134726,
+      0.004410648028498617
+    ],
+    "substitution_brier": [
+      -0.3511493127816037,
+      -0.2263069820952039
+    ]
+  },
+  "targets": {
+    "match_wdl": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "multiclass_log_loss",
+      "model_value": 1.0371916909256729,
+      "causal_reference_value": 0.8899111689701342,
+      "matched_day_bootstrap_95": [
+        0.044749392455561594,
+        0.2440722376601413
+      ],
+      "label_coverage": 1.0
+    },
+    "match_exact_score": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "joint_log_loss",
+      "model_value": 3.1379040095718516,
+      "causal_reference_value": 2.7523350867949974,
+      "matched_day_bootstrap_95": [
+        0.1952590529594051,
+        0.5922442648634898
+      ],
+      "label_coverage": 1.0
+    },
+    "team_goals": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "discrete_crps",
+      "model_value": 0.6376705,
+      "causal_reference_value": 0.5523443823849996,
+      "matched_day_bootstrap_95": [
+        0.027703661535477677,
+        0.1406305031973216
+      ],
+      "label_coverage": 1.0
+    },
+    "player_goal": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "player_goal_occurrence_brier",
+      "model_value": 0.03613062238452806,
+      "causal_reference_value": 0.03815333232237189,
+      "matched_day_bootstrap_95": [
+        -0.002692708103244329,
+        -0.0012445884875649568
+      ],
+      "label_coverage": 0.9375
+    },
+    "player_primary_assist": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "player_assist_occurrence_brier",
+      "model_value": 0.029111253270984898,
+      "causal_reference_value": 0.029071835218937338,
+      "matched_day_bootstrap_95": [
+        -0.0006948623786335773,
+        0.0008777065376336029
+      ],
+      "label_coverage": 0.94
+    },
+    "player_appearance_minutes": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "appearance_brier_plus_minutes_mae",
+      "model_value": 0.20832195946954252,
+      "causal_reference_value": 0.17613225565623225,
+      "matched_day_bootstrap_95": [
+        0.025481063921438868,
+        0.03863353664387663
+      ],
+      "label_coverage": 1.0
+    },
+    "time_goal_and_shot_15min": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "window_goal_occurrence_brier",
+      "model_value": 0.22715733333333332,
+      "causal_reference_value": 0.23262557620221927,
+      "matched_day_bootstrap_95": [
+        -0.025774470196075573,
+        0.016281192267158406
+      ],
+      "label_coverage": 1.0
+    },
+    "time_goal_1min": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "one_minute_goal_occurrence_brier",
+      "model_value": 0.02782833333333333,
+      "causal_reference_value": 0.02893245847127408,
+      "matched_day_bootstrap_95": [
+        -0.0016249367878890947,
+        -0.0005433835770996265
+      ],
+      "label_coverage": 1.0
+    },
+    "time_score_state": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "multiclass_brier",
+      "model_value": 0.611724,
+      "causal_reference_value": 0.6263669251228989,
+      "matched_day_bootstrap_95": [
+        -0.03542787254152915,
+        0.006081081668117143
+      ],
+      "label_coverage": 1.0
+    },
+    "red_cards_substitutions": {
+      "distinct_oos_fixtures": 25,
+      "primary_score": "incident_occurrence_brier",
+      "model_value": 0.016628833333333332,
+      "causal_reference_value": 0.013711831615852323,
+      "matched_day_bootstrap_95": [
+        0.0003254082530134726,
+        0.004410648028498617
+      ],
+      "label_coverage": 1.0
+    }
+  },
+  "coverage": {
+    "oos_fixtures": 25,
+    "actual_non_own_goals": 64,
+    "goals_by_pool_players": 60,
+    "actual_assists": 50,
+    "assists_by_pool_players": 47,
+    "player_appearances": 644,
+    "player_rows_scored": 1445,
+    "club_counts": {
+      "Manchester United": 13,
+      "AFC Bournemouth": 13,
+      "Watford": 2,
+      "West Bromwich Albion": 2,
+      "Tottenham Hotspur": 2,
+      "Manchester City": 2,
+      "Everton": 2,
+      "Aston Villa": 2,
+      "Sunderland": 1,
+      "Stoke City": 1,
+      "Arsenal": 1,
+      "Southampton": 1,
+      "Newcastle United": 1,
+      "Swansea City": 1,
+      "Liverpool": 1,
+      "Crystal Palace": 1,
+      "Chelsea": 1,
+      "Leicester City": 1,
+      "Norwich City": 1,
+      "West Ham United": 1
+    },
+    "goal_coverage": 0.9375,
+    "assist_coverage": 0.94
+  },
+  "input_contract": {
+    "away_attack_log_adjustment": 0.0,
+    "goal_rate_scale": 0.8452,
+    "home_advantage_multiplier": 1.0022,
+    "home_attack_log_adjustment": 0.1,
+    "injury_probability_per90": 0.02,
+    "max_substitutions": 3,
+    "path_log_rate_sigma": 0.28,
+    "red_card_probability_per90": 0.02
+  },
+  "experiment": "fit-period goal scale + home advantage",
+  "comparison": {
+    "source": "artifacts/validation/pl-hist-same-engine-paths.json",
+    "paths": 200,
+    "input_contract": {
+      "away_attack_log_adjustment": 0.0,
+      "goal_rate_scale": 1.0,
+      "home_advantage_multiplier": 1.09,
+      "home_attack_log_adjustment": 0.1,
+      "injury_probability_per90": 0.02,
+      "max_substitutions": 3,
+      "path_log_rate_sigma": 0.28,
+      "red_card_probability_per90": 0.02
+    },
+    "note": "mean difference is metrics(--predictions) minus metrics(--compare-predictions); with the documented experiment invocation (--predictions = experiment, --compare-predictions = baseline) negative means the experiment run has lower loss / better score",
+    "metrics": {
+      "wdl_log_loss_raw": {
+        "mean_difference_predictions_minus_compare": 0.06037880955946723,
+        "matched_day_bootstrap_95": [
+          0.008088031242015284,
+          0.12085060854132135
+        ]
+      },
+      "exact_score_log_loss_engine": {
+        "mean_difference_predictions_minus_compare": 0.12404764169809351,
+        "matched_day_bootstrap_95": [
+          -0.06241947411153369,
+          0.3263861655880551
+        ]
+      },
+      "team_goals_crps_engine": {
+        "mean_difference_predictions_minus_compare": 0.02718100000000001,
+        "matched_day_bootstrap_95": [
+          -0.013814655172413794,
+          0.07128206521739132
+        ]
+      },
+      "player_goal_occurrence_brier_engine": {
+        "mean_difference_predictions_minus_compare": -0.0008110946559409587,
+        "matched_day_bootstrap_95": [
+          -0.0012490727272375425,
+          -0.0003478520414254172
+        ]
+      },
+      "player_assist_occurrence_brier_engine": {
+        "mean_difference_predictions_minus_compare": -0.00019767144349203125,
+        "matched_day_bootstrap_95": [
+          -0.00048615128045242825,
+          0.00010071154594922465
+        ]
+      },
+      "player_start_brier_engine": {
+        "mean_difference_predictions_minus_compare": -0.00018998026025074833,
+        "matched_day_bootstrap_95": [
+          -0.0016925570812766622,
+          0.001417439075465887
+        ]
+      },
+      "player_appearance_brier_engine": {
+        "mean_difference_predictions_minus_compare": 0.001409591824678006,
+        "matched_day_bootstrap_95": [
+          4.073536641208908e-05,
+          0.0026810217813429847
+        ]
+      },
+      "player_minutes_mae_engine": {
+        "mean_difference_predictions_minus_compare": -0.03278519923029265,
+        "matched_day_bootstrap_95": [
+          -0.18330034048908242,
+          0.09959767461434847
+        ]
+      },
+      "window15_brier_engine": {
+        "mean_difference_predictions_minus_compare": 0.009708500000000005,
+        "matched_day_bootstrap_95": [
+          0.0017232638888889026,
+          0.01802934782608696
+        ]
+      },
+      "minute_brier_engine": {
+        "mean_difference_predictions_minus_compare": 0.00012796666666666624,
+        "matched_day_bootstrap_95": [
+          -0.00012301440329218026,
+          0.0004234953703703692
+        ]
+      }
+    }
+  },
+  "interpretation": "Same-engine walk-forward evaluation of the second-resolved Rust match engine with an observed-stat-only historical feature contract (no FM26, no current squads). This validates or fails to validate the engine mechanics and calibration on historical data; it does not validate the 2026 FM26-enhanced pipeline. Sample size and club coverage are limited by the 74 event-covered 2015/16 matches, so release-policy thresholds are not met."
+}
