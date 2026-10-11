@@ -124,12 +124,12 @@ def timeline_figure(f, as_of):
     clock_axis(fig)
 
     fig.update_layout(
-        title=dict(text=f"{f['home']} vs {f['away']} — 15-minute simulated windows",
-                   subtitle=dict(text=f"{f['date']} · pre-match snapshot {as_of} · {f['paths']} second-resolved paths · "
-                                      "scenario estimate from registered squads + FM26 player priors; not tracking data")),
+        title=dict(text=f"{f['home']} vs {f['away']} — 15-minute simulated windows"
+                        f"<br><sup>{f['date']} · pre-match snapshot {as_of} · {f['paths']} second-resolved paths · "
+                        "scenario estimate from registered squads + FM26 player priors; not tracking data</sup>",
+                   x=0.01, xanchor='left'),
         barmode='group', bargap=0.35, hovermode='x unified',
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0),
-        height=H, width=W, margin=dict(t=110, b=70, l=70, r=40))
+        height=H, width=W, margin=dict(t=95, b=70, l=70, r=210))
     return fig
 
 
@@ -161,11 +161,11 @@ def overview_figure(fixtures, as_of):
         fig.update_yaxes(title_text='momentum', range=[-mom_max, mom_max], row=row, col=2)
         clock_axis(fig, row=row, col=2)
     fig.update_layout(
-        title=dict(text='Premier League — simulated momentum & match outcomes',
-                   subtitle=dict(text=f'As of {as_of} · default-styled Plotly overview of the four match timelines · '
-                                      'momentum is derived from simulated shots/goals, not observed possession')),
-        barmode='group', height=980, width=W, margin=dict(t=130, b=60, l=70, r=40),
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
+        title=dict(text='Premier League — simulated momentum & match outcomes'
+                        f'<br><sup>As of {as_of} · plotly overview of the four match timelines · '
+                        'momentum is derived from simulated shots/goals, not observed possession</sup>',
+                   x=0.01, xanchor='left'),
+        barmode='group', height=980, width=W, margin=dict(t=95, b=60, l=70, r=40))
     return fig
 
 
