@@ -41,8 +41,18 @@ City's peak **relative pressure** was 60–75, and this remained the
 strongest relative-pressure bin when the arbitrary goal multiplier
 was changed to 0, 1, 3, 5 or 10. City's greatest *absolute* predicted
 goal intensity was instead **45–60**. The strongest relative-pressure
-window was driven partly by a shots imbalance and should not be read
+window was driven primarily by the shot-volume swing: comparing 45–60
+with 60–75, simulated Liverpool shots fall **2.431 to 1.806** (−0.625),
+while City shots rise **2.167 to 2.333** (+0.167). The expected City
+goals simultaneously fall **0.375 to 0.278**. This should not be read
 as the highest probability of a City goal.
+
+The 45–60 to 60–75 shift is mainly a simulated decline in
+**Liverpool's** shot pressure: Liverpool expected shots drop from
+2.431 to 1.806 (-0.625), while City's rise only 2.167 to 2.333
+(+0.167). City's expected goals actually fall from 0.375 to
+0.278 (-0.097). The ratio peaks because Liverpool weakens
+relative to City, not because City's goal rate suddenly spikes.
 
 In the pre-match six-bin distribution, 60–75 accounted for **16.95%**
 of City's expected goals, barely above a 16.67% uniform clock.
@@ -50,6 +60,8 @@ Conditioned on City scoring three, at least two falling in that
 pre-selected window had probability 7.64% versus 7.41% for uniform.
 The full observed 65', 68', 78' goal-time log likelihood gains just
 0.0992 nats in total, or **0.0331 nats per goal**, versus uniform timing.
+These conditional multinomial arrival scores are diagnostics, not
+the exact joint likelihood from state-dependent simulated paths.
 
 The engine reported only **4.17% any-team red-card incidence**
 for 60–75, not a specific Liverpool or Gravenberch red-card
@@ -72,12 +84,26 @@ The registered-squad input fingerprint in its contemporaneous run
 manifest also **differs from the currently on-disk audit file**,
 although the dated-team results, player inputs, team baseline and
 raw FM26 source hashes still agree.
+The registered-squad audit mismatch does not itself establish
+the cause of the replay difference: the match driver actually
+reads the dated player CSV. An unverified code/build revision
+remains a separate explanation. Do not attribute the drift to
+one specific mismatched file.
 
 This is a **provenance and input/build-matching failure**. It would
 be scientifically incorrect to call it pure Monte Carlo seed
 instability. Future releases must freeze the binary hash and *every*
 input byte along with the exact parameter configuration before
 seed-stability analyses.
+
+As a separate reproducibility sanity check, **two current-binary
+eight-path runs**, with identical input files, fixture filter and seed
+44, produced **byte-identical JSON output** (SHA256
+435d70890e8656da5cdf3137e8ca726238879d25c727937bd9768c5282a0028b).
+Those eight-path runs are *not* estimates of timing precision or an
+equivalent reproduction of the historical 72-path build; they show
+only that the current executable behaves deterministically at that
+small, matched setting.
 
 Run the locked audit, which also stores source fingerprints:
 
