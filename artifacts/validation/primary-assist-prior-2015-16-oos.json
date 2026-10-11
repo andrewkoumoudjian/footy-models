@@ -1,0 +1,375 @@
+{
+  "schema_version": 1,
+  "target": "assisted_scored_goal_probability",
+  "definition": "P(StatsBomb Pass.goal_assist=true | non-own Goal shot)",
+  "training_matches": 49,
+  "holdout_matches": 24,
+  "training_through": "2016-02-07",
+  "oos_from": "2016-02-13",
+  "oos_to": "2016-05-17",
+  "covered_games": 74,
+  "uncaptured_season_games": 306,
+  "training_goals": 119,
+  "training_primary_assists": 73,
+  "training_observed_assist_ratio": 0.6134453781512605,
+  "training_only_beta_2_2_posterior": 0.6097560975609756,
+  "holdout_goals": 62,
+  "holdout_primary_assists": 50,
+  "holdout_observed_ratio": 0.8064516129032258,
+  "mean_binary_log_loss_per_goal": {
+    "historical_posterior": 0.5810743907319302,
+    "preexisting_0_68": 0.5315537974009614,
+    "uniform_0_50": 0.6931471805599452
+  },
+  "contrasts": {
+    "historical_posterior": {
+      "vs_uniform_logloss_delta": -0.11207278982801494,
+      "paired_fixture_bootstrap_95": [
+        -0.14816506800514304,
+        -0.07200292631245266
+      ],
+      "beats_uniform_on_sealed_holdout": true,
+      "significantly_beats_uniform": true
+    },
+    "preexisting_0_68": {
+      "vs_uniform_logloss_delta": -0.16159338315898375,
+      "paired_fixture_bootstrap_95": [
+        -0.2225526656773826,
+        -0.0921213276404234
+      ],
+      "beats_uniform_on_sealed_holdout": true,
+      "significantly_beats_uniform": true
+    }
+  },
+  "historical_prior_vs_existing": {
+    "model_minus_existing_0_68_logloss": 0.04952059333096881,
+    "paired_fixture_bootstrap_95": [
+      0.022553689220008465,
+      0.07389265248149836
+    ],
+    "clearly_better_than_existing": false
+  },
+  "promotion": {
+    "approve_historical_prior": false,
+    "reason": "accept only when paired fixture-bootstrap upper 95% loss differences vs both 0.50 and existing 0.68 are negative; do not calibrate FM26 from this incompatible historical sample"
+  },
+  "limitations": [
+    "StatsBomb 2015/16 PL events cover only subset of fixture calendar",
+    "The holdout cannot identify which player will assist or validate xA-like attributes",
+    "This is not a compatible historical version of 2026 FM26 and cannot calibrate that specific model"
+  ],
+  "evaluated_games": [
+    {
+      "match_id": 3754274,
+      "date": "2016-02-13",
+      "home": "AFC Bournemouth",
+      "away": "Stoke City",
+      "non_own_goals": 4,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 2.425072069972848,
+        "preexisting_0_68": 2.296421725624319,
+        "uniform_0_50": 2.772588722239781
+      }
+    },
+    {
+      "match_id": 3754121,
+      "date": "2016-02-27",
+      "home": "Watford",
+      "away": "AFC Bournemouth",
+      "non_own_goals": 0,
+      "registered_primary_assists": 0,
+      "per_method_logloss": {
+        "historical_posterior": 0.0,
+        "preexisting_0_68": 0.0,
+        "uniform_0_50": 0.0
+      }
+    },
+    {
+      "match_id": 3754239,
+      "date": "2016-02-28",
+      "home": "Manchester United",
+      "away": "Arsenal",
+      "non_own_goals": 5,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 3.3660554144373744,
+        "preexisting_0_68": 3.435856008812684,
+        "uniform_0_50": 3.465735902799726
+      }
+    },
+    {
+      "match_id": 3754334,
+      "date": "2016-03-01",
+      "home": "AFC Bournemouth",
+      "away": "Southampton",
+      "non_own_goals": 2,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 1.4356795863006337,
+        "preexisting_0_68": 1.5250967640003497,
+        "uniform_0_50": 1.3862943611198906
+      }
+    },
+    {
+      "match_id": 3754232,
+      "date": "2016-03-02",
+      "home": "Manchester United",
+      "away": "Watford",
+      "non_own_goals": 1,
+      "registered_primary_assists": 0,
+      "per_method_logloss": {
+        "historical_posterior": 0.9409833444645266,
+        "preexisting_0_68": 1.139434283188365,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3754177,
+      "date": "2016-03-05",
+      "home": "Newcastle United",
+      "away": "AFC Bournemouth",
+      "non_own_goals": 3,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 1.4840887255083213,
+        "preexisting_0_68": 1.1569874424359539,
+        "uniform_0_50": 2.0794415416798357
+      }
+    },
+    {
+      "match_id": 3754081,
+      "date": "2016-03-06",
+      "home": "West Bromwich Albion",
+      "away": "Manchester United",
+      "non_own_goals": 1,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 0.49469624183610705,
+        "preexisting_0_68": 0.3856624808119846,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3753988,
+      "date": "2016-03-12",
+      "home": "AFC Bournemouth",
+      "away": "Swansea City",
+      "non_own_goals": 5,
+      "registered_primary_assists": 4,
+      "per_method_logloss": {
+        "historical_posterior": 2.919768311808955,
+        "preexisting_0_68": 2.6820842064363033,
+        "uniform_0_50": 3.4657359027997265
+      }
+    },
+    {
+      "match_id": 3754043,
+      "date": "2016-03-20",
+      "home": "Tottenham Hotspur",
+      "away": "AFC Bournemouth",
+      "non_own_goals": 3,
+      "registered_primary_assists": 2,
+      "per_method_logloss": {
+        "historical_posterior": 1.9303758281367407,
+        "preexisting_0_68": 1.9107592448123343,
+        "uniform_0_50": 2.0794415416798357
+      }
+    },
+    {
+      "match_id": 3754124,
+      "date": "2016-03-20",
+      "home": "Manchester City",
+      "away": "Manchester United",
+      "non_own_goals": 1,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 0.49469624183610705,
+        "preexisting_0_68": 0.3856624808119846,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3754144,
+      "date": "2016-04-02",
+      "home": "AFC Bournemouth",
+      "away": "Manchester City",
+      "non_own_goals": 4,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 2.425072069972848,
+        "preexisting_0_68": 2.296421725624319,
+        "uniform_0_50": 2.772588722239781
+      }
+    },
+    {
+      "match_id": 3754299,
+      "date": "2016-04-03",
+      "home": "Manchester United",
+      "away": "Everton",
+      "non_own_goals": 1,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 0.49469624183610705,
+        "preexisting_0_68": 0.3856624808119846,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3754262,
+      "date": "2016-04-09",
+      "home": "Aston Villa",
+      "away": "AFC Bournemouth",
+      "non_own_goals": 3,
+      "registered_primary_assists": 2,
+      "per_method_logloss": {
+        "historical_posterior": 1.9303758281367407,
+        "preexisting_0_68": 1.9107592448123343,
+        "uniform_0_50": 2.0794415416798357
+      }
+    },
+    {
+      "match_id": 3754209,
+      "date": "2016-04-10",
+      "home": "Tottenham Hotspur",
+      "away": "Manchester United",
+      "non_own_goals": 3,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 1.4840887255083213,
+        "preexisting_0_68": 1.1569874424359539,
+        "uniform_0_50": 2.0794415416798357
+      }
+    },
+    {
+      "match_id": 3754295,
+      "date": "2016-04-16",
+      "home": "Manchester United",
+      "away": "Aston Villa",
+      "non_own_goals": 1,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 0.49469624183610705,
+        "preexisting_0_68": 0.3856624808119846,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3754216,
+      "date": "2016-04-17",
+      "home": "AFC Bournemouth",
+      "away": "Liverpool",
+      "non_own_goals": 3,
+      "registered_primary_assists": 2,
+      "per_method_logloss": {
+        "historical_posterior": 1.9303758281367407,
+        "preexisting_0_68": 1.9107592448123343,
+        "uniform_0_50": 2.0794415416798357
+      }
+    },
+    {
+      "match_id": 3754310,
+      "date": "2016-04-20",
+      "home": "Manchester United",
+      "away": "Crystal Palace",
+      "non_own_goals": 1,
+      "registered_primary_assists": 0,
+      "per_method_logloss": {
+        "historical_posterior": 0.9409833444645266,
+        "preexisting_0_68": 1.139434283188365,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3754242,
+      "date": "2016-04-23",
+      "home": "AFC Bournemouth",
+      "away": "Chelsea",
+      "non_own_goals": 5,
+      "registered_primary_assists": 5,
+      "per_method_logloss": {
+        "historical_posterior": 2.473481209180535,
+        "preexisting_0_68": 1.928312404059923,
+        "uniform_0_50": 3.4657359027997265
+      }
+    },
+    {
+      "match_id": 3754037,
+      "date": "2016-04-30",
+      "home": "Everton",
+      "away": "AFC Bournemouth",
+      "non_own_goals": 3,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 1.4840887255083213,
+        "preexisting_0_68": 1.1569874424359539,
+        "uniform_0_50": 2.0794415416798357
+      }
+    },
+    {
+      "match_id": 3754165,
+      "date": "2016-05-01",
+      "home": "Manchester United",
+      "away": "Leicester City",
+      "non_own_goals": 2,
+      "registered_primary_assists": 2,
+      "per_method_logloss": {
+        "historical_posterior": 0.9893924836722141,
+        "preexisting_0_68": 0.7713249616239692,
+        "uniform_0_50": 1.3862943611198906
+      }
+    },
+    {
+      "match_id": 3754210,
+      "date": "2016-05-07",
+      "home": "Norwich City",
+      "away": "Manchester United",
+      "non_own_goals": 1,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 0.49469624183610705,
+        "preexisting_0_68": 0.3856624808119846,
+        "uniform_0_50": 0.6931471805599453
+      }
+    },
+    {
+      "match_id": 3754225,
+      "date": "2016-05-07",
+      "home": "AFC Bournemouth",
+      "away": "West Bromwich Albion",
+      "non_own_goals": 2,
+      "registered_primary_assists": 1,
+      "per_method_logloss": {
+        "historical_posterior": 1.4356795863006337,
+        "preexisting_0_68": 1.5250967640003497,
+        "uniform_0_50": 1.3862943611198906
+      }
+    },
+    {
+      "match_id": 3754134,
+      "date": "2016-05-10",
+      "home": "West Ham United",
+      "away": "Manchester United",
+      "non_own_goals": 5,
+      "registered_primary_assists": 5,
+      "per_method_logloss": {
+        "historical_posterior": 2.473481209180535,
+        "preexisting_0_68": 1.928312404059923,
+        "uniform_0_50": 3.4657359027997265
+      }
+    },
+    {
+      "match_id": 3754159,
+      "date": "2016-05-17",
+      "home": "Manchester United",
+      "away": "AFC Bournemouth",
+      "non_own_goals": 3,
+      "registered_primary_assists": 3,
+      "per_method_logloss": {
+        "historical_posterior": 1.4840887255083213,
+        "preexisting_0_68": 1.1569874424359539,
+        "uniform_0_50": 2.0794415416798357
+      }
+    }
+  ]
+}

@@ -33,3 +33,7 @@ jobs:
         run: python3 -m pip install --quiet plotly Pillow
       - name: Timeline chart and pipeline guards
         run: python3 tests/test_pl_timeline.py
+      - name: Forecast target and calibration release gates
+        run: |
+          python3 tests/test_forecast_targets.py
+          python3 scripts/check_forecast_release.py --output /tmp/forecast-release-gates.json

@@ -20,6 +20,47 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 
+MODEL_SOURCE_DIRS=(
+    'crates/match/src',
+    'crates/core/src',
+    'crates/forecast/src',
+    'crates/state/src',
+    'apps/matchforecast/src',
+    'apps/plforecast/src',
+)
+MODEL_SOURCE_FILES=(
+    'Cargo.lock',
+    'Cargo.toml',
+    'crates/match/Cargo.toml',
+    'apps/matchforecast/Cargo.toml',
+    'apps/plforecast/Cargo.toml',
+    'scripts/forecast_premier_league.py',
+    'scripts/match_premier_league_fm26.py',
+    'scripts/prepare_pl_player_inputs.py',
+)
+
+def model_code_files():
+    """All relevant domain, model, simulator, and adapter source files."""
+    files={ROOT/name for name in MODEL_SOURCE_FILES}
+    for name in MODEL_SOURCE_DIRS:
+        directory=ROOT/name
+        if not directory.is_dir():
+            raise FileNotFoundError(f'missing model source directory: {name}')
+        files.update(directory.rglob('*.rs'))
+    return tuple(sorted(str(src.relative_to(ROOT)) for src in files))
+
+def model_code_fingerprint():
+    """Fingerprint the match+feature implementation, independent of Git dirt."""
+    h=hashlib.sha256()
+    for name in model_code_files():
+        src=ROOT/name
+        if not src.is_file():
+            raise FileNotFoundError(f'missing model implementation file: {name}')
+        h.update(name.encode('utf-8')+b'\0')
+        h.update(src.read_bytes())
+        h.update(b'\0')
+    return h.hexdigest()
+
 def digest(path):
     h=hashlib.sha256()
     with path.open('rb') as f:
@@ -65,6 +106,8 @@ def main():
     ap.add_argument('--render-only',action='store_true',help='no FM/raw results necessary; use saved player_paths.json')
     ap.add_argument('--historical-event-oos',action='store_true',
                     help='also score separate 2015/16 StatsBomb event-rate baseline on held-out matches')
+    ap.add_argument('--matching-engine-oos',
+                    help='optional fully verified same-Rust-engine historical OOS report (no cross-model substitution)')
     ap.add_argument('--dry-run',action='store_true',help='show plan; change nothing')
     opt=ap.parse_args()
     config=json.loads((ROOT/opt.fixtures).read_text())
@@ -112,6 +155,16 @@ def main():
              '--players','data/pl/player_fm_join.csv','--baseline',benchmark,
              '--output',source])
         if not opt.dry_run:
+            # Persist the exact model/feature source fingerprint into every
+            # *new* simulation. The publication gate can then require exact
+            # fingerprint equality with a genuinely held-out OOS run.
+            model_fingerprint=model_code_fingerprint()
+            result_path=ROOT/source
+            result=json.loads(result_path.read_text())
+            result['model_code_sha256']=model_fingerprint
+            staged=result_path.with_suffix('.json.tmp')
+            staged.write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
+            staged.replace(result_path)
             shutil.copyfile(ROOT/benchmark,artifact/'team_benchmark.json')
             shutil.copyfile(ROOT/'data/pl/provenance.json',artifact/'team_benchmark_provenance.json')
             snapshot_audit(ROOT/roster,artifact/'fm_matched_squads.json')
@@ -123,6 +176,8 @@ def main():
             manifest={'as_of':str(cutoff),'fixtures':config['fixtures'],
                 'paths_per_fixture':opt.paths,'seed':opt.seed,
                 'engine':'footy-match::simulate_second_resolved_dynamic_mental_match',
+                'model_code_sha256':model_fingerprint,
+                'model_code_files':list(model_code_files()),
                 'source_sha256':hashes,'availability_source':availability.get('source'),
                 'git_revision':subprocess.run(['git','rev-parse','HEAD'],cwd=ROOT,text=True,capture_output=True,check=True).stdout.strip(),
                 'raw_data_in_git':False,
@@ -152,6 +207,13 @@ def main():
         # future FM26 player model on or label it as FM26 calibration.
         run([python,script/'backtest_pl_event_oos.py','--holdout-matches','24'])
         run([python,script/'write_pl_oos_report.py'])
+        run([python,script/'calibrate_assist_prior_oos.py','--holdout-matches','24'])
+    if not opt.render_only:
+        release=[python,script/'check_forecast_release.py',
+                 '--snapshot',source,'--output',snapshot/'release_gates.json']
+        if opt.matching_engine_oos:
+            release+=['--matching-engine-oos',opt.matching_engine_oos]
+        run(release)
     print(f'SNAPSHOT {source} | IMAGES {images} | REPORT {report}')
 
 if __name__=='__main__':main()

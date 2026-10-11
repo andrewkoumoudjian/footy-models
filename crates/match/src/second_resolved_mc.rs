@@ -26,17 +26,29 @@ pub struct SecondResolvedSimulationParameters {
     /// Hard cap on state-changing events in one integer second. This is only a safety guard against
     /// pathological calibration; normal football hazards are many orders below this bound.
     pub max_state_events_per_second: u16,
+    /// P(recorded primary assist | attributed non-own goal).
+    /// The 0.68 default is a **research prior**, not a calibrated EPL claim.
+    /// Requires dated matching event labels and separate OOS validation before
+    /// any changed value is approved for published predictions.
+    pub assisted_goal_probability: f64,
 }
 
 impl Default for SecondResolvedSimulationParameters {
     fn default() -> Self {
-        Self { clock: SecondClockConfig::default(), max_state_events_per_second: 64 }
+        Self {
+            clock: SecondClockConfig::default(),
+            max_state_events_per_second: 64,
+            assisted_goal_probability: 0.68,
+        }
     }
 }
 
 impl SecondResolvedSimulationParameters {
     pub fn validate(self) -> bool {
-        self.clock.validate() && self.max_state_events_per_second > 0
+        self.clock.validate()
+            && self.max_state_events_per_second > 0
+            && self.assisted_goal_probability.is_finite()
+            && (0.0..=1.0).contains(&self.assisted_goal_probability)
     }
 }
 
@@ -454,7 +466,9 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                         if home_goal { window.home_goals += 1; minute_window.home_goals += 1; }
                         else { window.away_goals += 1; minute_window.away_goals += 1; }
                         let active = if home_goal { &home } else { &away };
-                        if let Some((scorer, assist)) = attribute_goal(active, &snapshot, &mut rng) {
+                        if let Some((scorer, assist)) = attribute_goal(
+                            active, &snapshot, parameters.assisted_goal_probability, &mut rng
+                        ) {
                             // A modeled non-own goal entails a shot. The old goal
                             // process was separate from sampled player shots;
                             // record the event's shot everywhere, including the
@@ -657,8 +671,8 @@ fn summarize_clock_windows(aggregates: &[WindowAggregate], paths: u32, size_minu
 
 /// Conditional goalscorer and optional assisting-player assignment, never draws
 /// a second goal. xG/shot and xA rate weights are lineup/FМ-adjusted, but the
-/// 0.68 assisted-goal prior is exploratory pending pre-match event calibration.
-fn attribute_goal(team: &ActiveTeam, snapshot: &RateSnapshot, rng: &mut Rng64)
+/// assisted-goal prior is explicitly supplied by the simulation parameters.
+fn attribute_goal(team: &ActiveTeam, snapshot: &RateSnapshot, assist_probability: f64, rng: &mut Rng64)
     -> Option<(PlayerId, Option<PlayerId>)>
 {
     let ids=team.active_ids();
@@ -667,7 +681,7 @@ fn attribute_goal(team: &ActiveTeam, snapshot: &RateSnapshot, rng: &mut Rng64)
         let shots=snapshot.player_rates.get(&(*id,MetricId(1))).map_or(0.0,|r|r.adjusted_per90);
         (xg.max(0.0)+0.05*shots.max(0.0)).max(0.01)
     }),rng)?)?.to_owned();
-    let assist=if ids.len()>1 && rng.uniform()<0.68 {
+    let assist=if ids.len()>1 && rng.uniform()<assist_probability {
         let eligible:Vec<PlayerId>=ids.into_iter().filter(|id|*id!=scorer).collect();
         weighted_index(eligible.iter().map(|id| {
             snapshot.player_rates.get(&(*id,MetricId(3))).map_or(0.01,|r|r.adjusted_per90.max(0.01))
@@ -1531,6 +1545,23 @@ fn quantile(sorted: &[f64], probability: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn assisted_goal_calibration_parameter_requires_valid_probability() {
+        let prior=SecondResolvedSimulationParameters::default();
+        assert_eq!(prior.assisted_goal_probability, 0.68);
+        assert!(prior.validate());
+        for allowed in [0.0,0.5,1.0] {
+            assert!(SecondResolvedSimulationParameters {
+                assisted_goal_probability: allowed, ..prior
+            }.validate());
+        }
+        for bad in [-0.01,1.01,f64::NAN,f64::INFINITY] {
+            assert!(!SecondResolvedSimulationParameters {
+                assisted_goal_probability: bad, ..prior
+            }.validate());
+        }
+    }
 
     #[test]
     fn gamma_increment_is_non_negative() {

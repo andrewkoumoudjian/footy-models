@@ -82,6 +82,12 @@ python3 scripts/run_pl_pipeline.py --dry-run --offline \
 
 [Full data pipeline documentation](docs/premier-league-pipeline.md) · [Machine-readable 15-minute event and momentum data](assets/predictions/2026-10-11/momentum_15min.json) · [All forecast script inventory](docs/game-forecasting-inventory.md). Python's `requests` and `beautifulsoup4` are used for roster retrieval; `plotly` creates interactive HTML timelines, and `kaleido` with Chromium exports matching PNG/SVG static figures. Raw licensed player data and fetched source datasets stay out of Git.
 
+## Forecast targets and accuracy gates
+
+The [versioned target contract](configs/forecast_targets_v1.json) and [forecast-design plan](docs/forecast-targets.md) define **what** we should predict and **how** to evaluate it: match W/D/L and joint goals first, then player participation, player shots/goals/primary assists, then calibrated 15-minute events and score-state paths. Native one-minute data are kept for development, but must earn their own historical event-timing calibration. Momentum is an explicitly derived display proxy, not a separately calibrated football statistic.
+
+The [machine-readable release audit](artifacts/validation/forecast-release-gates-2026-10-11.json) prevents claiming these 72-path experimental outputs are calibrated. `python3 scripts/check_forecast_release.py` produces it; future runs call the same gate automatically. The [sealed historical primary-assist prior experiment](artifacts/validation/primary-assist-prior-2015-16-oos.json) evaluated a 0.61 candidate against the existing 0.68 default; it **failed** the OOS improvement requirement, so the simulator's 0.68 remains an unvalidated, explicit configurable prior, not an approved recalibration. No results from an unrelated historical model are allowed to validate the FM26 simulator.
+
 ## Code map
 
 - [`crates/match`](crates/match/src/lib.rs): source-neutral player match graph, lineup sampling, FM player attributes, dynamic mental state, second-resolved Monte Carlo and outcome calibration.
