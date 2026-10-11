@@ -22,3 +22,14 @@ jobs:
         env:
           RUSTFLAGS: -D warnings
         run: bash scripts/e2e-smoke.sh
+
+  premier-league-guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate committed Monte Carlo snapshot
+        run: python3 scripts/validate_pl_snapshot.py
+      - name: Install plotting/test dependencies
+        run: python3 -m pip install --quiet plotly Pillow
+      - name: Timeline chart and pipeline guards
+        run: python3 tests/test_pl_timeline.py

@@ -1,0 +1,2113 @@
+{
+  "source": "StatsBomb open data, English Premier League 2015/16 season, local event JSON",
+  "dataset_matches_with_events": 74,
+  "metadata_matches_without_event_files": 306,
+  "split": {
+    "type": "chronological last-N matches; same-day excluded from prior fit",
+    "holdout_games": 24,
+    "earliest_test_date": "2016-02-13",
+    "latest_test_date": "2016-05-17",
+    "no_FM26_used": true,
+    "confirmed_starting_XIs_at_prediction": false
+  },
+  "method": "causal, naive team/player rate hazard baseline fit only on games before each kickoff date",
+  "IMPORTANT": "The match simulation from 2026 FM26 is NOT validated here. This is a real-data OOS benchmark and event-label pipeline; player OOS calibration of the Rust FM model remains open.",
+  "metrics": {
+    "player_shot_occurrence_brier": 0.216213,
+    "player_goal_occurrence_brier": 0.059806,
+    "player_assist_occurrence_brier": 0.042514,
+    "reference_player_shot_brier": 0.2347,
+    "reference_player_goal_brier": 0.05767,
+    "reference_player_assist_brier": 0.043088,
+    "team_shot_count_mae": 3.726676,
+    "reference_team_shot_mae": 3.852491,
+    "minute_goal_brier": 0.014177,
+    "reference_minute_goal_brier": 0.014148,
+    "window15_goal_brier": 0.161833,
+    "reference_window15_goal_brier": 0.161316,
+    "team_goal_mae": 0.887519,
+    "prior_known_players_per_match": 35.0,
+    "unseen_player_actual_goals": 7,
+    "unseen_player_actual_assists": 9
+  },
+  "games": [
+    {
+      "id": 3754274,
+      "date": "2016-02-13",
+      "home": "AFC Bournemouth",
+      "away": "Stoke City",
+      "actual_score": [
+        1,
+        3
+      ],
+      "observed_goals": [
+        1,
+        3
+      ],
+      "predicted_goals": [
+        1.167,
+        1.265
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 25,
+        "Stoke City": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "Stoke City": 10
+      },
+      "unseen_player_actual_goals": 2,
+      "unseen_player_actual_assists": 1,
+      "player_count": 33,
+      "player_loss": {
+        "shots": 7.408770961610256,
+        "goals": 2.074240379293945,
+        "assists": 1.8813994641201803
+      },
+      "player_reference_loss": {
+        "shots": 8.783650767570373,
+        "goals": 1.8600324036989189,
+        "assists": 1.8675840412176372
+      },
+      "goal_minute_loss": 3.911273587286861,
+      "goal_minute_baseline_loss": 3.9251161838542337,
+      "goal_15min_loss": 2.3210096259315707,
+      "goal_15min_baseline_loss": 2.303520771811551,
+      "shot_loss": 1.7993364833618166,
+      "shot_baseline_loss": 0.6530612244897966,
+      "score_goal_abs_error": 1.9021815622800842,
+      "goal_event_times": [
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 56,
+          "goals": 1
+        },
+        {
+          "team": "Stoke City",
+          "minute_index": 8,
+          "goals": 1
+        },
+        {
+          "team": "Stoke City",
+          "minute_index": 51,
+          "goals": 1
+        },
+        {
+          "team": "Stoke City",
+          "minute_index": 54,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3049",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "4346",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "4891",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3265",
+          "count": 1,
+          "previously_seen": false
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3345",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3670",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3533",
+          "count": 1,
+          "previously_seen": false
+        }
+      ]
+    },
+    {
+      "id": 3754121,
+      "date": "2016-02-27",
+      "home": "Watford",
+      "away": "AFC Bournemouth",
+      "actual_score": [
+        0,
+        0
+      ],
+      "observed_goals": [
+        0,
+        0
+      ],
+      "predicted_goals": [
+        1.15,
+        1.163
+      ],
+      "prior_games": {
+        "Watford": 2,
+        "AFC Bournemouth": 26
+      },
+      "covered_players": {
+        "Watford": 7,
+        "AFC Bournemouth": 23
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 30,
+      "player_loss": {
+        "shots": 6.334307863271243,
+        "goals": 0.3047413883929776,
+        "assists": 0.08075029699509542
+      },
+      "player_reference_loss": {
+        "shots": 7.532629657717412,
+        "goals": 0.24247383172568204,
+        "assists": 0.09473977896570092
+      },
+      "goal_minute_loss": 0.03718950361635319,
+      "goal_minute_baseline_loss": 0.03292306679121837,
+      "goal_15min_loss": 0.37367842158443815,
+      "goal_15min_baseline_loss": 0.4095470177454978,
+      "shot_loss": 3.536601307189544,
+      "shot_baseline_loss": 3.137254901960784,
+      "score_goal_abs_error": 2.3137254901960786,
+      "goal_event_times": [],
+      "player_scorers": [],
+      "player_assisters": []
+    },
+    {
+      "id": 3754239,
+      "date": "2016-02-28",
+      "home": "Manchester United",
+      "away": "Arsenal",
+      "actual_score": [
+        3,
+        2
+      ],
+      "observed_goals": [
+        3,
+        2
+      ],
+      "predicted_goals": [
+        1.194,
+        1.687
+      ],
+      "prior_games": {
+        "Manchester United": 26,
+        "Arsenal": 3
+      },
+      "covered_players": {
+        "Manchester United": 23,
+        "Arsenal": 10
+      },
+      "unseen_player_actual_goals": 3,
+      "unseen_player_actual_assists": 1,
+      "player_count": 33,
+      "player_loss": {
+        "shots": 6.511649853227499,
+        "goals": 1.5406451249366298,
+        "assists": 1.761986795705441
+      },
+      "player_reference_loss": {
+        "shots": 7.019502911587665,
+        "goals": 1.8595496075542073,
+        "assists": 1.8686677492572128
+      },
+      "goal_minute_loss": 4.9506210596765845,
+      "goal_minute_baseline_loss": 4.899018021066523,
+      "goal_15min_loss": 3.7025217335425964,
+      "goal_15min_baseline_loss": 3.5801285567541936,
+      "shot_loss": 6.045421245421247,
+      "shot_baseline_loss": 6.0,
+      "score_goal_abs_error": 2.11959706959707,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 28,
+          "goals": 1
+        },
+        {
+          "team": "Manchester United",
+          "minute_index": 31,
+          "goals": 1
+        },
+        {
+          "team": "Manchester United",
+          "minute_index": 64,
+          "goals": 1
+        },
+        {
+          "team": "Arsenal",
+          "minute_index": 39,
+          "goals": 1
+        },
+        {
+          "team": "Arsenal",
+          "minute_index": 68,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3318",
+          "count": 2,
+          "previously_seen": false
+        },
+        {
+          "player_id": "3606",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3569",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "3496",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3318",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "3293",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3496",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754334,
+      "date": "2016-03-01",
+      "home": "AFC Bournemouth",
+      "away": "Southampton",
+      "actual_score": [
+        2,
+        0
+      ],
+      "observed_goals": [
+        2,
+        0
+      ],
+      "predicted_goals": [
+        1.126,
+        1.415
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 27,
+        "Southampton": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "Southampton": 13
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 36,
+      "player_loss": {
+        "shots": 9.134170803611399,
+        "goals": 2.186111617781628,
+        "assists": 1.0444184641099843
+      },
+      "player_reference_loss": {
+        "shots": 8.814267341143994,
+        "goals": 1.9596732546272235,
+        "assists": 0.9999705516804743
+      },
+      "goal_minute_loss": 1.973820673706573,
+      "goal_minute_baseline_loss": 1.9788348051793336,
+      "goal_15min_loss": 1.7728991448411506,
+      "goal_15min_baseline_loss": 1.670641167760817,
+      "shot_loss": 8.027475871663334,
+      "shot_baseline_loss": 6.867924528301888,
+      "score_goal_abs_error": 2.289105295191723,
+      "goal_event_times": [
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 30,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 78,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3341",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3278",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3049",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754232,
+      "date": "2016-03-02",
+      "home": "Manchester United",
+      "away": "Watford",
+      "actual_score": [
+        1,
+        0
+      ],
+      "observed_goals": [
+        1,
+        0
+      ],
+      "predicted_goals": [
+        1.254,
+        0.984
+      ],
+      "prior_games": {
+        "Manchester United": 27,
+        "Watford": 3
+      },
+      "covered_players": {
+        "Manchester United": 24,
+        "Watford": 13
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 37,
+      "player_loss": {
+        "shots": 6.61646909579708,
+        "goals": 1.0398814439569806,
+        "assists": 0.07189248865507233
+      },
+      "player_reference_loss": {
+        "shots": 8.232408685820678,
+        "goals": 1.0645389741534934,
+        "assists": 0.0620497678682502
+      },
+      "goal_minute_loss": 1.0126351293653777,
+      "goal_minute_baseline_loss": 1.0057719949126622,
+      "goal_15min_loss": 0.9226609882602023,
+      "goal_15min_baseline_loss": 1.0389881256840043,
+      "shot_loss": 4.067759003242875,
+      "shot_baseline_loss": 4.2592592592592595,
+      "score_goal_abs_error": 1.2386072708653353,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 82,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3294",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": []
+    },
+    {
+      "id": 3754177,
+      "date": "2016-03-05",
+      "home": "Newcastle United",
+      "away": "AFC Bournemouth",
+      "actual_score": [
+        1,
+        3
+      ],
+      "observed_goals": [
+        1,
+        3
+      ],
+      "predicted_goals": [
+        1.262,
+        1.151
+      ],
+      "prior_games": {
+        "Newcastle United": 3,
+        "AFC Bournemouth": 28
+      },
+      "covered_players": {
+        "Newcastle United": 9,
+        "AFC Bournemouth": 23
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 1,
+      "player_count": 32,
+      "player_loss": {
+        "shots": 7.502336410511658,
+        "goals": 2.5911830377840044,
+        "assists": 1.8248577042488883
+      },
+      "player_reference_loss": {
+        "shots": 7.939486945400692,
+        "goals": 2.7462816241723225,
+        "assists": 1.9520162030340849
+      },
+      "goal_minute_loss": 2.915971887013277,
+      "goal_minute_baseline_loss": 2.9519866159895956,
+      "goal_15min_loss": 2.233483909585947,
+      "goal_15min_baseline_loss": 2.3046607307336027,
+      "shot_loss": 8.786525974025976,
+      "shot_baseline_loss": 8.181818181818183,
+      "score_goal_abs_error": 1.1112012987012987,
+      "goal_event_times": [
+        {
+          "team": "Newcastle United",
+          "minute_index": 79,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 69,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 89,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3076",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3346",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3345",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3057",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "3049",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3646",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754081,
+      "date": "2016-03-06",
+      "home": "West Bromwich Albion",
+      "away": "Manchester United",
+      "actual_score": [
+        1,
+        0
+      ],
+      "observed_goals": [
+        1,
+        0
+      ],
+      "predicted_goals": [
+        0.976,
+        1.246
+      ],
+      "prior_games": {
+        "West Bromwich Albion": 2,
+        "Manchester United": 28
+      },
+      "covered_players": {
+        "West Bromwich Albion": 8,
+        "Manchester United": 24
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 1,
+      "player_count": 32,
+      "player_loss": {
+        "shots": 6.495517771337273,
+        "goals": 1.1381254860086814,
+        "assists": 0.13137746437729653
+      },
+      "player_reference_loss": {
+        "shots": 6.976992484816546,
+        "goals": 0.9354225490615671,
+        "assists": 0.08480837142749008
+      },
+      "goal_minute_loss": 1.0006413152186393,
+      "goal_minute_baseline_loss": 1.005524905251114,
+      "goal_15min_loss": 1.0695304665449,
+      "goal_15min_baseline_loss": 1.036385919944432,
+      "shot_loss": 4.819196428571429,
+      "shot_baseline_loss": 6.964285714285715,
+      "score_goal_abs_error": 1.2693452380952381,
+      "goal_event_times": [
+        {
+          "team": "West Bromwich Albion",
+          "minute_index": 65,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "4041",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "18947",
+          "count": 1,
+          "previously_seen": false
+        }
+      ]
+    },
+    {
+      "id": 3753988,
+      "date": "2016-03-12",
+      "home": "AFC Bournemouth",
+      "away": "Swansea City",
+      "actual_score": [
+        3,
+        2
+      ],
+      "observed_goals": [
+        3,
+        2
+      ],
+      "predicted_goals": [
+        1.176,
+        1.401
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 29,
+        "Swansea City": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "Swansea City": 12
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 1,
+      "player_count": 35,
+      "player_loss": {
+        "shots": 8.570074344308896,
+        "goals": 4.502291609490784,
+        "assists": 2.41248920640345
+      },
+      "player_reference_loss": {
+        "shots": 8.210217202154643,
+        "goals": 4.481950993399403,
+        "assists": 2.8201989291678364
+      },
+      "goal_minute_loss": 4.933861470673326,
+      "goal_minute_baseline_loss": 4.89902768386549,
+      "goal_15min_loss": 3.630022758285456,
+      "goal_15min_baseline_loss": 3.5802584236401214,
+      "shot_loss": 2.530872636135797,
+      "shot_baseline_loss": 3.157894736842106,
+      "score_goal_abs_error": 2.423027265132528,
+      "goal_event_times": [
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 36,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 49,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 77,
+          "goals": 1
+        },
+        {
+          "team": "Swansea City",
+          "minute_index": 38,
+          "goals": 1
+        },
+        {
+          "team": "Swansea City",
+          "minute_index": 61,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3346",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "4416",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3341",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3944",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "9536",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3049",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "4416",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "4045",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "9536",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754043,
+      "date": "2016-03-20",
+      "home": "Tottenham Hotspur",
+      "away": "AFC Bournemouth",
+      "actual_score": [
+        3,
+        0
+      ],
+      "observed_goals": [
+        3,
+        0
+      ],
+      "predicted_goals": [
+        1.649,
+        1.232
+      ],
+      "prior_games": {
+        "Tottenham Hotspur": 2,
+        "AFC Bournemouth": 30
+      },
+      "covered_players": {
+        "Tottenham Hotspur": 9,
+        "AFC Bournemouth": 23
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 32,
+      "player_loss": {
+        "shots": 7.7051663158890475,
+        "goals": 1.3585349801967892,
+        "assists": 1.9777737771524557
+      },
+      "player_reference_loss": {
+        "shots": 6.432553983707617,
+        "goals": 1.6986589726753492,
+        "assists": 1.7596773472928577
+      },
+      "goal_minute_loss": 2.9460969499003564,
+      "goal_minute_baseline_loss": 2.9517942434322735,
+      "goal_15min_loss": 2.128019623577903,
+      "goal_15min_baseline_loss": 2.3013944168597114,
+      "shot_loss": 17.204868154158213,
+      "shot_baseline_loss": 16.0,
+      "score_goal_abs_error": 2.5828262339418524,
+      "goal_event_times": [
+        {
+          "team": "Tottenham Hotspur",
+          "minute_index": 0,
+          "goals": 1
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "minute_index": 15,
+          "goals": 1
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "minute_index": 51,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "10955",
+          "count": 2,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3043",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3205",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3094",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754124,
+      "date": "2016-03-20",
+      "home": "Manchester City",
+      "away": "Manchester United",
+      "actual_score": [
+        0,
+        1
+      ],
+      "observed_goals": [
+        0,
+        1
+      ],
+      "predicted_goals": [
+        1.649,
+        1.209
+      ],
+      "prior_games": {
+        "Manchester City": 2,
+        "Manchester United": 29
+      },
+      "covered_players": {
+        "Manchester City": 6,
+        "Manchester United": 25
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 31,
+      "player_loss": {
+        "shots": 7.122046785179097,
+        "goals": 1.5466287809936967,
+        "assists": 1.0578227607825463
+      },
+      "player_reference_loss": {
+        "shots": 6.412140922991686,
+        "goals": 1.1658818918829783,
+        "assists": 1.0471938653866855
+      },
+      "goal_minute_loss": 1.0471773950304963,
+      "goal_minute_baseline_loss": 1.0058320421729965,
+      "goal_15min_loss": 1.1578961982968752,
+      "goal_15min_baseline_loss": 1.0396199162942772,
+      "shot_loss": 20.05851619644723,
+      "shot_baseline_loss": 20.0,
+      "score_goal_abs_error": 1.8584117032392893,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 15,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3318",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3294",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754144,
+      "date": "2016-04-02",
+      "home": "AFC Bournemouth",
+      "away": "Manchester City",
+      "actual_score": [
+        0,
+        4
+      ],
+      "observed_goals": [
+        0,
+        4
+      ],
+      "predicted_goals": [
+        1.196,
+        1.41
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 31,
+        "Manchester City": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "Manchester City": 12
+      },
+      "unseen_player_actual_goals": 1,
+      "unseen_player_actual_assists": 2,
+      "player_count": 35,
+      "player_loss": {
+        "shots": 8.96065762225301,
+        "goals": 3.1702618691932147,
+        "assists": 0.79870527928883
+      },
+      "player_reference_loss": {
+        "shots": 8.443610879065268,
+        "goals": 2.594105664586749,
+        "assists": 0.9467188167193712
+      },
+      "goal_minute_loss": 3.8825567622982238,
+      "goal_minute_baseline_loss": 3.9250334260693647,
+      "goal_15min_loss": 2.1343491344277736,
+      "goal_15min_baseline_loss": 2.3030026316989614,
+      "shot_loss": 3.093333333333332,
+      "shot_baseline_loss": 4.0,
+      "score_goal_abs_error": 3.786666666666666,
+      "goal_event_times": [
+        {
+          "team": "Manchester City",
+          "minute_index": 6,
+          "goals": 1
+        },
+        {
+          "team": "Manchester City",
+          "minute_index": 11,
+          "goals": 1
+        },
+        {
+          "team": "Manchester City",
+          "minute_index": 18,
+          "goals": 1
+        },
+        {
+          "team": "Manchester City",
+          "minute_index": 89,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "16003",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3089",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3237",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "5596",
+          "count": 1,
+          "previously_seen": false
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3064",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "6821",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "20253",
+          "count": 1,
+          "previously_seen": false
+        }
+      ]
+    },
+    {
+      "id": 3754299,
+      "date": "2016-04-03",
+      "home": "Manchester United",
+      "away": "Everton",
+      "actual_score": [
+        1,
+        0
+      ],
+      "observed_goals": [
+        1,
+        0
+      ],
+      "predicted_goals": [
+        1.203,
+        1.32
+      ],
+      "prior_games": {
+        "Manchester United": 30,
+        "Everton": 2
+      },
+      "covered_players": {
+        "Manchester United": 25,
+        "Everton": 10
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 35,
+      "player_loss": {
+        "shots": 8.45976962492361,
+        "goals": 1.0190784121560703,
+        "assists": 1.1903369125119105
+      },
+      "player_reference_loss": {
+        "shots": 8.914439222374906,
+        "goals": 1.0954445768410594,
+        "assists": 1.017318911449789
+      },
+      "goal_minute_loss": 1.0044878892956295,
+      "goal_minute_baseline_loss": 1.0060012106916363,
+      "goal_15min_loss": 1.0728815557927196,
+      "goal_15min_baseline_loss": 1.0413985927254414,
+      "shot_loss": 6.182899389263904,
+      "shot_baseline_loss": 6.016393442622952,
+      "score_goal_abs_error": 1.5231436837029895,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 53,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "20039",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3465",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754262,
+      "date": "2016-04-09",
+      "home": "Aston Villa",
+      "away": "AFC Bournemouth",
+      "actual_score": [
+        1,
+        2
+      ],
+      "observed_goals": [
+        1,
+        2
+      ],
+      "predicted_goals": [
+        0.978,
+        1.163
+      ],
+      "prior_games": {
+        "Aston Villa": 2,
+        "AFC Bournemouth": 32
+      },
+      "covered_players": {
+        "Aston Villa": 7,
+        "AFC Bournemouth": 23
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 30,
+      "player_loss": {
+        "shots": 6.763821032253571,
+        "goals": 2.652859969307136,
+        "assists": 1.9323447792341484
+      },
+      "player_reference_loss": {
+        "shots": 7.575956218206436,
+        "goals": 2.7140128294358177,
+        "assists": 1.8270554669357508
+      },
+      "goal_minute_loss": 2.9952538897417442,
+      "goal_minute_baseline_loss": 2.9518748139819224,
+      "goal_15min_loss": 2.285393954293268,
+      "goal_15min_baseline_loss": 2.3027695261263927,
+      "shot_loss": 2.968637992831539,
+      "shot_baseline_loss": 5.0,
+      "score_goal_abs_error": 0.8584229390681002,
+      "goal_event_times": [
+        {
+          "team": "Aston Villa",
+          "minute_index": 84,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 46,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 73,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3450",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3346",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3341",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3436",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3608",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754209,
+      "date": "2016-04-10",
+      "home": "Tottenham Hotspur",
+      "away": "Manchester United",
+      "actual_score": [
+        3,
+        0
+      ],
+      "observed_goals": [
+        3,
+        0
+      ],
+      "predicted_goals": [
+        1.841,
+        1.197
+      ],
+      "prior_games": {
+        "Tottenham Hotspur": 3,
+        "Manchester United": 31
+      },
+      "covered_players": {
+        "Tottenham Hotspur": 11,
+        "Manchester United": 25
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 36,
+      "player_loss": {
+        "shots": 6.622677643929311,
+        "goals": 3.0712364761108324,
+        "assists": 2.621046280883987
+      },
+      "player_reference_loss": {
+        "shots": 6.6582770592459894,
+        "goals": 2.5475957809742744,
+        "assists": 2.6676893525796284
+      },
+      "goal_minute_loss": 2.94644712376478,
+      "goal_minute_baseline_loss": 2.9518181894498663,
+      "goal_15min_loss": 1.5038421613173412,
+      "goal_15min_baseline_loss": 1.6703961766170257,
+      "shot_loss": 8.746938775510204,
+      "shot_baseline_loss": 10.0,
+      "score_goal_abs_error": 2.355555555555555,
+      "goal_event_times": [
+        {
+          "team": "Tottenham Hotspur",
+          "minute_index": 69,
+          "goals": 1
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "minute_index": 73,
+          "goals": 1
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "minute_index": 75,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3585",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3094",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "20005",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3594",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3043",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3585",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754295,
+      "date": "2016-04-16",
+      "home": "Manchester United",
+      "away": "Aston Villa",
+      "actual_score": [
+        1,
+        0
+      ],
+      "observed_goals": [
+        1,
+        0
+      ],
+      "predicted_goals": [
+        1.164,
+        0.987
+      ],
+      "prior_games": {
+        "Manchester United": 32,
+        "Aston Villa": 3
+      },
+      "covered_players": {
+        "Manchester United": 25,
+        "Aston Villa": 9
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 34,
+      "player_loss": {
+        "shots": 6.111538549976361,
+        "goals": 1.0942447951358614,
+        "assists": 1.1365710984492483
+      },
+      "player_reference_loss": {
+        "shots": 7.690496107196054,
+        "goals": 1.1076419768286827,
+        "assists": 1.0243486023064068
+      },
+      "goal_minute_loss": 1.0039520962236563,
+      "goal_minute_baseline_loss": 1.005908265226132,
+      "goal_15min_loss": 1.040270438931269,
+      "goal_15min_baseline_loss": 1.0404215690430314,
+      "shot_loss": 5.249751984126984,
+      "shot_baseline_loss": 7.0,
+      "score_goal_abs_error": 1.1506696428571428,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 31,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3318",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3267",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754216,
+      "date": "2016-04-17",
+      "home": "AFC Bournemouth",
+      "away": "Liverpool",
+      "actual_score": [
+        1,
+        2
+      ],
+      "observed_goals": [
+        1,
+        2
+      ],
+      "predicted_goals": [
+        1.185,
+        0.98
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 33,
+        "Liverpool": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "Liverpool": 12
+      },
+      "unseen_player_actual_goals": 1,
+      "unseen_player_actual_assists": 0,
+      "player_count": 35,
+      "player_loss": {
+        "shots": 10.561075893700357,
+        "goals": 1.8938281325250106,
+        "assists": 1.9348558295316967
+      },
+      "player_reference_loss": {
+        "shots": 9.322983032203076,
+        "goals": 1.8766821282037929,
+        "assists": 1.8807237063181774
+      },
+      "goal_minute_loss": 2.9168647565561874,
+      "goal_minute_baseline_loss": 2.9519049569538423,
+      "goal_15min_loss": 2.3500298656504355,
+      "goal_15min_baseline_loss": 2.3032812914937275,
+      "shot_loss": 12.595544995544994,
+      "shot_baseline_loss": 15.184615384615384,
+      "score_goal_abs_error": 1.205227205227205,
+      "goal_event_times": [
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 89,
+          "goals": 1
+        },
+        {
+          "team": "Liverpool",
+          "minute_index": 40,
+          "goals": 1
+        },
+        {
+          "team": "Liverpool",
+          "minute_index": 46,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3346",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3529",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "3535",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3344",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3635",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754310,
+      "date": "2016-04-20",
+      "home": "Manchester United",
+      "away": "Crystal Palace",
+      "actual_score": [
+        2,
+        0
+      ],
+      "observed_goals": [
+        2,
+        0
+      ],
+      "predicted_goals": [
+        1.159,
+        0.84
+      ],
+      "prior_games": {
+        "Manchester United": 33,
+        "Crystal Palace": 3
+      },
+      "covered_players": {
+        "Manchester United": 25,
+        "Crystal Palace": 15
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 40,
+      "player_loss": {
+        "shots": 8.391314121851718,
+        "goals": 1.2309473603419632,
+        "assists": 0.11154984028504553
+      },
+      "player_reference_loss": {
+        "shots": 9.667921318780838,
+        "goals": 1.0529329262883351,
+        "assists": 0.06215101648263606
+      },
+      "goal_minute_loss": 1.0100532767121038,
+      "goal_minute_baseline_loss": 1.0056930822917496,
+      "goal_15min_loss": 0.930432024206128,
+      "goal_15min_baseline_loss": 1.0381574904569018,
+      "shot_loss": 11.072306072306072,
+      "shot_baseline_loss": 11.0,
+      "score_goal_abs_error": 0.9987129987129986,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 54,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "4587",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": []
+    },
+    {
+      "id": 3754242,
+      "date": "2016-04-23",
+      "home": "AFC Bournemouth",
+      "away": "Chelsea",
+      "actual_score": [
+        1,
+        4
+      ],
+      "observed_goals": [
+        1,
+        4
+      ],
+      "predicted_goals": [
+        1.18,
+        0.834
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 34,
+        "Chelsea": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "Chelsea": 13
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 36,
+      "player_loss": {
+        "shots": 8.779946189608713,
+        "goals": 3.844432252002093,
+        "assists": 2.7693909723209282
+      },
+      "player_reference_loss": {
+        "shots": 8.489639685462057,
+        "goals": 3.527593462588032,
+        "assists": 2.772309605256351
+      },
+      "goal_minute_loss": 4.909522157401841,
+      "goal_minute_baseline_loss": 4.898616323795198,
+      "goal_15min_loss": 3.9855598772863887,
+      "goal_15min_baseline_loss": 3.5747293934838105,
+      "shot_loss": 3.6378072045786105,
+      "shot_baseline_loss": 5.985074626865671,
+      "score_goal_abs_error": 3.3462013242060378,
+      "goal_event_times": [
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 35,
+          "goals": 1
+        },
+        {
+          "team": "Chelsea",
+          "minute_index": 4,
+          "goals": 1
+        },
+        {
+          "team": "Chelsea",
+          "minute_index": 33,
+          "goals": 1
+        },
+        {
+          "team": "Chelsea",
+          "minute_index": 70,
+          "goals": 1
+        },
+        {
+          "team": "Chelsea",
+          "minute_index": 89,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "9626",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3958",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3621",
+          "count": 2,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3472",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3608",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3478",
+          "count": 3,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3381",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754037,
+      "date": "2016-04-30",
+      "home": "Everton",
+      "away": "AFC Bournemouth",
+      "actual_score": [
+        2,
+        1
+      ],
+      "observed_goals": [
+        2,
+        1
+      ],
+      "predicted_goals": [
+        1.13,
+        1.177
+      ],
+      "prior_games": {
+        "Everton": 3,
+        "AFC Bournemouth": 35
+      },
+      "covered_players": {
+        "Everton": 13,
+        "AFC Bournemouth": 23
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 36,
+      "player_loss": {
+        "shots": 8.0380010214168,
+        "goals": 2.9497549680320794,
+        "assists": 2.61238564338992
+      },
+      "player_reference_loss": {
+        "shots": 9.031571055600443,
+        "goals": 2.703266726819439,
+        "assists": 2.767233812167068
+      },
+      "goal_minute_loss": 2.947982158550717,
+      "goal_minute_baseline_loss": 2.9517471754150035,
+      "goal_15min_loss": 2.4132261957880186,
+      "goal_15min_baseline_loss": 2.3005860284666766,
+      "shot_loss": 3.797026502908855,
+      "shot_baseline_loss": 5.0,
+      "score_goal_abs_error": 1.0469726352079294,
+      "goal_event_times": [
+        {
+          "team": "Everton",
+          "minute_index": 6,
+          "goals": 1
+        },
+        {
+          "team": "Everton",
+          "minute_index": 63,
+          "goals": 1
+        },
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 8,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3683",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3518",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3646",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "4275",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3683",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3346",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754165,
+      "date": "2016-05-01",
+      "home": "Manchester United",
+      "away": "Leicester City",
+      "actual_score": [
+        1,
+        1
+      ],
+      "observed_goals": [
+        1,
+        1
+      ],
+      "predicted_goals": [
+        1.156,
+        0.99
+      ],
+      "prior_games": {
+        "Manchester United": 34,
+        "Leicester City": 3
+      },
+      "covered_players": {
+        "Manchester United": 25,
+        "Leicester City": 11
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 36,
+      "player_loss": {
+        "shots": 6.565653143393798,
+        "goals": 1.7812699102658769,
+        "assists": 1.9603507086168217
+      },
+      "player_reference_loss": {
+        "shots": 8.871249503291324,
+        "goals": 1.8732107853717823,
+        "assists": 1.875405008087098
+      },
+      "goal_minute_loss": 2.0005956766975292,
+      "goal_minute_baseline_loss": 1.9788877445763011,
+      "goal_15min_loss": 1.684774187236159,
+      "goal_15min_baseline_loss": 1.6709721607905785,
+      "shot_loss": 13.306963059823472,
+      "shot_baseline_loss": 11.840579710144926,
+      "score_goal_abs_error": 0.16633976244960225,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 7,
+          "goals": 1
+        },
+        {
+          "team": "Leicester City",
+          "minute_index": 16,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "20039",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3813",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3267",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3662",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754210,
+      "date": "2016-05-07",
+      "home": "Norwich City",
+      "away": "Manchester United",
+      "actual_score": [
+        0,
+        1
+      ],
+      "observed_goals": [
+        0,
+        1
+      ],
+      "predicted_goals": [
+        1.416,
+        1.152
+      ],
+      "prior_games": {
+        "Norwich City": 3,
+        "Manchester United": 35
+      },
+      "covered_players": {
+        "Norwich City": 11,
+        "Manchester United": 25
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 36,
+      "player_loss": {
+        "shots": 8.44246833115926,
+        "goals": 1.1955856703537375,
+        "assists": 1.0715261448466151
+      },
+      "player_reference_loss": {
+        "shots": 8.980658722863286,
+        "goals": 1.084426000599038,
+        "assists": 1.0167532468403322
+      },
+      "goal_minute_loss": 1.0283896803661787,
+      "goal_minute_baseline_loss": 1.0059716125149452,
+      "goal_15min_loss": 1.1141499205490988,
+      "goal_15min_baseline_loss": 1.0410875225280287,
+      "shot_loss": 5.1869178440607016,
+      "shot_baseline_loss": 6.0,
+      "score_goal_abs_error": 1.5679748822605966,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 71,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3294",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3538",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754225,
+      "date": "2016-05-07",
+      "home": "AFC Bournemouth",
+      "away": "West Bromwich Albion",
+      "actual_score": [
+        1,
+        1
+      ],
+      "observed_goals": [
+        1,
+        1
+      ],
+      "predicted_goals": [
+        1.173,
+        0.988
+      ],
+      "prior_games": {
+        "AFC Bournemouth": 36,
+        "West Bromwich Albion": 3
+      },
+      "covered_players": {
+        "AFC Bournemouth": 23,
+        "West Bromwich Albion": 10
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 1,
+      "player_count": 33,
+      "player_loss": {
+        "shots": 6.028490800462547,
+        "goals": 1.619956624924892,
+        "assists": 0.17531995989744995
+      },
+      "player_reference_loss": {
+        "shots": 8.711680264160115,
+        "goals": 1.8606344400205324,
+        "assists": 0.08748006305820709
+      },
+      "goal_minute_loss": 1.9983026889645865,
+      "goal_minute_baseline_loss": 1.9788555243511914,
+      "goal_15min_loss": 1.6280529155413446,
+      "goal_15min_baseline_loss": 1.6707701288298733,
+      "shot_loss": 3.0039795918367354,
+      "shot_baseline_loss": 1.6714285714285708,
+      "score_goal_abs_error": 0.18510204081632642,
+      "goal_event_times": [
+        {
+          "team": "AFC Bournemouth",
+          "minute_index": 81,
+          "goals": 1
+        },
+        {
+          "team": "West Bromwich Albion",
+          "minute_index": 14,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3049",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "4041",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "11012",
+          "count": 1,
+          "previously_seen": false
+        }
+      ]
+    },
+    {
+      "id": 3754134,
+      "date": "2016-05-10",
+      "home": "West Ham United",
+      "away": "Manchester United",
+      "actual_score": [
+        3,
+        2
+      ],
+      "observed_goals": [
+        3,
+        2
+      ],
+      "predicted_goals": [
+        1.552,
+        1.147
+      ],
+      "prior_games": {
+        "West Ham United": 3,
+        "Manchester United": 36
+      },
+      "covered_players": {
+        "West Ham United": 14,
+        "Manchester United": 25
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 1,
+      "player_count": 39,
+      "player_loss": {
+        "shots": 6.392766833230315,
+        "goals": 3.7322926653827233,
+        "assists": 2.4572824360625374
+      },
+      "player_reference_loss": {
+        "shots": 7.5506992419993235,
+        "goals": 3.559301586481163,
+        "assists": 2.831099890525322
+      },
+      "goal_minute_loss": 4.911916194440122,
+      "goal_minute_baseline_loss": 4.898257013953202,
+      "goal_15min_loss": 2.840626514171128,
+      "goal_15min_baseline_loss": 2.936601896641718,
+      "shot_loss": 16.893452380952382,
+      "shot_baseline_loss": 16.0,
+      "score_goal_abs_error": 2.3018849206349206,
+      "goal_event_times": [
+        {
+          "team": "West Ham United",
+          "minute_index": 9,
+          "goals": 1
+        },
+        {
+          "team": "West Ham United",
+          "minute_index": 75,
+          "goals": 1
+        },
+        {
+          "team": "West Ham United",
+          "minute_index": 79,
+          "goals": 1
+        },
+        {
+          "team": "Manchester United",
+          "minute_index": 50,
+          "goals": 1
+        },
+        {
+          "team": "Manchester United",
+          "minute_index": 71,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3962",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3349",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "4280",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "20039",
+          "count": 2,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3595",
+          "count": 1,
+          "previously_seen": false
+        },
+        {
+          "player_id": "3491",
+          "count": 2,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3294",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3318",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    },
+    {
+      "id": 3754159,
+      "date": "2016-05-17",
+      "home": "Manchester United",
+      "away": "AFC Bournemouth",
+      "actual_score": [
+        3,
+        1
+      ],
+      "observed_goals": [
+        3,
+        1
+      ],
+      "predicted_goals": [
+        1.169,
+        1.169
+      ],
+      "prior_games": {
+        "Manchester United": 37,
+        "AFC Bournemouth": 37
+      },
+      "covered_players": {
+        "Manchester United": 25,
+        "AFC Bournemouth": 23
+      },
+      "unseen_player_actual_goals": 0,
+      "unseen_player_actual_assists": 0,
+      "player_count": 48,
+      "player_loss": {
+        "shots": 8.100444591936057,
+        "goals": 2.6987579203766376,
+        "assists": 2.6950279379012696
+      },
+      "player_reference_loss": {
+        "shots": 10.885281706743157,
+        "goals": 2.8318247083479307,
+        "assists": 2.8604411035309085
+      },
+      "goal_minute_loss": 2.9599655672210146,
+      "goal_minute_baseline_loss": 2.9516870300444116,
+      "goal_15min_loss": 2.312635657675213,
+      "goal_15min_baseline_loss": 2.2995472757883215,
+      "shot_loss": 6.26829268292683,
+      "shot_baseline_loss": 5.0,
+      "score_goal_abs_error": 3.0,
+      "goal_event_times": [
+        {
+          "team": "Manchester United",
+          "minute_index": 42,
+          "goals": 1
+        },
+        {
+          "team": "Manchester United",
+          "minute_index": 73,
+          "goals": 1
+        },
+        {
+          "team": "Manchester United",
+          "minute_index": 86,
+          "goals": 1
+        }
+      ],
+      "player_scorers": [
+        {
+          "player_id": "3318",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3538",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3612",
+          "count": 1,
+          "previously_seen": true
+        }
+      ],
+      "player_assisters": [
+        {
+          "player_id": "3318",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3538",
+          "count": 1,
+          "previously_seen": true
+        },
+        {
+          "player_id": "3267",
+          "count": 1,
+          "previously_seen": true
+        }
+      ]
+    }
+  ]
+}

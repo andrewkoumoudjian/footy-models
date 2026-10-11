@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+name = "footy_matchforecast"
+path = "src/lib.rs"
+
 [[bin]]
 name = "footy-matchforecast"
 path = "src/main.rs"

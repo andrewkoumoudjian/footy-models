@@ -1,4 +1,4 @@
-use crate::{simulate_primitive_match, LineupCandidate, LineupProjectionInput, PrimitiveMatchForecast, PrimitiveMatchSimulationInput, SpecificPlayerIncidentProfile};
+use crate::{simulate_primitive_match, LineupProjectionInput, PrimitiveMatchForecast, PrimitiveMatchSimulationInput, SpecificPlayerIncidentProfile};
 use footy_core::{ClubId, Confidence, Date, MetricId, PlayerId};
 use footy_state::{PlayerState, PsychologyMeasure, PsychologyVector};
 use std::collections::{BTreeMap, BTreeSet};
@@ -680,10 +680,6 @@ fn support_confidence(support: f64, prior_strength: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AttributeEventLoading, AttributeMatchupRule, CausalChannelGraph, FormationPrior, FormationTemplate, GoalChannelLoading, LineupSamplingParameters, MatchupRule, MetricChannelLoading, PairwiseSynergy, PlayerAttributeState, PlayerAttributeValue, PlayerMatchupState, RoleFit, SpecificEnvironmentMetricModifier, SpecificGoalProcess, SpecificInMatchParameters, SpecificMatchEnvironment, SpecificPlayerEventModel, SpecificScoreStateMetricModifier, SpecificTeamContext, TacticalSlot, TeamProcessChannel};
-    use footy_core::{AttributeId, MatchId, RoleId};
-    use footy_forecast::StatFamily;
-    use footy_state::AbilityVector;
 
     fn measure(value: f64) -> MentalMeasure { MentalMeasure::new(value, Confidence::ONE).unwrap() }
 

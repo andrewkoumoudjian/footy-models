@@ -28,6 +28,36 @@ for f in result['fixtures']:
         home_total+=w['expected_home_goals'];away_total+=w['expected_away_goals']
     assert abs(home_total-f['expected_home_goals'])<1e-4
     assert abs(away_total-f['expected_away_goals'])<1e-4
+    if 'minutes_1min' in f:
+        minutes=f['minutes_1min']
+        assert len(minutes)==90, f['home']
+        for i,m in enumerate(minutes):
+            assert m['minute_start']==i and m['minute_end']==i+1
+            for key in ('p_any_goal','p_home_goal','p_away_goal','p_red_card','p_substitution'):
+                assert 0<=m[key]<=1
+            assert abs(sum(m['end_of_window_outcomes'])-1)<1e-5
+        keys=('expected_home_goals','expected_away_goals','expected_home_shots','expected_away_shots')
+        for j,w in enumerate(f['15_minute_windows']):
+            for key in keys:
+                assert abs(sum(m[key] for m in minutes[j*15:(j+1)*15])-w[key])<1e-6,(j,key)
+            assert all(abs(x-y)<1e-5 for x,y in zip(minutes[(j+1)*15-1]['end_of_window_outcomes'],
+                                                     w['end_of_window_outcomes']))
+        aggregated={}
+        for p in f['player_minute_events']:
+            assert 0<=p['minute']<90 and p['uid'] and p['team'] in (f['home'],f['away'])
+            for key in ('expected_shots','expected_goals','expected_assists_proxy'):
+                assert math.isfinite(p[key]) and p[key]>=0
+            assert p['expected_goals']*f['paths']<1e6
+        for side in ('home','away'):
+            team=f[side]
+            player_goals=sum(p['expected_goals'] for p in f['player_minute_events'] if p['team']==team)
+            team_goals=f[f'expected_{side}_goals']
+            assert player_goals<=team_goals+1e-6,(f['home'],team,player_goals,team_goals)
+        assigned=sum(p['expected_goals'] for p in f['player_minute_events'])
+        missing=f['unattributed_goals_per_match']
+        assert abs(assigned+missing-f['expected_home_goals']-f['expected_away_goals'])<1e-6
+        assists=sum(p['expected_assists_proxy'] for p in f['player_minute_events'])
+        assert assists<=assigned+1e-6
     print(f['home'],f['away'],f['paths'],'paths',f'home={f["home_win"]:.3f} draw={f["draw"]:.3f} away={f["away_win"]:.3f}')
 assert len(roster['teams'])>=2
 seen={}

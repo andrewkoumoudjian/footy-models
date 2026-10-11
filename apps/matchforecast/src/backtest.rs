@@ -91,7 +91,6 @@ struct TeamData {
     xg_pm: f64,
     xga_pm: f64,
     shots_pm: f64,
-    shots_face_pm: f64,
     sot_pm: f64,
     sot_face_pm: f64,
 }
@@ -168,7 +167,6 @@ fn team_window(all_rows: &[Row], name: &str, cutoff: Date) -> TeamData {
             xg_pm: 1.40,
             xga_pm: 1.40,
             shots_pm: 12.0,
-            shots_face_pm: 12.0,
             sot_pm: 4.5,
             sot_face_pm: 4.5,
         };
@@ -201,9 +199,6 @@ fn team_window(all_rows: &[Row], name: &str, cutoff: Date) -> TeamData {
         xga_pm: ewma(&|row| if row["home"] == name { f(row, "away_xg") } else { f(row, "home_xg") }, 1.40),
         shots_pm: ewma(&|row| {
             if row["home"] == name { f(row, "home_shots") } else { f(row, "away_shots") }
-        }, 12.0),
-        shots_face_pm: ewma(&|row| {
-            if row["home"] == name { f(row, "away_shots") } else { f(row, "home_shots") }
         }, 12.0),
         sot_pm: ewma(&|row| {
             if row["home"] == name {

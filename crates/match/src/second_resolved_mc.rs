@@ -1,4 +1,3 @@
-use crate::channels::TeamProcessChannel;
 use crate::lineup::{
     sample_lineup, FormationProjection, LineupCandidate, LineupProjection, LineupProjectionInput,
     PlayerLineupProjection, RoleProjection, SampledLineup, SampledStarter,
@@ -83,6 +82,12 @@ pub struct SecondResolvedDynamicMentalForecast {
     pub paths: u32,
     /// Path-observed event probabilities in actual six 15-minute clock windows.
     pub windows_15min: Vec<SecondResolvedWindowForecast>,
+    /// Ninety path-observed, non-overlapping regulation-minute bins.
+    pub minutes_1min: Vec<SecondResolvedWindowForecast>,
+    /// Sparse player-level minute aggregates, divided by the number of full paths.
+    pub player_minute_events: Vec<SecondResolvedPlayerMinuteForecast>,
+    /// Expected goals that could not be assigned to a currently active player.
+    pub unattributed_goals_per_match: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -102,6 +107,19 @@ pub struct SecondResolvedWindowForecast {
     pub end_draw: f64,
     pub end_away_lead: f64,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SecondResolvedPlayerMinuteForecast {
+    pub minute: u16,
+    pub player: PlayerId,
+    pub expected_shots: f64,
+    pub expected_goals: f64,
+    /// Heuristic sampled assist attribution, not a fitted assist model.
+    pub expected_assists_proxy: f64,
+}
+
+#[derive(Debug, Clone, Default)]
+struct PlayerMinuteAggregate { shots: f64, goals: u32, assists: u32 }
 
 #[derive(Debug, Clone, Default)]
 struct PathWindow {
@@ -142,7 +160,6 @@ impl PathMentalPlayer {
 
 #[derive(Debug, Clone)]
 struct PathTeamMental {
-    kickoff: BTreeMap<TeamMentalDimension, f64>,
     current: BTreeMap<TeamMentalDimension, f64>,
 }
 
@@ -311,6 +328,10 @@ pub fn simulate_second_resolved_dynamic_mental_match(
     let mut collision_paths = 0_u32;
     let mut windows = [WindowAggregate::default(), WindowAggregate::default(), WindowAggregate::default(),
         WindowAggregate::default(), WindowAggregate::default(), WindowAggregate::default()];
+    let minute_len = (end.0 as usize).div_ceil(60);
+    let mut minute_windows = vec![WindowAggregate::default(); minute_len];
+    let mut player_minute_aggregate = BTreeMap::<(u16, PlayerId), PlayerMinuteAggregate>::new();
+    let mut unattributed_goals = 0_u32;
     let home_player_ids: BTreeSet<PlayerId> = home_squad.iter().copied().collect();
     let mut home_lineups = LineupAggregate::default();
     let mut away_lineups = LineupAggregate::default();
@@ -366,6 +387,7 @@ pub fn simulate_second_resolved_dynamic_mental_match(
         let mut score_away = 0_u32;
         let mut path_windows = [PathWindow::default(), PathWindow::default(), PathWindow::default(),
             PathWindow::default(), PathWindow::default(), PathWindow::default()];
+        let mut path_minutes = vec![PathWindow::default(); minute_len];
         let mut path_collision = false;
         let mut second = MatchSecond::KICKOFF;
 
@@ -400,9 +422,11 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                 let end_fraction = next.as_ref().map(|value| value.fraction).unwrap_or(1.0).clamp(cursor, 1.0);
                 let elapsed = end_fraction - cursor;
                 if elapsed > 0.0 {
+                    let minute_index = (second.0 as usize / 60).min(minute_len - 1);
                     let personal = advance_player_metrics(&snapshot, elapsed, &mut path_metrics,
                         &mut rng, &mut path_windows[(second.0 as usize / 900).min(5)],
-                        &home_player_ids);
+                        &mut path_minutes[minute_index], minute_index as u16,
+                        &mut player_minute_aggregate, &home_player_ids);
                     apply_personal_feedback(&home, &personal, &mut mental_players, transition, elapsed);
                     apply_personal_feedback(&away, &personal, &mut mental_players, transition, elapsed);
                     advance_continuous_mental(
@@ -421,12 +445,41 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                 events_this_second = events_this_second.saturating_add(1);
                 if events_this_second >= 2 { path_collision = true; }
                 total_state_events = total_state_events.saturating_add(1);
+                let minute_index = (second.0 as usize / 60).min(minute_len - 1);
                 let window = &mut path_windows[(second.0 as usize / 900).min(5)];
+                let minute_window = &mut path_minutes[minute_index];
                 match &event.event {
-                    StateEvent::HomeGoal => window.home_goals += 1,
-                    StateEvent::AwayGoal => window.away_goals += 1,
-                    StateEvent::Red { .. } => window.red_cards += 1,
-                    StateEvent::Injury { .. } | StateEvent::TacticalSub { .. } => window.substitutions += 1,
+                    StateEvent::HomeGoal | StateEvent::AwayGoal => {
+                        let home_goal = matches!(event.event, StateEvent::HomeGoal);
+                        if home_goal { window.home_goals += 1; minute_window.home_goals += 1; }
+                        else { window.away_goals += 1; minute_window.away_goals += 1; }
+                        let active = if home_goal { &home } else { &away };
+                        if let Some((scorer, assist)) = attribute_goal(active, &snapshot, &mut rng) {
+                            // A modeled non-own goal entails a shot. The old goal
+                            // process was separate from sampled player shots;
+                            // record the event's shot everywhere, including the
+                            // team/individual metric marginals, so the exported
+                            // shot counts cannot omit a scored shot.
+                            if home_goal {
+                                window.home_shots += 1.0;
+                                minute_window.home_shots += 1.0;
+                            } else {
+                                window.away_shots += 1.0;
+                                minute_window.away_shots += 1.0;
+                            }
+                            path_metrics.entry((scorer,MetricId(1))).or_default().total += 1.0;
+                            let attribution=player_minute_aggregate.entry((minute_index as u16, scorer)).or_default();
+                            attribution.goals += 1;
+                            attribution.shots += 1.0;
+                            if let Some(assister) = assist {
+                                player_minute_aggregate.entry((minute_index as u16, assister)).or_default().assists += 1;
+                            }
+                        } else {unattributed_goals += 1;}
+                    }
+                    StateEvent::Red { .. } => { window.red_cards += 1; minute_window.red_cards += 1; }
+                    StateEvent::Injury { .. } | StateEvent::TacticalSub { .. } => {
+                        window.substitutions += 1; minute_window.substitutions += 1;
+                    }
                 }
                 apply_state_event(
                     event.event, input, mental_model, transition,
@@ -439,25 +492,8 @@ pub fn simulate_second_resolved_dynamic_mental_match(
             second = MatchSecond(second.0.saturating_add(1));
         }
 
-        let (mut home_running, mut away_running) = (0_u32, 0_u32);
-        for (aggregate, window) in windows.iter_mut().zip(&mut path_windows) {
-            home_running += window.home_goals;
-            away_running += window.away_goals;
-            window.cumulative_home = home_running;
-            window.cumulative_away = away_running;
-            aggregate.any_goal += u32::from(window.home_goals + window.away_goals > 0);
-            aggregate.home_goal += u32::from(window.home_goals > 0);
-            aggregate.away_goal += u32::from(window.away_goals > 0);
-            aggregate.red_card += u32::from(window.red_cards > 0);
-            aggregate.substitution += u32::from(window.substitutions > 0);
-            aggregate.home_goals += u64::from(window.home_goals);
-            aggregate.away_goals += u64::from(window.away_goals);
-            aggregate.home_shots += window.home_shots;
-            aggregate.away_shots += window.away_shots;
-            if home_running > away_running { aggregate.home_lead += 1; }
-            else if home_running < away_running { aggregate.away_lead += 1; }
-            else { aggregate.draw += 1; }
-        }
+        accumulate_path_windows(&mut windows, &mut path_windows);
+        accumulate_path_windows(&mut minute_windows, &mut path_minutes);
         if path_collision { collision_paths = collision_paths.saturating_add(1); }
         home_goals.push(f64::from(score_home));
         away_goals.push(f64::from(score_away));
@@ -550,10 +586,60 @@ pub fn simulate_second_resolved_dynamic_mental_match(
         kind,
         mean_per_path: count as f64 / f64::from(paths),
     }).collect();
-    let windows_15min = windows.iter().enumerate().map(|(i,w)| {
+    let windows_15min = summarize_clock_windows(&windows, paths, 15);
+    let minutes_1min = summarize_clock_windows(&minute_windows, paths, 1);
+    let player_minute_events = player_minute_aggregate.into_iter()
+        .map(|((minute, player), totals)| SecondResolvedPlayerMinuteForecast {
+            minute, player,
+            expected_shots: totals.shots / f64::from(paths),
+            expected_goals: f64::from(totals.goals) / f64::from(paths),
+            expected_assists_proxy: f64::from(totals.assists) / f64::from(paths),
+        }).collect();
+    Some(SecondResolvedDynamicMentalForecast {
+        outcome, windows_15min, minutes_1min, player_minute_events,
+        unattributed_goals_per_match: f64::from(unattributed_goals) / f64::from(paths),
+        home_lineup,
+        away_lineup,
+        player_metrics,
+        player_mental,
+        state_events,
+        same_second_collision_probability: Probability::clamped(collision_paths as f32 / denominator),
+        mean_state_events_per_path: total_state_events as f64 / f64::from(paths),
+        simulated_match_seconds: end.0,
+        paths,
+    })
+}
+
+fn accumulate_path_windows(aggregates: &mut [WindowAggregate], path: &mut [PathWindow]) {
+    let (mut home_running, mut away_running) = (0_u32, 0_u32);
+    for (aggregate, window) in aggregates.iter_mut().zip(path) {
+        home_running += window.home_goals;
+        away_running += window.away_goals;
+        window.cumulative_home = home_running;
+        window.cumulative_away = away_running;
+        aggregate.any_goal += u32::from(window.home_goals + window.away_goals > 0);
+        aggregate.home_goal += u32::from(window.home_goals > 0);
+        aggregate.away_goal += u32::from(window.away_goals > 0);
+        aggregate.red_card += u32::from(window.red_cards > 0);
+        aggregate.substitution += u32::from(window.substitutions > 0);
+        aggregate.home_goals += u64::from(window.home_goals);
+        aggregate.away_goals += u64::from(window.away_goals);
+        aggregate.home_shots += window.home_shots;
+        aggregate.away_shots += window.away_shots;
+        if home_running > away_running { aggregate.home_lead += 1; }
+        else if home_running < away_running { aggregate.away_lead += 1; }
+        else { aggregate.draw += 1; }
+    }
+}
+
+fn summarize_clock_windows(aggregates: &[WindowAggregate], paths: u32, size_minutes: u16)
+    -> Vec<SecondResolvedWindowForecast>
+{
+    aggregates.iter().enumerate().map(|(i,w)| {
         let d = f64::from(paths);
         SecondResolvedWindowForecast {
-            start_minute:(i*15) as u16,end_minute:((i+1)*15) as u16,
+            start_minute:(i as u16)*size_minutes,
+            end_minute:((i+1) as u16)*size_minutes,
             probability_any_goal:f64::from(w.any_goal)/d,
             probability_home_goal:f64::from(w.home_goal)/d,
             probability_away_goal:f64::from(w.away_goal)/d,
@@ -566,19 +652,28 @@ pub fn simulate_second_resolved_dynamic_mental_match(
             end_draw:f64::from(w.draw)/d,
             end_away_lead:f64::from(w.away_lead)/d,
         }
-    }).collect();
-    Some(SecondResolvedDynamicMentalForecast {
-        outcome, windows_15min,
-        home_lineup,
-        away_lineup,
-        player_metrics,
-        player_mental,
-        state_events,
-        same_second_collision_probability: Probability::clamped(collision_paths as f32 / denominator),
-        mean_state_events_per_path: total_state_events as f64 / f64::from(paths),
-        simulated_match_seconds: end.0,
-        paths,
-    })
+    }).collect()
+}
+
+/// Conditional goalscorer and optional assisting-player assignment, never draws
+/// a second goal. xG/shot and xA rate weights are lineup/FМ-adjusted, but the
+/// 0.68 assisted-goal prior is exploratory pending pre-match event calibration.
+fn attribute_goal(team: &ActiveTeam, snapshot: &RateSnapshot, rng: &mut Rng64)
+    -> Option<(PlayerId, Option<PlayerId>)>
+{
+    let ids=team.active_ids();
+    let scorer=ids.get(weighted_index(ids.iter().map(|id| {
+        let xg=snapshot.player_rates.get(&(*id,MetricId(2))).map_or(0.0,|r|r.adjusted_per90);
+        let shots=snapshot.player_rates.get(&(*id,MetricId(1))).map_or(0.0,|r|r.adjusted_per90);
+        (xg.max(0.0)+0.05*shots.max(0.0)).max(0.01)
+    }),rng)?)?.to_owned();
+    let assist=if ids.len()>1 && rng.uniform()<0.68 {
+        let eligible:Vec<PlayerId>=ids.into_iter().filter(|id|*id!=scorer).collect();
+        weighted_index(eligible.iter().map(|id| {
+            snapshot.player_rates.get(&(*id,MetricId(3))).map_or(0.01,|r|r.adjusted_per90.max(0.01))
+        }),rng).map(|index|eligible[index])
+    }else{None};
+    Some((scorer,assist))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -792,6 +887,9 @@ fn advance_player_metrics(
     path_metrics: &mut BTreeMap<(PlayerId, MetricId), PathMetric>,
     rng: &mut Rng64,
     window: &mut PathWindow,
+    minute: &mut PathWindow,
+    minute_index: u16,
+    player_minutes: &mut BTreeMap<(u16,PlayerId),PlayerMinuteAggregate>,
     home_players: &BTreeSet<PlayerId>,
 ) -> BTreeMap<PlayerId, f64> {
     let exposure = elapsed_seconds / f64::from(REGULATION_MATCH_SECONDS);
@@ -808,8 +906,9 @@ fn advance_player_metrics(
             StatFamily::ContinuousNonNegative => gamma_increment(mean, variance, rng),
         };
         if key.1.0 == 1 {
-            if home_players.contains(&key.0) {window.home_shots += realized;}
-            else {window.away_shots += realized;}
+            if home_players.contains(&key.0) {window.home_shots += realized;minute.home_shots += realized;}
+            else {window.away_shots += realized;minute.away_shots += realized;}
+            if realized > 0.0 {player_minutes.entry((minute_index,key.0)).or_default().shots += realized;}
         }
         let value = path_metrics.entry(*key).or_default();
         value.total += realized;
@@ -1156,7 +1255,7 @@ fn sample_team_mental(state: TeamMentalState, transition: DynamicMentalTransitio
             (measure.value * confidence + transition.initial_state_sigma_at_zero_confidence * (1.0 - confidence) * rng.normal()).clamp(-1.0, 1.0),
         );
     }
-    PathTeamMental { current: kickoff.clone(), kickoff }
+    PathTeamMental { current: kickoff }
 }
 
 fn adjust_lineup_for_path_mental(lineup: &mut LineupProjectionInput, states: &BTreeMap<PlayerId, PathMentalPlayer>, model: &MentalMatchModel) {

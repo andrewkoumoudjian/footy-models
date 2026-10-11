@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
-//! Premier League match engine driver, sharing the production input adapter.
-#[path = "main_mls.rs"]
-mod shared;
-fn main() { shared::run_premier_league(); }
+//! Thin binary: Premier League registered-squad + FM26 Monte Carlo snapshot driver.
+
+fn main() {
+    footy_matchforecast::driver::run_premier_league();
+}

@@ -1,0 +1,2985 @@
+{
+  "as_of": "2026-10-10",
+  "caveats": [
+    "No confirmed lineups or 2026/27 player minutes; starts are random with CA/exposure priors",
+    "FM-derived event processes have not been validated on EPL player events",
+    "Player goal process anchored to independently refitted results+FM benchmark",
+    "P(any shot) per window is simulated player-event process; goals/red cards/subs are path-observed",
+    "Goal scorers are sampled conditional on already simulated goals using FM xG/shot weights; assist attribution uses a fixed, unvalidated 0.68 prior"
+  ],
+  "fixtures": [
+    {
+      "15_minute_windows": [
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 4.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 1.5,
+          "minute_end": 15,
+          "minute_start": 0,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 2.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 2.0,
+          "minute_end": 30,
+          "minute_start": 15,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.5,
+          "expected_away_shots": 1.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 1.5,
+          "minute_end": 45,
+          "minute_start": 30,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.5,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 3.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 3.5,
+          "minute_end": 60,
+          "minute_start": 45,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 3.5,
+          "expected_home_goals": 0.5,
+          "expected_home_shots": 2.5,
+          "minute_end": 75,
+          "minute_start": 60,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.5,
+          "p_red_card": 0.0,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.5,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.5,
+          "expected_home_shots": 2.5,
+          "minute_end": 90,
+          "minute_start": 75,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.5,
+          "p_home_goal": 0.5,
+          "p_red_card": 0.0,
+          "p_substitution": 1.0
+        }
+      ],
+      "away": "Man City",
+      "away_win": 0.0,
+      "comparison_results_fm_model": {
+        "away_win": 0.437815992439084,
+        "draw": 0.28023191002496467,
+        "home_win": 0.28195209753595135
+      },
+      "date": "2026-10-11",
+      "draw": 1.0,
+      "expected_away_goals": 1.0,
+      "expected_home_goals": 1.0,
+      "home": "Liverpool",
+      "home_win": 0.0,
+      "match_state_events_per_path": 12.0,
+      "minutes_1min": [
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 1,
+          "minute_start": 0,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 2,
+          "minute_start": 1,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 3,
+          "minute_start": 2,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 4,
+          "minute_start": 3,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 5,
+          "minute_start": 4,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 6,
+          "minute_start": 5,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 7,
+          "minute_start": 6,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 8,
+          "minute_start": 7,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 9,
+          "minute_start": 8,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 10,
+          "minute_start": 9,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 11,
+          "minute_start": 10,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 12,
+          "minute_start": 11,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 13,
+          "minute_start": 12,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 14,
+          "minute_start": 13,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 15,
+          "minute_start": 14,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 16,
+          "minute_start": 15,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 17,
+          "minute_start": 16,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 18,
+          "minute_start": 17,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 19,
+          "minute_start": 18,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 20,
+          "minute_start": 19,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 21,
+          "minute_start": 20,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 22,
+          "minute_start": 21,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 23,
+          "minute_start": 22,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 24,
+          "minute_start": 23,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 25,
+          "minute_start": 24,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 26,
+          "minute_start": 25,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 27,
+          "minute_start": 26,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 28,
+          "minute_start": 27,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 29,
+          "minute_start": 28,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 30,
+          "minute_start": 29,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 31,
+          "minute_start": 30,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 32,
+          "minute_start": 31,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 33,
+          "minute_start": 32,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 34,
+          "minute_start": 33,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 35,
+          "minute_start": 34,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 36,
+          "minute_start": 35,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.5,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 37,
+          "minute_start": 36,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.5,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 38,
+          "minute_start": 37,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 39,
+          "minute_start": 38,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 1.0,
+          "minute_end": 40,
+          "minute_start": 39,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 41,
+          "minute_start": 40,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 42,
+          "minute_start": 41,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 43,
+          "minute_start": 42,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 44,
+          "minute_start": 43,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 45,
+          "minute_start": 44,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 46,
+          "minute_start": 45,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 47,
+          "minute_start": 46,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 48,
+          "minute_start": 47,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 49,
+          "minute_start": 48,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 50,
+          "minute_start": 49,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 51,
+          "minute_start": 50,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 52,
+          "minute_start": 51,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 53,
+          "minute_start": 52,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 54,
+          "minute_start": 53,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 55,
+          "minute_start": 54,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 56,
+          "minute_start": 55,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 57,
+          "minute_start": 56,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 58,
+          "minute_start": 57,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 59,
+          "minute_start": 58,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 60,
+          "minute_start": 59,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 61,
+          "minute_start": 60,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 62,
+          "minute_start": 61,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 63,
+          "minute_start": 62,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 64,
+          "minute_start": 63,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 65,
+          "minute_start": 64,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 66,
+          "minute_start": 65,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 67,
+          "minute_start": 66,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 68,
+          "minute_start": 67,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 69,
+          "minute_start": 68,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 1.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 70,
+          "minute_start": 69,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 71,
+          "minute_start": 70,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 72,
+          "minute_start": 71,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 73,
+          "minute_start": 72,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 74,
+          "minute_start": 73,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.5,
+          "expected_home_shots": 0.0,
+          "minute_end": 75,
+          "minute_start": 74,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.5,
+          "p_red_card": 0.0,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 76,
+          "minute_start": 75,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 1.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.5,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 77,
+          "minute_start": 76,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 78,
+          "minute_start": 77,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.5,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 79,
+          "minute_start": 78,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.5,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 80,
+          "minute_start": 79,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 81,
+          "minute_start": 80,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 82,
+          "minute_start": 81,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 83,
+          "minute_start": 82,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 84,
+          "minute_start": 83,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 85,
+          "minute_start": 84,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 86,
+          "minute_start": 85,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.5
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 87,
+          "minute_start": 86,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            0.5,
+            0.5
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.5,
+          "minute_end": 88,
+          "minute_start": 87,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.5,
+          "expected_home_shots": 0.0,
+          "minute_end": 89,
+          "minute_start": 88,
+          "p_any_goal": 0.5,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.5,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        },
+        {
+          "end_of_window_outcomes": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "expected_away_goals": 0.0,
+          "expected_away_shots": 0.0,
+          "expected_home_goals": 0.0,
+          "expected_home_shots": 0.0,
+          "minute_end": 90,
+          "minute_start": 89,
+          "p_any_goal": 0.0,
+          "p_away_goal": 0.0,
+          "p_home_goal": 0.0,
+          "p_red_card": 0.0,
+          "p_substitution": 0.0
+        }
+      ],
+      "paths": 2,
+      "player_minute_events": [
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 1,
+          "name": "Joško Gvardiol",
+          "team": "Man City",
+          "uid": 24060473
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 2,
+          "name": "Florian Richard Wirtz",
+          "team": "Liverpool",
+          "uid": 91193048
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 4,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 4,
+          "name": "Antoine Serlom Semenyo",
+          "team": "Man City",
+          "uid": 29194724
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 7,
+          "name": "Rayan Aït-Nouri",
+          "team": "Man City",
+          "uid": 49047581
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 7,
+          "name": "Nico O'Reilly",
+          "team": "Man City",
+          "uid": 2000101285
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 1.0,
+          "minute": 8,
+          "name": "Enzo Jeremías Fernández",
+          "team": "Man City",
+          "uid": 14229525
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 9,
+          "name": "Erling Braut Haaland",
+          "team": "Man City",
+          "uid": 29179241
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 11,
+          "name": "Dominik Szoboszlai",
+          "team": "Liverpool",
+          "uid": 16202373
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 13,
+          "name": "Luke Chambers",
+          "team": "Liverpool",
+          "uid": 2000049215
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 14,
+          "name": "Antoine Serlom Semenyo",
+          "team": "Man City",
+          "uid": 29194724
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 15,
+          "name": "Rayan Aït-Nouri",
+          "team": "Man City",
+          "uid": 49047581
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 15,
+          "name": "Rúben Santos Gato Alves Dias",
+          "team": "Man City",
+          "uid": 55070299
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 15,
+          "name": "Florian Richard Wirtz",
+          "team": "Liverpool",
+          "uid": 91193048
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 20,
+          "name": "Virgil van Dijk",
+          "team": "Liverpool",
+          "uid": 37024025
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 22,
+          "name": "Erling Braut Haaland",
+          "team": "Man City",
+          "uid": 29179241
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 24,
+          "name": "Florian Richard Wirtz",
+          "team": "Liverpool",
+          "uid": 91193048
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 26,
+          "name": "Lewis Terence Koumas",
+          "team": "Liverpool",
+          "uid": 2000191802
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 27,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 29,
+          "name": "Antoine Serlom Semenyo",
+          "team": "Man City",
+          "uid": 29194724
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 34,
+          "name": "Enzo Jeremías Fernández",
+          "team": "Man City",
+          "uid": 14229525
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 34,
+          "name": "Joško Gvardiol",
+          "team": "Man City",
+          "uid": 24060473
+        },
+        {
+          "expected_assists_proxy": 0.5,
+          "expected_goals": 0.0,
+          "expected_shots": 0.0,
+          "minute": 36,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.5,
+          "expected_shots": 0.0,
+          "minute": 36,
+          "name": "Erling Braut Haaland",
+          "team": "Man City",
+          "uid": 29179241
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 39,
+          "name": "Virgil van Dijk",
+          "team": "Liverpool",
+          "uid": 37024025
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 39,
+          "name": "Jayden Alexander Danns",
+          "team": "Liverpool",
+          "uid": 2000191846
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 41,
+          "name": "Jayden Alexander Danns",
+          "team": "Liverpool",
+          "uid": 2000191846
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 44,
+          "name": "Antoine Serlom Semenyo",
+          "team": "Man City",
+          "uid": 29194724
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 46,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 46,
+          "name": "Virgil van Dijk",
+          "team": "Liverpool",
+          "uid": 37024025
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 47,
+          "name": "Enzo Jeremías Fernández",
+          "team": "Man City",
+          "uid": 14229525
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 48,
+          "name": "Joško Gvardiol",
+          "team": "Man City",
+          "uid": 24060473
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 48,
+          "name": "Antoine Serlom Semenyo",
+          "team": "Man City",
+          "uid": 29194724
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 49,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 49,
+          "name": "Víctor Muñoz Villanueva",
+          "team": "Liverpool",
+          "uid": 2000126470
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 53,
+          "name": "Luke Chambers",
+          "team": "Liverpool",
+          "uid": 2000049215
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 54,
+          "name": "Dominik Szoboszlai",
+          "team": "Liverpool",
+          "uid": 16202373
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 54,
+          "name": "Antoine Serlom Semenyo",
+          "team": "Man City",
+          "uid": 29194724
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 55,
+          "name": "Jérémy Jacquet",
+          "team": "Liverpool",
+          "uid": 2000094886
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 56,
+          "name": "Joško Gvardiol",
+          "team": "Man City",
+          "uid": 24060473
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 58,
+          "name": "Jérémy Jacquet",
+          "team": "Liverpool",
+          "uid": 2000094886
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 59,
+          "name": "Dominik Szoboszlai",
+          "team": "Liverpool",
+          "uid": 16202373
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 60,
+          "name": "Erling Braut Haaland",
+          "team": "Man City",
+          "uid": 29179241
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 60,
+          "name": "Virgil van Dijk",
+          "team": "Liverpool",
+          "uid": 37024025
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 61,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 61,
+          "name": "Erling Braut Haaland",
+          "team": "Man City",
+          "uid": 29179241
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 65,
+          "name": "Enzo Jeremías Fernández",
+          "team": "Man City",
+          "uid": 14229525
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 65,
+          "name": "Jayden Alexander Danns",
+          "team": "Liverpool",
+          "uid": 2000191846
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 68,
+          "name": "Ronald Federico Araujo Da Silva",
+          "team": "Liverpool",
+          "uid": 78085068
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 69,
+          "name": "Joško Gvardiol",
+          "team": "Man City",
+          "uid": 24060473
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 69,
+          "name": "Elliot Anderson",
+          "team": "Man City",
+          "uid": 28127254
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 71,
+          "name": "Florian Richard Wirtz",
+          "team": "Liverpool",
+          "uid": 91193048
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 72,
+          "name": "Joško Gvardiol",
+          "team": "Man City",
+          "uid": 24060473
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 72,
+          "name": "Frederick John Woodman",
+          "team": "Liverpool",
+          "uid": 28091347
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.5,
+          "expected_shots": 0.0,
+          "minute": 74,
+          "name": "Joseph Gómez",
+          "team": "Liverpool",
+          "uid": 82082339
+        },
+        {
+          "expected_assists_proxy": 0.5,
+          "expected_goals": 0.0,
+          "expected_shots": 0.0,
+          "minute": 74,
+          "name": "Víctor Muñoz Villanueva",
+          "team": "Liverpool",
+          "uid": 2000126470
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 76,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "team": "Man City",
+          "uid": 28108033
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.5,
+          "expected_shots": 0.0,
+          "minute": 78,
+          "name": "Enzo Jeremías Fernández",
+          "team": "Man City",
+          "uid": 14229525
+        },
+        {
+          "expected_assists_proxy": 0.5,
+          "expected_goals": 0.0,
+          "expected_shots": 0.0,
+          "minute": 78,
+          "name": "Erling Braut Haaland",
+          "team": "Man City",
+          "uid": 29179241
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 78,
+          "name": "Virgil van Dijk",
+          "team": "Liverpool",
+          "uid": 37024025
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 80,
+          "name": "Dominik Szoboszlai",
+          "team": "Liverpool",
+          "uid": 16202373
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 82,
+          "name": "Ronald Federico Araujo Da Silva",
+          "team": "Liverpool",
+          "uid": 78085068
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 85,
+          "name": "Luke Chambers",
+          "team": "Liverpool",
+          "uid": 2000049215
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.0,
+          "expected_shots": 0.5,
+          "minute": 87,
+          "name": "Dominik Szoboszlai",
+          "team": "Liverpool",
+          "uid": 16202373
+        },
+        {
+          "expected_assists_proxy": 0.5,
+          "expected_goals": 0.0,
+          "expected_shots": 0.0,
+          "minute": 88,
+          "name": "Dominik Szoboszlai",
+          "team": "Liverpool",
+          "uid": 16202373
+        },
+        {
+          "expected_assists_proxy": 0.0,
+          "expected_goals": 0.5,
+          "expected_shots": 0.0,
+          "minute": 88,
+          "name": "Víctor Muñoz Villanueva",
+          "team": "Liverpool",
+          "uid": 2000126470
+        }
+      ],
+      "players": [
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 45.0,
+          "expected_shots": 0.0,
+          "name": "Gerónimo Rulli",
+          "start_probability": 0.5,
+          "uid": 14030119
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 86.1975990868281,
+          "expected_shots": 2.5,
+          "name": "Enzo Jeremías Fernández",
+          "start_probability": 1.0,
+          "uid": 14229525
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 90.0,
+          "expected_shots": 2.5,
+          "name": "Dominik Szoboszlai",
+          "start_probability": 1.0,
+          "uid": 16202373
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 74.85280581531242,
+          "expected_shots": 3.0,
+          "name": "Joško Gvardiol",
+          "start_probability": 1.0,
+          "uid": 24060473
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 21.860817201137255,
+          "expected_shots": 0.0,
+          "name": "Marcus Bettinelli",
+          "start_probability": 0.0,
+          "uid": 28021778
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 44.4968317660665,
+          "expected_shots": 0.5,
+          "name": "Frederick John Woodman",
+          "start_probability": 0.5,
+          "uid": 28091347
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 82.8097954590969,
+          "expected_shots": 3.0,
+          "name": "Addji Keaninkin Marc-Israel Guéhi",
+          "start_probability": 1.0,
+          "uid": 28108033
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 39.96062466710024,
+          "expected_shots": 0.0,
+          "name": "Vítězslav Jaroš",
+          "start_probability": 0.5,
+          "uid": 28116414
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 79.02916628899796,
+          "expected_shots": 0.5,
+          "name": "Elliot Anderson",
+          "start_probability": 1.0,
+          "uid": 28127254
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 79.98474750480342,
+          "expected_shots": 2.0,
+          "name": "Erling Braut Haaland",
+          "start_probability": 1.0,
+          "uid": 29179241
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 90.0,
+          "expected_shots": 3.0,
+          "name": "Antoine Serlom Semenyo",
+          "start_probability": 1.0,
+          "uid": 29194724
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 90.0,
+          "expected_shots": 2.5,
+          "name": "Virgil van Dijk",
+          "start_probability": 1.0,
+          "uid": 37024025
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 64.01301014432232,
+          "expected_shots": 0.0,
+          "name": "Ryan Jiro Gravenberch",
+          "start_probability": 1.0,
+          "uid": 37071197
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 73.68440574424682,
+          "expected_shots": 0.0,
+          "name": "Gianluigi Donnarumma",
+          "start_probability": 1.0,
+          "uid": 43252073
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 87.31921807820711,
+          "expected_shots": 1.0,
+          "name": "Rayan Aït-Nouri",
+          "start_probability": 1.0,
+          "uid": 49047581
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 45.0,
+          "expected_shots": 0.0,
+          "name": "Bradley Barcola",
+          "start_probability": 0.5,
+          "uid": 49056282
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 90.0,
+          "expected_shots": 0.5,
+          "name": "Rúben Santos Gato Alves Dias",
+          "start_probability": 1.0,
+          "uid": 55070299
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 76.26344250758686,
+          "expected_shots": 0.0,
+          "name": "Giorgi Mamardashvili",
+          "start_probability": 1.0,
+          "uid": 59138294
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Matthew Wright",
+          "start_probability": 0.0,
+          "uid": 61094151
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 51.752350756275064,
+          "expected_shots": 1.0,
+          "name": "Ronald Federico Araujo Da Silva",
+          "start_probability": 0.5,
+          "uid": 78085068
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 19.84001078973015,
+          "expected_shots": 0.0,
+          "name": "Joseph Gómez",
+          "start_probability": 0.0,
+          "uid": 82082339
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 66.45995070918892,
+          "expected_shots": 2.0,
+          "name": "Florian Richard Wirtz",
+          "start_probability": 1.0,
+          "uid": 91193048
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 82.31109282521304,
+          "expected_shots": 0.0,
+          "name": "Miloš Kerkez",
+          "start_probability": 1.0,
+          "uid": 2000011147
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 56.49941678708756,
+          "expected_shots": 1.5,
+          "name": "Luke Chambers",
+          "start_probability": 0.5,
+          "uid": 2000049215
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 11.23353777462731,
+          "expected_shots": 0.0,
+          "name": "Claudio Jeremías Echeverri",
+          "start_probability": 0.0,
+          "uid": 2000094152
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 71.3917962782722,
+          "expected_shots": 1.0,
+          "name": "Jérémy Jacquet",
+          "start_probability": 1.0,
+          "uid": 2000094886
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 10.01525249519657,
+          "expected_shots": 0.0,
+          "name": "Rico Mark Lewis",
+          "start_probability": 0.0,
+          "uid": 2000098727
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 54.80018123572079,
+          "expected_shots": 0.5,
+          "name": "Nico O'Reilly",
+          "start_probability": 0.5,
+          "uid": 2000101285
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 13.736557492413143,
+          "expected_shots": 0.0,
+          "name": "James William McConnell",
+          "start_probability": 0.0,
+          "uid": 2000108364
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 20.59526679943344,
+          "expected_shots": 0.0,
+          "name": "Isaac Angus Mabaya",
+          "start_probability": 0.0,
+          "uid": 2000108376
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 45.0,
+          "expected_shots": 0.5,
+          "name": "Víctor Muñoz Villanueva",
+          "start_probability": 0.5,
+          "uid": 2000126470
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 35.19981876427921,
+          "expected_shots": 0.0,
+          "name": "Abdukodir Khusanov",
+          "start_probability": 0.5,
+          "uid": 2000168014
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Wellity Lucky Omoruyi",
+          "start_probability": 0.0,
+          "uid": 2000191774
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Michael Mark Paul Laffey",
+          "start_probability": 0.0,
+          "uid": 2000191792
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 59.99074130252361,
+          "expected_shots": 0.5,
+          "name": "Lewis Terence Koumas",
+          "start_probability": 0.5,
+          "uid": 2000191802
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 52.68890717478697,
+          "expected_shots": 1.5,
+          "name": "Jayden Alexander Danns",
+          "start_probability": 0.5,
+          "uid": 2000191846
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harrison Percival Parker",
+          "start_probability": 0.0,
+          "uid": 2000272785
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lucas Pitt",
+          "start_probability": 0.0,
+          "uid": 2000276738
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Clae Ewing",
+          "start_probability": 0.0,
+          "uid": 2000276770
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kian Lee Noble",
+          "start_probability": 0.0,
+          "uid": 2000282868
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Rhys Lloyd Thomas",
+          "start_probability": 0.0,
+          "uid": 2000282899
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oliver Louis Tevenan",
+          "start_probability": 0.0,
+          "uid": 2000282906
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oluwafemi David Adetayo Fapetu",
+          "start_probability": 0.0,
+          "uid": 2000283424
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Noah Adekoya",
+          "start_probability": 0.0,
+          "uid": 2000285680
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Mahamadou Sangaré",
+          "start_probability": 0.0,
+          "uid": 2000288733
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Matthew James Henderson-Hall",
+          "start_probability": 0.0,
+          "uid": 2000296039
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Brooklyn Nfonkeu Feuba",
+          "start_probability": 0.0,
+          "uid": 2000296461
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 52.190204540903096,
+          "expected_shots": 0.0,
+          "name": "Ayyoub Bouaddi",
+          "start_probability": 0.5,
+          "uid": 2000381365
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "William Wright",
+          "start_probability": 0.0,
+          "uid": 2000388194
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Max-Edgar Chabot",
+          "start_probability": 0.0,
+          "uid": 2000392591
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Bailey Hall",
+          "start_probability": 0.0,
+          "uid": 2000399741
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Oliver O'Connor",
+          "start_probability": 0.0,
+          "uid": 2000399794
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ryan Cowley",
+          "start_probability": 0.0,
+          "uid": 2000399824
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Prince Kobé Cissé",
+          "start_probability": 0.0,
+          "uid": 2000399858
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Alvin Ayman",
+          "start_probability": 0.0,
+          "uid": 2000399893
+        },
+        {
+          "appearance_probability": 0.5,
+          "expected_minutes": 2.1708343778481085,
+          "expected_shots": 0.0,
+          "name": "Kaden Elliot Braithwaite",
+          "start_probability": 0.0,
+          "uid": 2000415453
+        },
+        {
+          "appearance_probability": 1.0,
+          "expected_minutes": 13.651615632794925,
+          "expected_shots": 0.0,
+          "name": "Ryan Kelly McAidoo",
+          "start_probability": 0.0,
+          "uid": 2000416598
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Charlie Courtman",
+          "start_probability": 0.0,
+          "uid": 2000436720
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Kylan Midwood",
+          "start_probability": 0.0,
+          "uid": 2000437793
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Tyrone Prosper William Samba",
+          "start_probability": 0.0,
+          "uid": 2000437952
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harrison Miles",
+          "start_probability": 0.0,
+          "uid": 2000438102
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Finlay Gorman",
+          "start_probability": 0.0,
+          "uid": 2000498739
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Cameron Finn Williams",
+          "start_probability": 0.0,
+          "uid": 2000499492
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Cian George Powney Wain",
+          "start_probability": 0.0,
+          "uid": 2000499521
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lucas James Clarke",
+          "start_probability": 0.0,
+          "uid": 2000502095
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Lenix Conde",
+          "start_probability": 0.0,
+          "uid": 2000502098
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harry Sam Moran",
+          "start_probability": 0.0,
+          "uid": 2000502100
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Harvey Michael Owen",
+          "start_probability": 0.0,
+          "uid": 2000502101
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "La'more Lake Lee Forrester",
+          "start_probability": 0.0,
+          "uid": 2000502106
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Ellis David Hickman",
+          "start_probability": 0.0,
+          "uid": 2000502112
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Finn Inglethorpe",
+          "start_probability": 0.0,
+          "uid": 2000502158
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Finley Grigg",
+          "start_probability": 0.0,
+          "uid": 2000506287
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Yohann Obin",
+          "start_probability": 0.0,
+          "uid": 2000510837
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Timeo Whisker",
+          "start_probability": 0.0,
+          "uid": 2000511337
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Floyd Samba",
+          "start_probability": 0.0,
+          "uid": 2000511340
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "Teddie Lamb",
+          "start_probability": 0.0,
+          "uid": 2000511353
+        },
+        {
+          "appearance_probability": 0.0,
+          "expected_minutes": 0.0,
+          "expected_shots": 0.0,
+          "name": "El Hadji Mor Talla Ndiaye",
+          "start_probability": 0.0,
+          "uid": 2000524865
+        }
+      ],
+      "registered_fm_players": {
+        "away": 37,
+        "home": 40
+      },
+      "same_second_collision_probability": 0.0,
+      "seed": 64,
+      "unattributed_goals_per_match": 0.0
+    }
+  ],
+  "model": "simulate_second_resolved_dynamic_mental_match",
+  "roster": "2026/27 registered squad list + matched FM26 attributes",
+  "status": "exploratory player-level pre-match scenario; not a statistically validated EPL event forecast"
+}

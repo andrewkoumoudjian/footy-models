@@ -79,11 +79,6 @@ fn date_from(text: &str) -> Date {
         .expect("valid date")
 }
 
-fn checksum(path: &str) -> u64 {
-    let bytes = std::fs::read(path).unwrap_or_else(|error| panic!("read {path}: {error}"));
-    stable_hash64(&bytes)
-}
-
 fn stable_hash64(bytes: &[u8]) -> u64 {
     // FNV-1a; deterministic provenance checksum for the manifest record.
     let mut hash: u64 = 0xcbf29ce484222325;
@@ -353,8 +348,6 @@ fn build_and_forecast(
             }
         }
     }
-    let mut player_matches = sporting.player_matches(&canonical_base);
-    player_matches.retain(|value| true);
     let mut enriched: Vec<PlayerMatch> = Vec::new();
     {
         // Recreate PlayerMatch rows for stat observations that have a minutes join.
@@ -542,7 +535,7 @@ fn calibrate_mental(home: ClubId, away: ClubId, input: &footy_match::PrimitiveMa
 
 #[allow(clippy::too_many_arguments)]
 fn calibrate_input(
-    args: &Args,
+    _args: &Args,
     fx_id: &str,
     fx_date: Date,
     home_club: ClubId,

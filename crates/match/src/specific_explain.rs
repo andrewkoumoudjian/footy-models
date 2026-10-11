@@ -1,5 +1,5 @@
 use crate::lineup::{sample_lineup, LineupProjectionInput, SampledStarter};
-use crate::specific::{AttributeMatchupRule, PlayerAttributeState, PlayerAttributeValue, SpecificPlayerEventModel};
+use crate::specific::{AttributeMatchupRule, PlayerAttributeState, SpecificPlayerEventModel};
 use footy_core::{AttributeId, MetricId, PlayerId, Probability};
 use footy_forecast::Rng64;
 use std::collections::BTreeMap;
@@ -132,6 +132,7 @@ fn overlap(attacker: &SampledStarter, defender: &SampledStarter, sigma: f64) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::specific::PlayerAttributeValue;
     use crate::lineup::{FormationPrior, FormationTemplate, LineupCandidate, LineupSamplingParameters, LockedStarter, RoleFit, TacticalSlot};
     use footy_core::{ClubId, RoleId};
     use footy_forecast::StatFamily;
