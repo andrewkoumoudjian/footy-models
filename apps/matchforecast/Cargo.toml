@@ -28,6 +28,10 @@ path = "src/backtest.rs"
 name = "footy-matchforecast-pl-hist"
 path = "src/main_pl_hist.rs"
 
+[[bin]]
+name = "footy-matchforecast-math"
+path = "src/math_engine_main.rs"
+
 [dependencies]
 footy-core = { path = "../../crates/core" }
 footy-source-stats = { path = "../../crates/source-stats" }
