@@ -7,6 +7,7 @@
 /data/**/*.bin
 /data/**/*.parquet
 /data/**/*.pdf
+/data/**/*.html
 
 # Large generated Monte Carlo paths, Python bytecode
 /artifacts/**/*.tsv
