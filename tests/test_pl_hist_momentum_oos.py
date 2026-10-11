@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from score_pl_hist_momentum_oos import (
     observed_windows, observed_substitution_bins, score_fixture, oos_split,
-    fit_only_goal_clock_prior,
+    fit_only_goal_clock_prior, summarize,
 )
 import json
 import tempfile
@@ -111,7 +111,12 @@ class HistMomentumTest(unittest.TestCase):
             fit_only_sub_prior=[0.10] * 6,
         )
         self.assertEqual(scored["forecast_substitution_target"], "completed_replacements")
-        self.assertEqual(scored["expected_any_substitution_triggers"], [0.2] * 6)
+        self.assertEqual(scored["predicted_completed_substitution_probability"], [0.2] * 6)
+        self.assertNotIn("expected_any_substitution_triggers", scored)
+        scores = summarize([scored])
+        self.assertTrue(scores["substitution_forecast_is_completed_event_matched"])
+        self.assertIn("completed_substitution_brier_engine", scores)
+        self.assertNotIn("substitution_trigger_vs_completed_brier_engine", scores)
         del f["windows_15min"][0]["p_completed_substitution"]
         with self.assertRaisesRegex(ValueError, "mixed attempted/completed"):
             score_fixture(

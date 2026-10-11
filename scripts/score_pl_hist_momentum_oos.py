@@ -266,7 +266,8 @@ def score_fixture(
             raise ValueError("invalid event probability")
         result.update({
             "actual_completed_substitution_bins": actual_subs,
-            "expected_any_substitution_triggers": predicted_subs,
+            ("predicted_completed_substitution_probability" if completed_contract
+             else "expected_any_substitution_triggers"): predicted_subs,
             "forecast_substitution_target": (
                 "completed_replacements" if completed_contract
                 else "attempted_substitution_or_injury_events"
@@ -323,10 +324,10 @@ def summarize(rows):
         if len(targets) != 1:
             raise ValueError("mixed substitution event definitions in scored fixtures")
         bins = sums("substitution_bins")
-        summary["substitution_trigger_vs_completed_brier_engine"] = (
+        engine_brier = (
             sums("substitution_proxy_brier_sum_engine") / bins
         )
-        summary["substitution_trigger_vs_completed_brier_fit_only"] = (
+        prior_brier = (
             sums("substitution_proxy_brier_sum_fit_only") / bins
         )
         summary["substitution_proxy_brier_delta_engine_minus_fit_only"] = (
@@ -335,6 +336,13 @@ def summarize(rows):
         ) / bins
         if targets == {"completed_replacements"}:
             summary["substitution_forecast_is_completed_event_matched"] = True
+            summary["completed_substitution_brier_engine"] = engine_brier
+            summary["completed_substitution_brier_fit_only"] = prior_brier
+        else:
+            # Historical v1 forecast only emitted attempts. Do not label these
+            # probabilities calibrated completed substitutions.
+            summary["substitution_trigger_vs_completed_brier_engine"] = engine_brier
+            summary["substitution_trigger_vs_completed_brier_fit_only"] = prior_brier
     return summary
 
 
@@ -405,6 +413,12 @@ def main():
         "data_scope": "2015-16 StatsBomb EPL event-covered fixtures only",
         "source_forecast": str(args.predictions),
         "source_engine_paths": forecast["paths"],
+        "source_sampler": (
+            "role_neutral_exact_cardinality_research"
+            if forecast.get("input_contract", {}).get("exact_cardinality_lineup")
+            else "production_sequential_lineup"
+        ),
+        "fresh_independent_oos": False if forecast.get("input_contract", {}).get("exact_cardinality_lineup") else None,
         "fit_fixtures": len(fit),
         "fit_only_goals": fit_only_goals,
         "fit_only_clock_prior": fitted_goal_clock,
@@ -428,7 +442,12 @@ def main():
             "Flat timed-goal benchmark is deliberately simple; stronger as-of time priors are needed.",
             "Goal-weight 3 and the display index were already authored, not selected using these OOS goals.",
             "This evaluates observed-stat-only 2015/16 model, not FM26 in October 2026.",
-            "The optional substitution Brier compares ANY model substitution TRIGGER to recorded completed substitutions; these are not identical events or calibrated probability labels.",
+            ("Research sampler was proposed after these held-out fixtures had already been inspected; do not use these results to promote or tune it."
+             if forecast.get("input_contract", {}).get("exact_cardinality_lineup")
+             else "Frozen reference forecasting inputs must not be retuned using the evaluated fixtures."),
+            ("Completed-substitution Brier compares actual successful replacements to the matching modeled completed-event occurrence; evidence remains research-only."
+             if rows and rows[0].get("forecast_substitution_target") == "completed_replacements"
+             else "Legacy substitution Brier compares model attempts to completed replacements; these are not identical event definitions."),
         ],
         "oos_fixtures": rows,
     }
