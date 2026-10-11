@@ -3,7 +3,8 @@ use crate::{DynamicMentalTransitionParameters, MentalMatchModel, PrimitiveMatchS
 
 pub use crate::second_resolved_mc::{
     SecondResolvedDynamicMentalForecast, SecondResolvedEventSummary,
-    SecondResolvedPlayerMentalForecast, SecondResolvedSimulationParameters,
+    SecondResolvedPlayerMentalForecast, SecondResolvedPlayerOccurrenceForecast,
+    SecondResolvedScorelineForecast, SecondResolvedSimulationParameters,
     SecondResolvedStateEventKind, DYNAMIC_MENTAL_REFERENCE_SECONDS,
 };
 

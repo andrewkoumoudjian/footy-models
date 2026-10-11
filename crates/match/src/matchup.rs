@@ -114,6 +114,52 @@ pub fn build_metric_matchup_edges(
 /// Collapse the graph into the two context terms consumed by a player's metric process. This is
 /// deliberately separate from the event model: the same matchup primitive can influence dribbles,
 /// crosses, tackles, aerials, xG, or any future metric with different sensitivities.
+///
+/// Batched variant: builds the metric matchup graph once and returns the collapsed context for
+/// every starter. The per-player entry point above remains for single lookups; the match simulator
+/// uses this batch form so the O(starters × defenders) graph is not rebuilt per player-metric on
+/// every clock tick.
+pub fn player_metric_interaction_contexts(
+    own_lineup: &SampledLineup,
+    opponent_lineup: &SampledLineup,
+    states: &[PlayerMatchupState],
+    rules: &[MatchupRule],
+    synergies: &[PairwiseSynergy],
+    metric: MetricId,
+    spatial_sigma: f64,
+) -> Option<BTreeMap<PlayerId, PlayerMetricInteractionContext>> {
+    let edges = build_metric_matchup_edges(own_lineup, opponent_lineup, states, rules, metric, spatial_sigma)?;
+    let mut numerator = BTreeMap::<PlayerId, f64>::new();
+    let mut denominator = BTreeMap::<PlayerId, f64>::new();
+    for edge in &edges {
+        *numerator.entry(edge.attacker).or_default() += edge.ability_advantage * edge.spatial_weight;
+        *denominator.entry(edge.attacker).or_default() += edge.spatial_weight;
+    }
+    let mut out = BTreeMap::new();
+    for starter in &own_lineup.starters {
+        let total = denominator.get(&starter.player).copied().unwrap_or(0.0);
+        let opponent_advantage = if total > 0.0 {
+            numerator.get(&starter.player).copied().unwrap_or(0.0) / total
+        } else {
+            0.0
+        };
+        let mut teammate_numerator = 0.0;
+        let mut teammate_denominator = 0.0;
+        for teammate in own_lineup.starters.iter().filter(|value| value.player != starter.player) {
+            let Some(strength) = synergy_strength(starter.player, teammate.player, metric, synergies) else { continue; };
+            if !strength.is_finite() { continue; }
+            let weight = teammate_spatial_overlap(starter, teammate, spatial_sigma);
+            teammate_numerator += strength * weight;
+            teammate_denominator += weight;
+        }
+        let teammate_support = if teammate_denominator > 0.0 { teammate_numerator / teammate_denominator } else { 0.0 };
+        out.insert(starter.player, PlayerMetricInteractionContext {
+            player: starter.player, metric, opponent_advantage, teammate_support,
+        });
+    }
+    Some(out)
+}
+
 pub fn player_metric_interaction_context(
     player: PlayerId,
     metric: MetricId,
@@ -253,6 +299,43 @@ mod tests {
         let rules = [MatchupRule { metric: Some(metric), attacker_dimension: AbilityDimension::BallProgression, defender_dimension: AbilityDimension::Defending, weight: 1.0, scale: 20.0 }];
         let context = player_metric_interaction_context(PlayerId(1), metric, &attack, &defend, &states, &rules, &[], 0.25).unwrap();
         assert!(context.opponent_advantage > 0.0);
+    }
+
+    #[test]
+    fn batched_contexts_match_per_player_contexts() {
+        let own = SampledLineup {
+            club: ClubId(1), formation_id: 1,
+            starters: vec![
+                SampledStarter { player: PlayerId(1), slot: 1, role: RoleId(1), x: 0.7, y: 0.1, minutes: 90.0, role_fit: 1.0, fatigue: 0.0 },
+                SampledStarter { player: PlayerId(3), slot: 2, role: RoleId(2), x: 0.6, y: 0.15, minutes: 90.0, role_fit: 1.0, fatigue: 0.0 },
+                SampledStarter { player: PlayerId(4), slot: 3, role: RoleId(3), x: 0.4, y: 0.7, minutes: 90.0, role_fit: 1.0, fatigue: 0.0 },
+            ],
+        };
+        let opponent = SampledLineup {
+            club: ClubId(2), formation_id: 1,
+            starters: vec![
+                SampledStarter { player: PlayerId(2), slot: 1, role: RoleId(1), x: 0.3, y: 0.9, minutes: 90.0, role_fit: 1.0, fatigue: 0.0 },
+                SampledStarter { player: PlayerId(5), slot: 2, role: RoleId(2), x: 0.5, y: 0.8, minutes: 90.0, role_fit: 1.0, fatigue: 0.0 },
+            ],
+        };
+        let states = [
+            PlayerMatchupState { player: PlayerId(1), ability: ability(15.0, 9.0) },
+            PlayerMatchupState { player: PlayerId(3), ability: ability(11.0, 10.0) },
+            PlayerMatchupState { player: PlayerId(4), ability: ability(9.0, 12.0) },
+            PlayerMatchupState { player: PlayerId(2), ability: ability(10.0, 14.0) },
+            PlayerMatchupState { player: PlayerId(5), ability: ability(10.0, 10.0) },
+        ];
+        let metric = MetricId(7);
+        let rules = [MatchupRule { metric: Some(metric), attacker_dimension: AbilityDimension::BallProgression, defender_dimension: AbilityDimension::Defending, weight: 1.0, scale: 20.0 }];
+        let synergies = [PairwiseSynergy { a: PlayerId(1), b: PlayerId(3), metric: Some(metric), strength: 0.2 }];
+        let batched = player_metric_interaction_contexts(&own, &opponent, &states, &rules, &synergies, metric, 0.25).unwrap();
+        for starter in &own.starters {
+            let single = player_metric_interaction_context(
+                starter.player, metric, &own, &opponent, &states, &rules, &synergies, 0.25,
+            ).unwrap();
+            let batch = batched.get(&starter.player).copied().unwrap();
+            assert_eq!(single, batch, "batched context must match the per-player path");
+        }
     }
 
     #[test]

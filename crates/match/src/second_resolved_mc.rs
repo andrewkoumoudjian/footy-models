@@ -2,7 +2,7 @@ use crate::lineup::{
     sample_lineup, FormationProjection, LineupCandidate, LineupProjection, LineupProjectionInput,
     PlayerLineupProjection, RoleProjection, SampledLineup, SampledStarter,
 };
-use crate::matchup::player_metric_interaction_context;
+use crate::matchup::{player_metric_interaction_contexts, PlayerMetricInteractionContext};
 use crate::psychology::{
     MatchMentalContext, MentalDimension, MentalMatchModel, PlayerMentalState, TeamMentalDimension,
     TeamMentalState,
@@ -100,6 +100,12 @@ pub struct SecondResolvedDynamicMentalForecast {
     pub player_minute_events: Vec<SecondResolvedPlayerMinuteForecast>,
     /// Expected goals that could not be assigned to a currently active player.
     pub unattributed_goals_per_match: f64,
+    /// Joint exact-score table over the same complete paths. Probabilities sum to one.
+    pub scoreline_distribution: Vec<SecondResolvedScorelineForecast>,
+    /// Per-player P(at least one simulated scored goal) from the same paths.
+    pub player_goal_occurrence: Vec<SecondResolvedPlayerOccurrenceForecast>,
+    /// Per-player P(at least one sampled primary-assist credit) from the same paths.
+    pub player_assist_occurrence: Vec<SecondResolvedPlayerOccurrenceForecast>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -128,6 +134,30 @@ pub struct SecondResolvedPlayerMinuteForecast {
     pub expected_goals: f64,
     /// Heuristic sampled assist attribution, not a fitted assist model.
     pub expected_assists_proxy: f64,
+}
+
+/// One joint exact-score cell observed across the independent match paths.
+///
+/// This is the same empirical distribution from which the W/D/L outcome and the
+/// per-team goal marginals are derived, so scoreline, totals and 1X2 cannot
+/// contradict each other.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SecondResolvedScorelineForecast {
+    pub home_goals: u16,
+    pub away_goals: u16,
+    pub probability: f64,
+}
+
+/// Path-observed occurrence of a credited player event (a simulated scored goal
+/// or a sampled primary-assist credit). This is a same-path probability, never
+/// `P(goal) + P(assist)` or a collapsed aggregate.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SecondResolvedPlayerOccurrenceForecast {
+    pub player: PlayerId,
+    /// P(at least one credited event) over independent paths.
+    pub occurrence_probability: f64,
+    /// Expected credited events per match over the same paths.
+    pub expected_per_match: f64,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -344,6 +374,11 @@ pub fn simulate_second_resolved_dynamic_mental_match(
     let mut minute_windows = vec![WindowAggregate::default(); minute_len];
     let mut player_minute_aggregate = BTreeMap::<(u16, PlayerId), PlayerMinuteAggregate>::new();
     let mut unattributed_goals = 0_u32;
+    let mut scoreline_counts = BTreeMap::<(u32, u32), u64>::new();
+    let mut player_goal_paths = BTreeMap::<PlayerId, u32>::new();
+    let mut player_goal_totals = BTreeMap::<PlayerId, u64>::new();
+    let mut player_assist_paths = BTreeMap::<PlayerId, u32>::new();
+    let mut player_assist_totals = BTreeMap::<PlayerId, u64>::new();
     let home_player_ids: BTreeSet<PlayerId> = home_squad.iter().copied().collect();
     let mut home_lineups = LineupAggregate::default();
     let mut away_lineups = LineupAggregate::default();
@@ -397,6 +432,8 @@ pub fn simulate_second_resolved_dynamic_mental_match(
         let mut path_metrics = BTreeMap::<(PlayerId, MetricId), PathMetric>::new();
         let mut score_home = 0_u32;
         let mut score_away = 0_u32;
+        let mut path_scorers = BTreeSet::<PlayerId>::new();
+        let mut path_assisters = BTreeSet::<PlayerId>::new();
         let mut path_windows = [PathWindow::default(), PathWindow::default(), PathWindow::default(),
             PathWindow::default(), PathWindow::default(), PathWindow::default()];
         let mut path_minutes = vec![PathWindow::default(); minute_len];
@@ -485,8 +522,12 @@ pub fn simulate_second_resolved_dynamic_mental_match(
                             let attribution=player_minute_aggregate.entry((minute_index as u16, scorer)).or_default();
                             attribution.goals += 1;
                             attribution.shots += 1.0;
+                            path_scorers.insert(scorer);
+                            *player_goal_totals.entry(scorer).or_default() += 1;
                             if let Some(assister) = assist {
                                 player_minute_aggregate.entry((minute_index as u16, assister)).or_default().assists += 1;
+                                path_assisters.insert(assister);
+                                *player_assist_totals.entry(assister).or_default() += 1;
                             }
                         } else {unattributed_goals += 1;}
                     }
@@ -509,6 +550,9 @@ pub fn simulate_second_resolved_dynamic_mental_match(
         accumulate_path_windows(&mut windows, &mut path_windows);
         accumulate_path_windows(&mut minute_windows, &mut path_minutes);
         if path_collision { collision_paths = collision_paths.saturating_add(1); }
+        for player in path_scorers { *player_goal_paths.entry(player).or_default() += 1; }
+        for player in path_assisters { *player_assist_paths.entry(player).or_default() += 1; }
+        *scoreline_counts.entry((score_home, score_away)).or_default() += 1;
         home_goals.push(f64::from(score_home));
         away_goals.push(f64::from(score_away));
         match score_home.cmp(&score_away) {
@@ -609,9 +653,29 @@ pub fn simulate_second_resolved_dynamic_mental_match(
             expected_goals: f64::from(totals.goals) / f64::from(paths),
             expected_assists_proxy: f64::from(totals.assists) / f64::from(paths),
         }).collect();
+    let scoreline_distribution = scoreline_counts.into_iter()
+        .map(|((home, away), count)| SecondResolvedScorelineForecast {
+            home_goals: home.min(u32::from(u16::MAX)) as u16,
+            away_goals: away.min(u32::from(u16::MAX)) as u16,
+            probability: count as f64 / f64::from(paths),
+        })
+        .collect();
+    let player_goal_occurrence = all_squad.iter().map(|player| SecondResolvedPlayerOccurrenceForecast {
+        player: *player,
+        occurrence_probability: player_goal_paths.get(player).copied().unwrap_or(0) as f64 / f64::from(paths),
+        expected_per_match: player_goal_totals.get(player).copied().unwrap_or(0) as f64 / f64::from(paths),
+    }).collect();
+    let player_assist_occurrence = all_squad.iter().map(|player| SecondResolvedPlayerOccurrenceForecast {
+        player: *player,
+        occurrence_probability: player_assist_paths.get(player).copied().unwrap_or(0) as f64 / f64::from(paths),
+        expected_per_match: player_assist_totals.get(player).copied().unwrap_or(0) as f64 / f64::from(paths),
+    }).collect();
     Some(SecondResolvedDynamicMentalForecast {
         outcome, windows_15min, minutes_1min, player_minute_events,
         unattributed_goals_per_match: f64::from(unattributed_goals) / f64::from(paths),
+        scoreline_distribution,
+        player_goal_occurrence,
+        player_assist_occurrence,
         home_lineup,
         away_lineup,
         player_metrics,
@@ -760,12 +824,17 @@ fn team_rates(
     let opponent_context = if is_home { &input.away_context } else { &input.home_context };
     let attributes: BTreeMap<PlayerId, &PlayerAttributeState> = input.attribute_states.iter().map(|value| (value.player, value)).collect();
     let mut out = BTreeMap::new();
+    let mut interaction_cache: BTreeMap<MetricId, BTreeMap<PlayerId, PlayerMetricInteractionContext>> = BTreeMap::new();
     for starter in &own.starters {
         for model in input.event_models.iter().filter(|value| value.player == starter.player) {
-            let interaction = player_metric_interaction_context(
-                starter.player, model.metric, own, opponent, &input.player_states,
-                &input.aggregate_matchup_rules, &input.synergies, input.matchup_spatial_sigma,
-            )?;
+            if !interaction_cache.contains_key(&model.metric) {
+                let contexts = player_metric_interaction_contexts(
+                    own, opponent, &input.player_states, &input.aggregate_matchup_rules,
+                    &input.synergies, model.metric, input.matchup_spatial_sigma,
+                )?;
+                interaction_cache.insert(model.metric, contexts);
+            }
+            let interaction = interaction_cache.get(&model.metric)?.get(&starter.player).copied()?;
             let own_attribute = attributes.get(&starter.player)
                 .map(|state| own_attribute_adjustment(state, model.metric, &input.own_attribute_loadings))
                 .unwrap_or(0.0);
@@ -1545,6 +1614,240 @@ fn quantile(sorted: &[f64], probability: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::channels::CausalChannelGraph;
+    use crate::lineup::{FormationPrior, FormationTemplate, LineupSamplingParameters, RoleFit, TacticalSlot};
+    use crate::matchup::PlayerMatchupState;
+    use crate::psychology::{MentalMeasure, MentalModelParameters, MentalSelectionLoading, StablePsychologyState};
+    use crate::specific::{SpecificGoalProcess, SpecificInMatchParameters, SpecificMatchEnvironment, SpecificPlayerEventModel};
+    use footy_core::{Confidence, MatchId};
+    use footy_forecast::StatFamily;
+    use footy_state::AbilityVector;
+
+    fn test_formation() -> FormationTemplate {
+        FormationTemplate {
+            id: 433,
+            slots: (0..11).map(|slot| TacticalSlot {
+                slot: slot as u8,
+                role: RoleId(slot as u16 + 1),
+                x: 0.05 + slot as f64 * 0.07,
+                y: f64::from(slot % 5) / 4.0,
+            }).collect(),
+        }
+    }
+
+    fn test_candidate(player: u64) -> LineupCandidate {
+        LineupCandidate {
+            player: PlayerId(player),
+            start_probability: if player <= 11 { 0.85 } else { 0.25 },
+            availability_probability: 1.0,
+            ability_index: 10.0,
+            fatigue: 0.1,
+            expected_minutes_if_start: if player <= 11 { 80.0 } else { 30.0 },
+            minutes_sigma: 8.0,
+            substitute_probability: if player <= 11 { 0.1 } else { 0.6 },
+            role_fits: (1..=11).map(|role| RoleFit {
+                role: RoleId(role),
+                fit: if u64::from(role) == player.min(11) { 1.0 } else { 0.3 },
+            }).collect(),
+        }
+    }
+
+    fn test_lineup(club: ClubId, base: u64) -> LineupProjectionInput {
+        LineupProjectionInput {
+            club,
+            formations: vec![FormationPrior { formation: test_formation(), probability: 1.0 }],
+            candidates: (0..14).map(|index| test_candidate(base + index)).collect(),
+            locked_starters: Vec::new(),
+            parameters: LineupSamplingParameters::default(),
+        }
+    }
+
+    fn test_input() -> PrimitiveMatchSimulationInput {
+        let home = test_lineup(ClubId(1), 1);
+        let away = test_lineup(ClubId(2), 101);
+        let all: Vec<PlayerId> = home.candidates.iter().chain(away.candidates.iter()).map(|value| value.player).collect();
+        PrimitiveMatchSimulationInput {
+            match_id: MatchId(7),
+            home: ClubId(1),
+            away: ClubId(2),
+            home_lineup: home,
+            away_lineup: away,
+            player_states: all.iter().map(|player| PlayerMatchupState {
+                player: *player,
+                ability: AbilityVector::from_components([10.0; 10]),
+            }).collect(),
+            attribute_states: Vec::new(),
+            event_models: all.iter().map(|player| SpecificPlayerEventModel {
+                player: *player,
+                metric: MetricId(1),
+                family: StatFamily::Count,
+                mean_per90: 1.0,
+                variance_per90: 2.0,
+                epistemic_sigma: 0.1,
+                reference_per90: 1.0,
+                aggregate_matchup_sensitivity: 0.0,
+                attribute_matchup_sensitivity: 0.0,
+                teammate_sensitivity: 0.0,
+                role_fit_sensitivity: 0.0,
+                fatigue_sensitivity: 0.0,
+            }).collect(),
+            own_attribute_loadings: Vec::new(),
+            aggregate_matchup_rules: Vec::new(),
+            attribute_matchup_rules: Vec::new(),
+            synergies: Vec::new(),
+            channel_graph: CausalChannelGraph {
+                metric_loadings: Vec::new(),
+                edges: Vec::new(),
+                goal_loadings: Vec::new(),
+            },
+            score_state_modifiers: Vec::new(),
+            incident_profiles: Vec::new(),
+            in_match: SpecificInMatchParameters {
+                injury_probability_per90: 0.02,
+                red_card_probability_per90: 0.02,
+                max_substitutions: 5,
+                minimum_tactical_substitution_minute: 58.0,
+            },
+            home_context: SpecificTeamContext {
+                club: ClubId(1),
+                residual_attack_log_adjustment: 0.0,
+                residual_defense_log_adjustment: 0.0,
+                metric_modifiers: Vec::new(),
+            },
+            away_context: SpecificTeamContext {
+                club: ClubId(2),
+                residual_attack_log_adjustment: 0.0,
+                residual_defense_log_adjustment: 0.0,
+                metric_modifiers: Vec::new(),
+            },
+            environment: SpecificMatchEnvironment {
+                home_residual_attack_log_adjustment: 0.1,
+                away_residual_attack_log_adjustment: 0.0,
+                metric_modifiers: Vec::new(),
+            },
+            goal_process: SpecificGoalProcess {
+                goals_per_team_match: 1.4,
+                home_advantage_multiplier: 1.09,
+                path_log_rate_sigma: 0.1,
+                max_abs_segment_log_adjustment: 1.2,
+                segments: 6,
+            },
+            matchup_spatial_sigma: 0.25,
+            max_player_rate_log_adjustment: 1.0,
+        }
+    }
+
+    fn test_mental(input: &PrimitiveMatchSimulationInput) -> MentalMatchModel {
+        let measure = |value: f64| MentalMeasure::new(value, Confidence::ONE).expect("measure");
+        let squad = |ids: &[PlayerId]| -> Vec<PlayerMentalState> {
+            ids.iter().map(|player| PlayerMentalState {
+                player: *player,
+                stable: StablePsychologyState {
+                    professionalism: measure(0.3),
+                    ambition: measure(0.3),
+                    consistency: measure(0.3),
+                    pressure_resilience: measure(0.3),
+                    adaptability: measure(0.3),
+                    leadership: measure(0.3),
+                    teamwork: measure(0.3),
+                    discipline: measure(0.3),
+                },
+                morale: measure(0.0),
+                self_belief: measure(0.0),
+                form: measure(0.0),
+                form_trend: measure(0.0),
+                motivation: measure(0.0),
+                role_satisfaction: measure(0.0),
+            }).collect()
+        };
+        let home_ids: Vec<PlayerId> = input.home_lineup.candidates.iter().map(|value| value.player).collect();
+        let away_ids: Vec<PlayerId> = input.away_lineup.candidates.iter().map(|value| value.player).collect();
+        MentalMatchModel {
+            players: [squad(&home_ids), squad(&away_ids)].concat(),
+            home_team: TeamMentalState {
+                club: input.home,
+                collective_morale: measure(0.0),
+                collective_belief: measure(0.0),
+                cohesion: measure(0.3),
+                leadership: measure(0.3),
+            },
+            away_team: TeamMentalState {
+                club: input.away,
+                collective_morale: measure(0.0),
+                collective_belief: measure(0.0),
+                cohesion: measure(0.3),
+                leadership: measure(0.3),
+            },
+            metric_loadings: Vec::new(),
+            team_metric_loadings: Vec::new(),
+            selection_loadings: vec![MentalSelectionLoading {
+                dimension: MentalDimension::Motivation,
+                start_logit_weight: 0.05,
+                substitute_logit_weight: 0.05,
+            }],
+            context: MatchMentalContext { pressure_intensity: 0.6, environmental_novelty: 0.15, hostility: 0.25 },
+            parameters: MentalModelParameters::default(),
+        }
+    }
+
+    #[test]
+    fn scoreline_distribution_matches_outcome_marginals_and_sums_to_one() {
+        let input = test_input();
+        let mental = test_mental(&input);
+        let forecast = simulate_second_resolved_dynamic_mental_match(
+            &input, &mental, DynamicMentalTransitionParameters::default(),
+            SecondResolvedSimulationParameters::default(), 2, 11,
+        ).expect("simulation");
+        let total: f64 = forecast.scoreline_distribution.iter().map(|cell| cell.probability).sum();
+        assert!((total - 1.0).abs() < 1e-9, "scoreline probabilities must sum to one");
+        assert!(forecast.scoreline_distribution.iter().all(|cell| cell.probability >= 0.0));
+        let home_win: f64 = forecast.scoreline_distribution.iter()
+            .filter(|cell| cell.home_goals > cell.away_goals).map(|cell| cell.probability).sum();
+        let draw: f64 = forecast.scoreline_distribution.iter()
+            .filter(|cell| cell.home_goals == cell.away_goals).map(|cell| cell.probability).sum();
+        let away_win: f64 = forecast.scoreline_distribution.iter()
+            .filter(|cell| cell.home_goals < cell.away_goals).map(|cell| cell.probability).sum();
+        assert!((home_win - f64::from(forecast.outcome.home_win.get())).abs() < 1e-9);
+        assert!((draw - f64::from(forecast.outcome.draw.get())).abs() < 1e-9);
+        assert!((away_win - f64::from(forecast.outcome.away_win.get())).abs() < 1e-9);
+    }
+
+    #[test]
+    fn goal_attribution_conserves_simulated_goals_and_occurrence_is_bounded() {
+        let input = test_input();
+        let mental = test_mental(&input);
+        let forecast = simulate_second_resolved_dynamic_mental_match(
+            &input, &mental, DynamicMentalTransitionParameters::default(),
+            SecondResolvedSimulationParameters::default(), 2, 23,
+        ).expect("simulation");
+        let attributed: f64 = forecast.player_goal_occurrence.iter().map(|row| row.expected_per_match).sum();
+        let simulated = forecast.outcome.home_goals.mean + forecast.outcome.away_goals.mean;
+        assert!(
+            (attributed + forecast.unattributed_goals_per_match - simulated).abs() < 1e-9,
+            "attributed {attributed} + unattributed {} != simulated {simulated}",
+            forecast.unattributed_goals_per_match,
+        );
+        for row in forecast.player_goal_occurrence.iter().chain(forecast.player_assist_occurrence.iter()) {
+            assert!((0.0..=1.0).contains(&row.occurrence_probability));
+            assert!(row.occurrence_probability <= row.expected_per_match + 1e-9);
+            assert!(row.expected_per_match >= 0.0);
+        }
+    }
+
+    #[test]
+    fn new_exports_are_reproducible_for_a_fixed_seed() {
+        let input = test_input();
+        let mental = test_mental(&input);
+        let run = || simulate_second_resolved_dynamic_mental_match(
+            &input, &mental, DynamicMentalTransitionParameters::default(),
+            SecondResolvedSimulationParameters::default(), 2, 5,
+        ).expect("simulation");
+        let first = run();
+        let second = run();
+        assert_eq!(first.scoreline_distribution, second.scoreline_distribution);
+        assert_eq!(first.player_goal_occurrence, second.player_goal_occurrence);
+        assert_eq!(first.player_assist_occurrence, second.player_assist_occurrence);
+    }
 
     #[test]
     fn assisted_goal_calibration_parameter_requires_valid_probability() {
