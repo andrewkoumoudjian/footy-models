@@ -67,6 +67,9 @@ def main():
     ap.add_argument("--fm-coeff", type=float, default=0.1)
     ap.add_argument("--paths", type=int, default=2500)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--expected-clubs", type=int, default=20)
+    ap.add_argument("--club-map", choices=["epl", "ucl"], default="epl",
+                    help="closed ESPN->canonical club map (default EPL)")
     ap.add_argument("--build", action="store_true",
                     help="rebuild the Rust engine before simulating")
     a = ap.parse_args()
@@ -89,12 +92,15 @@ def main():
         frozen_schedule.append(dest)
 
     from build_universal_bundle import fixtures_from_schedule
+    from build_universal_bundle import UCL_ESPN_TO_CANONICAL
     squads_raw = json.loads(a.squads.read_text())
-    fixtures = fixtures_from_schedule(frozen_schedule, squads_raw["teams"], as_of)
+    club_map = UCL_ESPN_TO_CANONICAL if a.club_map == "ucl" else None
+    fixtures = fixtures_from_schedule(frozen_schedule, squads_raw["teams"], as_of,
+                                      club_map)
     bundle = build_bundle(squads_path=a.squads, fixtures=fixtures, as_of=as_of,
                           espn_paths=a.espn, crosswalk_path=a.crosswalk,
                           history_path=a.history, results_path=a.results,
-                          ledger_path=a.ledger)
+                          ledger_path=a.ledger, expected_clubs=a.expected_clubs)
     inputs = [a.squads, a.history, a.results, *frozen_schedule, *a.espn,
               a.crosswalk, a.ledger]
     bundle["sources"] = {str(p): sha(p) for p in inputs}
@@ -109,12 +115,14 @@ def main():
     if not MODEL.exists():
         ap.error(f"engine binary missing; rerun with --build: {MODEL}")
     predictions_path = out / "predictions.json"
+    competition_label = a.club_map.upper()
     sim = [str(MODEL), str(bundle_path), str(predictions_path),
            "--paths", str(a.paths), "--seed", str(a.seed),
            "--red-per90", "0", "--score-effect", "0", "--man-advantage", "0",
            "--fm-effect", "0", "--selection-marginals", "false",
            "--max-subs", "0", "--heads-artifact", str(a.heads),
-           "--fm-priors", str(a.fm_priors), "--fm-coeff", str(a.fm_coeff)]
+           "--fm-priors", str(a.fm_priors), "--fm-coeff", str(a.fm_coeff),
+           "--competition-label", competition_label]
     subprocess.run(sim, cwd=ROOT, check=True, capture_output=True, text=True)
     validation = validate(bundle_path, predictions_path, paths=a.paths,
                           default_effects=True)

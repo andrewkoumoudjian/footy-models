@@ -15,8 +15,17 @@ import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+LEAGUES = {'eng.1', 'uefa.champions'}
 LEAGUE = 'eng.1'
-BASE = f'https://site.api.espn.com/apis/site/v2/sports/soccer/{LEAGUE}'
+
+
+def base_for(league):
+    if league not in LEAGUES:
+        raise ValueError(f'unsupported ESPN league {league!r}')
+    return f'https://site.api.espn.com/apis/site/v2/sports/soccer/{league}'
+
+
+BASE = base_for(LEAGUE)
 
 
 def parse_utc(value):
@@ -169,8 +178,8 @@ def normalize_match(summary, event, as_of_date):
     }
 
 
-def request_json(url):
-    if not url.startswith(BASE + '/'):
+def request_json(url, base=BASE):
+    if not url.startswith(base + '/'):
         raise ValueError('unsupported untrusted provider URL')
     # Local provider access in this environment uses curl's CA/proxy settings;
     # urllib defaults currently receive an HTTP 403 from this endpoint.
@@ -182,19 +191,25 @@ def request_json(url):
     return json.loads(raw)
 
 
-def fetch(as_of, since, delay, raw_dir):
+def fetch(as_of, since, delay, raw_dir, league=LEAGUE, dates=None):
     # Calendar is sourced live, but a completed fixture is only valid when the
     # *entire calendar date* precedes the declared as_of calendar date.
-    calendar = request_json(BASE + '/scoreboard?dates=' + as_of.strftime('%Y%m%d'))
-    days = sorted({
-        date.fromisoformat(value[:10]) for value in calendar['leagues'][0]['calendar']
-        if since <= date.fromisoformat(value[:10]) < as_of
-    })
+    base = base_for(league)
+    if dates is None:
+        calendar = request_json(base + '/scoreboard?dates=' + as_of.strftime('%Y%m%d'),
+                                base)
+        days = sorted({
+            date.fromisoformat(value[:10]) for value in calendar['leagues'][0]['calendar']
+            if since <= date.fromisoformat(value[:10]) < as_of
+        })
+    else:
+        days = sorted({d for d in dates if since <= d < as_of})
     collected = {}
     incomplete = []
     source_hashes = {}
     for day in days:
-        scoreboard = request_json(BASE + '/scoreboard?dates=' + day.strftime('%Y%m%d'))
+        scoreboard = request_json(base + '/scoreboard?dates=' + day.strftime('%Y%m%d'),
+                                  base)
         board_path = raw_dir / ('scoreboard_' + day.strftime('%Y%m%d') + '.json')
         body = stable_json(scoreboard)
         board_path.write_text(body)
@@ -209,7 +224,7 @@ def fetch(as_of, since, delay, raw_dir):
                 continue
             if eid in collected:
                 raise ValueError('duplicate ESPN fixture ID across calendar days')
-            summary = request_json(BASE + f'/summary?event={eid}')
+            summary = request_json(base + f'/summary?event={eid}', base)
             raw_path = raw_dir / f'summary_{eid}.json'
             body = stable_json(summary)
             if raw_path.exists():
@@ -235,7 +250,12 @@ def main():
     p.add_argument('--raw-dir', type=Path,
                    help='immutable raw ESPN responses; defaults to output path with .raw extension')
     p.add_argument('--delay', type=float, default=0.15,
-                   help='sleep between provider calls; API policies remain authoritative')
+                     help='sleep between provider calls; API policies remain authoritative')
+    p.add_argument('--league', default=LEAGUE, choices=sorted(LEAGUES),
+                   help='ESPN league slug (default eng.1; uefa.champions for UCL)')
+    p.add_argument('--dates', nargs='*', default=None,
+                   help='explicit YYYY-MM-DD calendar dates to visit (required for '
+                        'leagues whose scoreboard calendar is not a date list)')
     args = p.parse_args()
     raw_dir = args.raw_dir or args.output.with_suffix('.raw')
     if args.output.exists() or raw_dir.exists():
@@ -246,13 +266,19 @@ def main():
         p.error('invalid request delay')
     started = datetime.now(timezone.utc).isoformat()
     raw_dir.mkdir(parents=True)
-    matches, rejects, visited_days, hashes = fetch(args.as_of, args.since, args.delay, raw_dir)
+    explicit = ([date.fromisoformat(v) for v in args.dates]
+                if args.dates else None)
+    if args.league != LEAGUE and explicit is None:
+        p.error('--dates is required for non-default leagues')
+    matches, rejects, visited_days, hashes = fetch(
+        args.as_of, args.since, args.delay, raw_dir,
+        league=args.league, dates=explicit)
     if not matches:
         raise RuntimeError('no complete historical ESPN match summaries were found')
     frozen = {
         'schema':'espn_player_appearances_v1',
         'provider':'ESPN site.api.espn.com summary via soccerdata-compatible contract',
-        'source_url':BASE, 'source_league':LEAGUE,
+        'source_url':base_for(args.league), 'source_league':args.league,
         'retrieved_started_at_utc':started,
         'retrieved_completed_at_utc':datetime.now(timezone.utc).isoformat(),
         'as_of_exclusive_calendar_date':args.as_of.isoformat(),

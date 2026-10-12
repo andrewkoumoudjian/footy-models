@@ -133,7 +133,9 @@ def rank_person(official,club,reep_id,record,linked_tm,tm_rows,native):
         tm_tier=shared_name(official,tm['name'])
         # Names are supplementary; Reep itself is the identity authority
         # tying FM UIDs to typed Transfermarkt provider IDs.
-        club_ok=club_matches(TEAM_ALIASES[club],tm.get('current_club_name',''))
+        # TEAM_ALIASES maps short canonical club keys to full official names
+        # for the EPL path; non-EPL canonical keys already are full names.
+        club_ok=club_matches(TEAM_ALIASES.get(club,club),tm.get('current_club_name',''))
         tms.append((tm_tier,int(club_ok),tid,tm))
     tms.sort(key=lambda t:(t[0],t[1],t[2]),reverse=True)
     best=tms[0] if tms else None
@@ -444,17 +446,22 @@ def read_sortitoutsi_corrob(roster_path,map_path,official_roster,local_fm):
 
 
 def resolve_official_roster(official_roster,active_path,fm_path,tm_path,
-                            si_roster_path=None,si_map_path=None,complete_fm_path=None):
+                            si_roster_path=None,si_map_path=None,complete_fm_path=None,
+                            expected_clubs=20):
     """Single source-neutral implementation used by the *normal* EPL command.
 
     This function starts from ZERO name-guessed UIDs. Full Reep resolution,
     native exact legal names, SI->binary UID and independent TM are all
     consulted in one deterministic execution, with no post-hoc UID patchlist.
+
+    expected_clubs guards the full-league invariant (20 for EPL, 36 for the
+    UCL league phase); the matching logic itself is source-neutral.
     """
     import duckdb
     official=json.loads(json.dumps(official_roster))
-    if len(official['teams'])!=20:
-        raise ValueError('canonical identity resolver requires all 20 EPL clubs')
+    if len(official['teams'])!=expected_clubs:
+        raise ValueError(f'canonical identity resolver requires all {expected_clubs} clubs, '
+                         f'got {len(official["teams"])}')
     if any(p.get('fm_uid') for block in official['teams'].values()
            for p in block['players']):
         raise ValueError('canonical Reep-first input must be raw official registrations, not old FM guesses')

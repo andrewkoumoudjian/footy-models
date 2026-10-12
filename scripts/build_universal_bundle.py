@@ -92,6 +92,30 @@ ESPN_TO_CANONICAL = {
     "Sunderland": "Sunderland",
 }
 
+# UCL league-phase 2026-27: ESPN scoreboard displayName == canonical squad
+# name for all 36 clubs (verified against the frozen MD2/MD3 boards and the
+# roster snapshot). Closed identity map; unknown names fail loudly.
+UCL_ESPN_TO_CANONICAL = {
+    "AEK Athens": "AEK Athens", "AS Roma": "AS Roma", "Arsenal": "Arsenal",
+    "Aston Villa": "Aston Villa", "Atlético Madrid": "Atlético Madrid",
+    "Barcelona": "Barcelona", "Bayern Munich": "Bayern Munich",
+    "Bodo/Glimt": "Bodo/Glimt", "Borussia Dortmund": "Borussia Dortmund",
+    "Club Brugge": "Club Brugge", "Como": "Como", "FC Porto": "FC Porto",
+    "Fenerbahce": "Fenerbahce", "Feyenoord Rotterdam": "Feyenoord Rotterdam",
+    "Galatasaray": "Galatasaray", "Internazionale": "Internazionale",
+    "LASK Linz": "LASK Linz", "Lens": "Lens", "Lille": "Lille",
+    "Liverpool": "Liverpool", "Manchester City": "Manchester City",
+    "Manchester United": "Manchester United", "Napoli": "Napoli",
+    "PSV Eindhoven": "PSV Eindhoven",
+    "Paris Saint-Germain": "Paris Saint-Germain", "RB Leipzig": "RB Leipzig",
+    "Real Betis": "Real Betis", "Real Madrid": "Real Madrid",
+    "Sabah FK": "Sabah FK", "Shakhtar Donetsk": "Shakhtar Donetsk",
+    "Slavia Prague": "Slavia Prague",
+    "Slovan Bratislava": "Slovan Bratislava", "Sporting CP": "Sporting CP",
+    "VfB Stuttgart": "VfB Stuttgart", "Viking FK": "Viking FK",
+    "Villarreal": "Villarreal",
+}
+
 
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -115,9 +139,10 @@ def provisional_id(club: str, official_name: str) -> int:
     return fnv1a64(f"official:{club}:{official_name}") | (1 << 63)
 
 
-def canonical_club(name: str) -> str:
+def canonical_club(name: str, club_map: dict | None = None) -> str:
+    table = ESPN_TO_CANONICAL if club_map is None else club_map
     try:
-        return ESPN_TO_CANONICAL[name.strip()]
+        return table[name.strip()]
     except KeyError:
         raise ValueError(f"unknown club identity {name!r}; refusing to alias")
 
@@ -147,7 +172,8 @@ def fixtures_from_tsv(path: Path, squads: dict, as_of: date) -> list[dict]:
     return fixtures
 
 
-def fixtures_from_schedule(paths: list[Path], squads: dict, as_of: date) -> list[dict]:
+def fixtures_from_schedule(paths: list[Path], squads: dict, as_of: date,
+                            club_map: dict | None = None) -> list[dict]:
     fixtures = []
     for path in paths:
         board = json.loads(path.read_text())
@@ -166,8 +192,8 @@ def fixtures_from_schedule(paths: list[Path], squads: dict, as_of: date) -> list
                 raise ValueError(f"cannot resolve home/away for {event.get('name')}")
             sides = {c.get("homeAway"): c for c in competitors}
             try:
-                home = canonical_club(sides["home"]["team"]["displayName"])
-                away = canonical_club(sides["away"]["team"]["displayName"])
+                home = canonical_club(sides["home"]["team"]["displayName"], club_map)
+                away = canonical_club(sides["away"]["team"]["displayName"], club_map)
             except KeyError as exc:
                 raise ValueError(f"unresolvable competitor in {event.get('name')}: {exc}") from exc
             for club in (home, away):
@@ -247,14 +273,15 @@ def championship(path: Path, first_day: int) -> list[dict]:
 def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                  espn_paths: list[Path], crosswalk_path: Path,
                  history_path: Path, results_path: Path,
-                 ledger_path: Path | None = None) -> dict:
+                 ledger_path: Path | None = None,
+                 expected_clubs: int = 20) -> dict:
     squads_raw = json.loads(squads_path.read_text())
     snapshot_day = date.fromisoformat(squads_raw["as_of"])
     if snapshot_day > as_of:
         raise ValueError("squad snapshot is newer than the prediction cutoff")
     clubs: dict[str, list[dict]] = squads_raw["teams"]
-    if len(clubs) != 20:
-        raise ValueError(f"expected 20 registered clubs, got {len(clubs)}")
+    if len(clubs) != expected_clubs:
+        raise ValueError(f"expected {expected_clubs} registered clubs, got {len(clubs)}")
 
     crosswalk = load_crosswalk(crosswalk_path)
     fm_to_espn: dict[str, tuple[str, str]] = {}
@@ -282,9 +309,22 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
 
     players: list[dict] = []
     seen_ids: set[int] = set()
+    # Squad-side homonym pre-pass: two registrations sharing one official name
+    # in a club (e.g. Shakhtar's two Pedrinhos) make the ledger key ambiguous.
+    # Every colliding entry keeps missing identity (no rescue adoption) and
+    # receives an occurrence-indexed provisional id.
+    squad_name_counts: dict[tuple[str, str], int] = {}
+    for club_name in sorted(clubs):
+        for item in clubs[club_name]["players"]:
+            if item.get("loaned_out"):
+                continue
+            key = (club_name, item["official_name"])
+            squad_name_counts[key] = squad_name_counts.get(key, 0) + 1
+    name_uses: dict[tuple[str, str], int] = {}
     counts = {"corrected_link": 0, "cold_start": 0, "fm_verified": 0,
               "fm_rescued_staff": 0, "ledger_identity_heals": 0,
-              "provisional_ids": 0, "ambiguous_skipped": 0}
+              "provisional_ids": 0, "ambiguous_skipped": 0,
+              "squad_homonym_collisions": 0}
     source_counts: dict[str, int] = {}
     kind_counts: dict[str, int] = {}
     trusted = 0
@@ -294,8 +334,13 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                 continue
             fm_uid = entry.get("fm_uid")
             rescued_info = None
-            if ledger_path is not None:
-                rescued_info = rescue.get((club, entry["official_name"]))
+            name_key = (club, entry["official_name"])
+            name_uses[name_key] = name_uses.get(name_key, 0) + 1
+            homonym = squad_name_counts.get(name_key, 1) > 1
+            if homonym and name_uses[name_key] == 1:
+                counts["squad_homonym_collisions"] += 1
+            if ledger_path is not None and not homonym:
+                rescued_info = rescue.get(name_key)
                 if rescued_info is not None and fm_uid is None:
                     # Squad lags the canonical ledger for this registration:
                     # adopt the ledger's bridge-mediated FM uid (never a
@@ -304,7 +349,13 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                 elif (rescued_info is not None
                         and str(fm_uid) != rescued_info["fm_uid"]):
                     rescued_info = None
-            pid = int(fm_uid) if fm_uid else provisional_id(club, entry["official_name"])
+            if fm_uid:
+                pid = int(fm_uid)
+            else:
+                occurrence = name_uses[name_key]
+                tag = entry["official_name"] if occurrence == 1 and not homonym else \
+                    f"{entry['official_name']}#{occurrence}"
+                pid = provisional_id(club, tag)
             if pid in seen_ids:
                 raise ValueError(f"duplicate player id {pid} ({entry['official_name']})")
             seen_ids.add(pid)
@@ -450,19 +501,24 @@ def main():
     ap.add_argument("--ledger", type=Path, default=
         ROOT / "data/identity/reep/epl_canonical_clean_v11_evidence.json",
         help="canonical identity ledger; enables staff-db trait rescue only")
+    ap.add_argument("--expected-clubs", type=int, default=20)
+    ap.add_argument("--club-map", choices=["epl", "ucl"], default="epl",
+                    help="closed ESPN->canonical club map (default EPL)")
     ap.add_argument("--output", type=Path, required=True)
     a = ap.parse_args()
     if a.output.exists():
         ap.error("refusing to overwrite immutable bundle")
     as_of = date.fromisoformat(a.as_of)
     squads_raw = json.loads(a.squads.read_text())
+    club_map = UCL_ESPN_TO_CANONICAL if a.club_map == "ucl" else None
     fixtures = (fixtures_from_tsv(a.fixtures_tsv, squads_raw["teams"], as_of)
                 if a.fixtures_tsv else
-                fixtures_from_schedule(a.schedule, squads_raw["teams"], as_of))
+                fixtures_from_schedule(a.schedule, squads_raw["teams"], as_of,
+                                       club_map))
     bundle = build_bundle(squads_path=a.squads, fixtures=fixtures, as_of=as_of,
                           espn_paths=a.espn, crosswalk_path=a.crosswalk,
                           history_path=a.history, results_path=a.results,
-                          ledger_path=a.ledger)
+                          ledger_path=a.ledger, expected_clubs=a.expected_clubs)
     inputs = [a.squads, a.history, a.results, *(a.schedule or []), *a.espn,
               a.crosswalk, a.ledger]
     bundle["sources"] = {str(p): sha256(p) for p in inputs}
