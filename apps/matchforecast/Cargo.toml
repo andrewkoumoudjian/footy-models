@@ -32,6 +32,10 @@ path = "src/main_pl_hist.rs"
 name = "footy-matchforecast-math"
 path = "src/math_engine_main.rs"
 
+[[bin]]
+name = "footy-participation-eval"
+path = "src/main_participation_eval.rs"
+
 [dependencies]
 footy-core = { path = "../../crates/core" }
 footy-source-stats = { path = "../../crates/source-stats" }

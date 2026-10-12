@@ -6,6 +6,13 @@ A reproducible, dated pre-match snapshot that fetches historical match results; 
 
 This is a fully wired **data-processing and artifact pipeline**, **not** a claim that FM-derived Premier League goal/event rates have been statistically validated or trained on live per-player data. The team-goal benchmark and the player-resolved engine have different inputs and calibration. See [forecast code inventory](game-forecasting-inventory.md).
 
+**Historical player inputs (2026-10-11):** A separate, source-neutral dated
+lineup/event panel now combines the covered 2015/16 StatsBomb EPL and 2026
+SofaScore match sheets into provider-qualified, strictly previous-date
+candidate histories. The initial Rust start/appearance/minutes evaluation
+**does not pass** for EPL starting probabilities, so this research path is not
+enabled in production. See [the panel contract and OOS comparison](historical-player-participation-panel-2026-10-11.md).
+
 ## One-command interface
 
 From the repo root, with Rust, Python 3, `requests`, `beautifulsoup4`, `kaleido` with Chromium/Chrome, and FM26 men attributes locally available:
