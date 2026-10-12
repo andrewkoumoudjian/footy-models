@@ -1,0 +1,53 @@
+{
+ "default_72p": {
+  "city_rel_pressure_by_window": [
+   12.07,
+   6.33,
+   -6.7,
+   12.42,
+   4.7,
+   -13.35
+  ],
+  "peak_window": "45-60",
+  "peak_value": 12.42,
+  "expected_city_goals": 1.639,
+  "expected_liverpool_goals": 1.278,
+  "home_win": 0.3472,
+  "draw": 0.1806,
+  "away_win": 0.4722
+ },
+ "no_tactical_subs_72p": {
+  "city_rel_pressure_by_window": [
+   1.15,
+   0.24,
+   4.53,
+   5.99,
+   -0.76,
+   3.43
+  ],
+  "peak_window": "45-60",
+  "peak_value": 5.99,
+  "expected_city_goals": 1.486,
+  "expected_liverpool_goals": 1.097,
+  "home_win": 0.2639,
+  "draw": 0.2917,
+  "away_win": 0.4444
+ },
+ "no_red_72p": {
+  "city_rel_pressure_by_window": [
+   4.17,
+   5.99,
+   4.88,
+   -5.51,
+   6.37,
+   2.02
+  ],
+  "peak_window": "60-75",
+  "peak_value": 6.37,
+  "expected_city_goals": 1.431,
+  "expected_liverpool_goals": 1.167,
+  "home_win": 0.3333,
+  "draw": 0.25,
+  "away_win": 0.4167
+ }
+}

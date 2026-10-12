@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "model": "simulate_second_resolved_dynamic_mental_match",
+  "as_of": "2026-10-10",
+  "path_count_min": 72,
+  "worst_case_mc_halfwidth_95": 0.11549410759380276,
+  "all_match_targets_calibrated": false,
+  "historical_event_data_cannot_validate_current_player_engine": true,
+  "matching_engine_oos_valid": false,
+  "independent_historical_event_oos_matches": 24,
+  "historical_assist_prior_approved": false,
+  "targets": [
+    {
+      "id": "match_wdl",
+      "level": "match",
+      "priority": "P0",
+      "kind": "categorical_distribution",
+      "choices": [
+        "home_win",
+        "draw",
+        "away_win"
+      ],
+      "primary_score": "multiclass_log_loss",
+      "secondary_score": "multiclass_brier",
+      "baseline": "causal_league_team_strength",
+      "label": "final_home_away_goals",
+      "required_events": "final_scores",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "match_exact_score",
+      "level": "match",
+      "priority": "P0",
+      "kind": "joint_count_distribution",
+      "values": "home_goals_x_away_goals",
+      "primary_score": "joint_log_loss",
+      "secondary_score": "ranked_probability_score",
+      "baseline": "causal_independent_poisson",
+      "label": "full_time_score",
+      "required_events": "final_scores",
+      "release": "not_in_simulator",
+      "publication_status": "unavailable",
+      "gate_reasons": [
+        "not produced by current simulation"
+      ]
+    },
+    {
+      "id": "match_total_goals_btts",
+      "level": "match",
+      "priority": "P1",
+      "kind": "derived_joint_distribution",
+      "values": "total_goals_over_under_btts",
+      "primary_score": "binary_brier_and_log_loss",
+      "baseline": "score_distribution_baseline",
+      "label": "full_time_score",
+      "required_events": "final_scores",
+      "release": "not_in_simulator",
+      "publication_status": "unavailable",
+      "gate_reasons": [
+        "not produced by current simulation"
+      ]
+    },
+    {
+      "id": "team_goals",
+      "level": "team",
+      "priority": "P0",
+      "kind": "count_distribution",
+      "primary_score": "discrete_crps",
+      "secondary_score": "count_mae",
+      "baseline": "previous_only_team_goal_rate",
+      "label": "team_full_time_goal_count",
+      "required_events": "final_scores",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "team_shots_and_sot",
+      "level": "team",
+      "priority": "P1",
+      "kind": "count_distribution",
+      "primary_score": "count_log_loss",
+      "secondary_score": "count_mae",
+      "baseline": "previous_only_team_shots_and_sot",
+      "label": "full_match_shots_and_sot",
+      "required_events": "verified_player_event_feed",
+      "release": "not_in_simulator",
+      "publication_status": "unavailable",
+      "gate_reasons": [
+        "not produced by current simulation"
+      ]
+    },
+    {
+      "id": "player_appearance_minutes",
+      "level": "player",
+      "priority": "P0",
+      "kind": "appearance_probability_and_minutes_distribution",
+      "primary_score": "appearance_brier_plus_minutes_mae",
+      "baseline": "causal_start_minutes_last_n",
+      "label": "official_lineup_and_actual_minutes",
+      "required_events": "dated_team_lineups",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "player_shots_sot",
+      "level": "player",
+      "priority": "P1",
+      "kind": "unconditional_and_given_appearance_counts",
+      "primary_score": "count_log_loss",
+      "secondary_score": "player_occurrence_brier",
+      "baseline": "causal_player_event_rate",
+      "label": "player_shots_and_sot",
+      "required_events": "verified_player_event_feed",
+      "release": "not_in_simulator",
+      "publication_status": "unavailable",
+      "gate_reasons": [
+        "not produced by current simulation"
+      ]
+    },
+    {
+      "id": "player_goal",
+      "level": "player",
+      "priority": "P1",
+      "kind": "per-player expected goal credit; P(at least one score) not available from collapsed path aggregate",
+      "primary_score": "player_goal_occurrence_brier",
+      "secondary_score": "goal_count_log_loss",
+      "baseline": "causal_previous_goal_rate_with_team_shrinkage",
+      "label": "official_non_own_scorers",
+      "required_events": "verified_player_event_feed",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "player_primary_assist",
+      "level": "player",
+      "priority": "P1",
+      "kind": "unconditional_expected_assisted_goals_only; per-player occurrence/count distribution missing",
+      "primary_score": "player_assist_occurrence_brier",
+      "secondary_score": "assist_count_log_loss",
+      "baseline": "previous_player_primary_assists_and_team_rate",
+      "label": "primary_goal_assist_not_xa",
+      "required_events": "verified_player_event_feed",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ],
+      "historical_assist_prior_warning": "2015/16 candidate failed; unrelated 2026-style engine evidence is required"
+    },
+    {
+      "id": "player_goal_plus_assist",
+      "level": "player",
+      "priority": "P2",
+      "kind": "same_path_derived_count",
+      "primary_score": "count_log_loss",
+      "secondary_score": "occurrence_brier",
+      "baseline": "same_path_or_empirical_count_distribution",
+      "label": "player_goal_plus_primary_assist",
+      "required_events": "verified_player_event_feed",
+      "release": "not_in_simulator",
+      "publication_status": "unavailable",
+      "gate_reasons": [
+        "not produced by current simulation"
+      ]
+    },
+    {
+      "id": "time_goal_and_shot_15min",
+      "level": "timeline",
+      "priority": "P1",
+      "kind": "path_marginal_count_and_occurrence_distribution",
+      "primary_score": "window_goal_occurrence_brier",
+      "secondary_score": "window_count_mae",
+      "baseline": "historical_league_event_window_hazards",
+      "label": "actual_events_in_non_overlapping_15min_bins",
+      "required_events": "timestamped_events",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "time_goal_1min",
+      "level": "timeline",
+      "priority": "P2",
+      "kind": "path_marginal_count_and_occurrence_distribution",
+      "primary_score": "one_minute_goal_occurrence_brier",
+      "secondary_score": "minute_event_mae",
+      "baseline": "previous_only_league_goal_minute_hazard",
+      "label": "actual_goal_clock_minute",
+      "required_events": "timestamped_events",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "time_score_state",
+      "level": "timeline",
+      "priority": "P1",
+      "kind": "path_cumulative_categorical_distribution",
+      "choices": [
+        "home_lead",
+        "level",
+        "away_lead"
+      ],
+      "primary_score": "multiclass_brier",
+      "baseline": "previous_only_score_state_hazards",
+      "label": "observed_score_after_window",
+      "required_events": "timestamped_goals",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "red_cards_substitutions",
+      "level": "team_timeline",
+      "priority": "P2",
+      "kind": "incident_distribution",
+      "primary_score": "incident_occurrence_brier",
+      "baseline": "previous_only_team_card_sub_rates",
+      "label": "verified_red_card_and_completed_substitution_events",
+      "required_events": "timestamped_events",
+      "release": "research_only",
+      "publication_status": "research_only",
+      "gate_reasons": [
+        "72 simulated full-match paths < 2500 required by precision policy",
+        "no version-matched, pre-match OOS evaluation of the current player simulator"
+      ]
+    },
+    {
+      "id": "corners_yellow_cards",
+      "level": "team",
+      "priority": "P3",
+      "kind": "count_distribution",
+      "primary_score": "count_mae_and_log_loss",
+      "baseline": "previous_only_team_rates",
+      "label": "official_corners_and_yellow_cards",
+      "required_events": "verified_event_feed",
+      "release": "not_in_simulator",
+      "publication_status": "unavailable",
+      "gate_reasons": [
+        "not produced by current simulation"
+      ]
+    },
+    {
+      "id": "attacking_momentum_index",
+      "level": "visualization",
+      "priority": "DISPLAY_ONLY",
+      "kind": "derived_descriptive_index",
+      "primary_score": null,
+      "baseline": null,
+      "label": null,
+      "required_events": "simulated_shots_and_goals",
+      "release": "descriptive_only",
+      "publication_status": "descriptive_only",
+      "gate_reasons": []
+    }
+  ]
+}

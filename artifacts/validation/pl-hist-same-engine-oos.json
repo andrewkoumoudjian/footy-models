@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "model": "simulate_second_resolved_dynamic_mental_match",
-  "model_code_sha256": "fd95b9ee31195cc36fee1c53f88d4d6fe9d9e3c2659afed86c0df2f98d70c4fd",
+  "model_code_sha256": "84c08aabad2a0f3af892b346558dcc98d73de2dd045fa0ee0b848d3b9ac3b04f",
   "protocol": "same_engine_walk_forward_frozen_pre_kickoff",
   "feature_contract": "observed_stats_only_no_fm26_no_current_squads",
   "fit_end_date": "2016-02-07",

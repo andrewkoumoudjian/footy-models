@@ -1,0 +1,30 @@
+{
+  "source": "artifacts/premier-league-2026-10-11/player_paths.json",
+  "status": "provisional scorer and uncalibrated assists; do not interpret as OOS-validated",
+  "fixtures": [
+    {
+      "fixture": "Crystal Palace vs Nott'm Forest",
+      "paths": 72,
+      "expected_goals": 2.25,
+      "unattributed_goals": 0.0
+    },
+    {
+      "fixture": "Hull vs Everton",
+      "paths": 72,
+      "expected_goals": 1.4027777777777777,
+      "unattributed_goals": 0.0
+    },
+    {
+      "fixture": "Liverpool vs Man City",
+      "paths": 72,
+      "expected_goals": 2.791666666666667,
+      "unattributed_goals": 0.0
+    },
+    {
+      "fixture": "Coventry vs Newcastle",
+      "paths": 72,
+      "expected_goals": 2.9305555555555554,
+      "unattributed_goals": 0.0
+    }
+  ]
+}
