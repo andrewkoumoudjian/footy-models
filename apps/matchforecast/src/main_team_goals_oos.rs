@@ -7,8 +7,15 @@
 //! home-advantage-only baseline. Thin orchestration: scoring lives in
 //! `footy_match::oos`.
 use footy_match::{rolling_origin, RollingConfig, RollingReport, TeamMatch};
+use footy_matchforecast::heads::load_fm_prior_indices_json;
 use serde_json::json;
+use std::collections::BTreeMap;
 use std::fs;
+
+fn read_fm_priors(path: &str) -> Result<BTreeMap<String, (f64, f64)>, String> {
+    let text = fs::read_to_string(path).map_err(|error| error.to_string())?;
+    load_fm_prior_indices_json(&text)
+}
 
 const ALIASES: &[(&str, &str)] = &[
     ("Nottingham Forest", "Nott'm Forest"),
@@ -194,12 +201,35 @@ fn report_json(report: &RollingReport) -> serde_json::Value {
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let run = || -> Result<(), String> {
-        if args.len() != 6 || args[0] != "--asof-csv" || args[2] != "--results-tsv" || args[4] != "--out" {
+        // Positional required args plus optional `--flag value` pairs.
+        if args.len() < 6 || args[0] != "--asof-csv" || args[2] != "--results-tsv" || args[4] != "--out" {
             return Err(
-                "usage: footy-team-goals-oos --asof-csv ASOF.csv --results-tsv RESULTS.tsv --out REPORT.json"
+                "usage: footy-team-goals-oos --asof-csv ASOF.csv --results-tsv RESULTS.tsv --out REPORT.json [--fm-priors PRIORS.json --fm-coeff C --score-from-day YYYY-MM-DD]"
                     .into(),
             );
         }
+        let mut fm_priors_path: Option<&str> = None;
+        let mut fm_coefficient = 0.0;
+        let mut score_from_day: Option<i32> = None;
+        let mut rest = args[6..].iter();
+        while let Some(flag) = rest.next() {
+            let value = rest.next().ok_or_else(|| format!("{flag} requires a value"))?;
+            match flag.as_str() {
+                "--fm-priors" => fm_priors_path = Some(value),
+                "--fm-coeff" => {
+                    fm_coefficient = value.parse().map_err(|_| "invalid --fm-coeff")?;
+                    if !(0.0..=0.5).contains(&fm_coefficient) {
+                        return Err("fm-coeff outside [0, 0.5]".into());
+                    }
+                }
+                "--score-from-day" => score_from_day = Some(unix_day(value)?),
+                _ => return Err(format!("unknown argument {flag}")),
+            }
+        }
+        let fm_priors = match fm_priors_path {
+            None => BTreeMap::new(),
+            Some(path) => read_fm_priors(path)?,
+        };
         let matches = read_asof_csv(&args[1])?;
         let championship = read_championship_tsv(&args[3], UNIX_EPOCH_ORDINAL)?;
         if matches.len() < 100 {
@@ -210,13 +240,18 @@ fn main() {
             // First forecast season: one full season of history is required
             // before the first monthly refit is trusted.
             first_forecast_day: first + 365,
+            score_from_day: score_from_day.unwrap_or(first + 365),
             step_days: 30,
             min_history: 100,
+            fm_coefficient,
+            fm_priors,
             bootstrap_draws: 2500,
             bootstrap_seed: 20261012,
         };
         let report = rolling_origin(&matches, &championship, config)
             .ok_or("rolling-origin scoring produced no fixtures")?;
+        let mut output = report_json(&report);
+        output["fm_prior_coefficient"] = json!(fm_coefficient);
         let output = report_json(&report);
         let path = std::path::Path::new(&args[5]);
         if path.exists() {

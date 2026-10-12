@@ -61,7 +61,10 @@ def main():
     ap.add_argument("--ledger", type=Path, default=
         ROOT / "data/identity/reep/epl_canonical_clean_v11_evidence.json")
     ap.add_argument("--heads", type=Path,
-                    default=ROOT / "data/ml/unified_forecast_heads_v1.json")
+                    default=ROOT / "data/ml/unified_forecast_heads_v2.json")
+    ap.add_argument("--fm-priors", type=Path,
+                    default=ROOT / "data/ml/fm26_team_priors_v1.json")
+    ap.add_argument("--fm-coeff", type=float, default=0.1)
     ap.add_argument("--paths", type=int, default=2500)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--build", action="store_true",
@@ -74,7 +77,7 @@ def main():
         ap.error("positive path count required")
     as_of = date.fromisoformat(a.as_of)
     for path in [*a.schedule, a.squads, a.history, a.results, a.heads,
-                 a.ledger, *a.espn, a.crosswalk]:
+                 a.fm_priors, a.ledger, *a.espn, a.crosswalk]:
         if not path.exists():
             ap.error(f"missing input {path}")
     out.mkdir(parents=True)
@@ -110,7 +113,8 @@ def main():
            "--paths", str(a.paths), "--seed", str(a.seed),
            "--red-per90", "0", "--score-effect", "0", "--man-advantage", "0",
            "--fm-effect", "0", "--selection-marginals", "false",
-           "--max-subs", "0", "--heads-artifact", str(a.heads)]
+           "--max-subs", "0", "--heads-artifact", str(a.heads),
+           "--fm-priors", str(a.fm_priors), "--fm-coeff", str(a.fm_coeff)]
     subprocess.run(sim, cwd=ROOT, check=True, capture_output=True, text=True)
     validation = validate(bundle_path, predictions_path, paths=a.paths,
                           default_effects=True)
@@ -122,6 +126,8 @@ def main():
         "predictions_sha256": sha(predictions_path),
         "binary_sha256": sha(MODEL),
         "heads_sha256": sha(a.heads),
+        "fm_priors_sha256": sha(a.fm_priors),
+        "fm_coefficient": a.fm_coeff,
         "simulation_arguments": sim[3:],
         "validation": validation,
         "fixtures": [(f["date"], f["home"], f["away"]) for f in fixtures],

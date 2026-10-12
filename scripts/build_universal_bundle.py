@@ -46,6 +46,23 @@ from fit_unified_forecast_heads import (  # noqa: E402
     load_fm_union,
 )
 from fm_staff_rescue import load_rescue_map, rescue_candidate_uids  # noqa: E402
+from build_fm_mls_defense_dataset import TACKLE_ROLE_PRIORS  # noqa: E402
+from fit_pooled_defense import HEADS as DEFENSE_HEADS  # noqa: E402
+
+ROLE_LETTER = {"goalkeeper": "G", "defender": "D", "midfield": "M",
+               "attack": "F", "unknown": "U"}
+# EPL has no dated defensive-event histories, so every tackle baseline is a
+# cold-start role prior (unknown roles take a disclosed neutral 1.50); the
+# MLS-fitted residual differentiates through FM traits as a flagged
+# cross-league transfer.
+TACKLE_PRIOR_UNKNOWN = 1.50
+TACKLE_ATTRS = DEFENSE_HEADS["tackles"]["attrs"]
+# EPL has no dated defensive-event histories, so every tackle baseline is a
+# cold-start role prior (unknown roles take a disclosed neutral 1.50); the
+# MLS-fitted residual differentiates through FM traits as a flagged
+# cross-league transfer.
+TACKLE_PRIOR_UNKNOWN = 1.50
+TACKLE_ATTRS = DEFENSE_HEADS["tackles"]["attrs"]
 
 ROLE_PRIORS = {"goalkeeper": 0.02, "defender": 0.40, "midfield": 0.90,
                "attack": 2.20, "unknown": 0.90}
@@ -339,6 +356,15 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                       block["verified"]]
             if len(pooled) != len(POOLED_FEATURE_NAMES):
                 raise ValueError("pooled feature contract drift")
+            letter = ROLE_LETTER[role]
+            tackle_baseline = (TACKLE_ROLE_PRIORS[letter] if letter in TACKLE_ROLE_PRIORS
+                               else TACKLE_PRIOR_UNKNOWN)
+            tackle_block = fm_feature_block(
+                fm if usable else None, fm.get("dob", "") if usable else "",
+                as_of, TACKLE_ATTRS)
+            pooled_tackles = [0.0, tackle_block["age"], tackle_block["ca"],
+                              *tackle_block["attrs"], gap,
+                              tackle_block["verified"]]
             players.append({
                 "id": pid, "club": club,
                 "minutes_prior": minutes_prior,
@@ -355,6 +381,8 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                 "expected_minutes_if_start": None,
                 "bench_appearance_probability": None,
                 "pooled_features": pooled,
+                "tackle_baseline_per90": tackle_baseline,
+                "pooled_tackle_features": pooled_tackles,
             })
     # Every fixture club needs a feasible 1GK+10OF pool at simulation time.
     for fixture in fixtures:
@@ -380,6 +408,10 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
             "fm_traits": "squad-verified AND union-usable rows, plus "
                            "ledger-directed staff-db rescue (Reep-bridged DOB, "
                            "MLS-parity validity gate, tier>=2); rest masked",
+            "defense": "tackle baselines are cold-start role priors (no EPL "
+                       "defensive histories exist); the MLS-fitted tackles "
+                       "residual differentiates via FM traits as a flagged "
+                       "cross-league transfer",
             "identity": "FM uids are squad-asserted; missing uids get stable "
                         "provisional ids (top bit set), never guessed FM uids",
         },

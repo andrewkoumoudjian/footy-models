@@ -2,12 +2,14 @@
 //! Deterministic Monte Carlo and market-factor volatility primitives.
 
 mod calibration;
+mod event_rate;
 mod player_participation;
 mod player_rate;
 mod pooled_correction;
 mod player_shot_count;
 mod stats;
 pub use calibration::*;
+pub use event_rate::*;
 pub use player_participation::*;
 pub use player_rate::*;
 pub use pooled_correction::*;

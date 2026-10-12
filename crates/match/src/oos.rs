@@ -46,14 +46,23 @@ impl TeamMatch {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RollingConfig {
     /// First month-start (unix day) that is forecast, never fitted.
     pub first_forecast_day: i32,
+    /// Fixtures before this day still supply history but are never scored.
+    /// Used to restrict scoring to a post-vintage window (e.g. FM priors must
+    /// not score fixtures predating the FM snapshot).
+    pub score_from_day: i32,
     /// Refits happen at this cadence; forecasts use the latest prior fit.
     pub step_days: i32,
     /// Minimum strictly-prior matches required before the first forecast.
     pub min_history: usize,
+    /// FM roster-prior coefficient applied through
+    /// `TeamGoalModel::forecast_with_fm` (0.0 = strictly result-driven).
+    pub fm_coefficient: f64,
+    /// Per-club (attack, defense) FM prior indices; absent clubs use 0.0.
+    pub fm_priors: BTreeMap<String, (f64, f64)>,
     /// Bootstrap draws for the paired log-loss interval.
     pub bootstrap_draws: usize,
     pub bootstrap_seed: u64,
@@ -63,8 +72,11 @@ impl Default for RollingConfig {
     fn default() -> Self {
         Self {
             first_forecast_day: 0,
+            score_from_day: 0,
             step_days: 30,
             min_history: 30,
+            fm_coefficient: 0.0,
+            fm_priors: BTreeMap::new(),
             bootstrap_draws: 2500,
             bootstrap_seed: 20261012,
         }
@@ -236,9 +248,29 @@ pub fn rolling_origin(
             ];
             if let Some(fitted) = TeamGoalModel::fit(&epl, &e1, cursor) {
                 for game in matches.iter().filter(|game| {
-                    game.day >= cursor && game.day < cursor + config.step_days
+                    game.day >= cursor
+                        && game.day < cursor + config.step_days
+                        && game.day >= config.score_from_day
                 }) {
-                    let forecast = fitted.forecast(&game.home, &game.away);
+                    let (home_attack, home_defense) = config
+                        .fm_priors
+                        .get(&game.home)
+                        .copied()
+                        .unwrap_or((0.0, 0.0));
+                    let (away_attack, away_defense) = config
+                        .fm_priors
+                        .get(&game.away)
+                        .copied()
+                        .unwrap_or((0.0, 0.0));
+                    let forecast = fitted.forecast_with_fm(
+                        &game.home,
+                        &game.away,
+                        home_attack,
+                        home_defense,
+                        away_attack,
+                        away_defense,
+                        config.fm_coefficient,
+                    );
                     scores.push(score_one(
                         [forecast.home_goals, forecast.away_goals],
                         base_mu,
@@ -383,8 +415,9 @@ mod tests {
             min_history: 30,
             bootstrap_draws: 200,
             bootstrap_seed: 7,
+            ..RollingConfig::default()
         };
-        let first = rolling_origin(&matches, &[], config).unwrap();
+        let first = rolling_origin(&matches, &[], config.clone()).unwrap();
         let second = rolling_origin(&matches, &[], config).unwrap();
         assert_eq!(first, second);
         assert!(first.fixtures > 0);
@@ -401,6 +434,77 @@ mod tests {
         let mut bad = matches.clone();
         bad[0].away = "A".into();
         assert!(rolling_origin(&bad, &[], RollingConfig::default()).is_none());
+    }
+
+    #[test]
+    fn score_from_day_restricts_scoring_not_history() {
+        let matches = league(0..120, 2, 1);
+        let full = rolling_origin(
+            &matches,
+            &[],
+            RollingConfig {
+                first_forecast_day: 90,
+                step_days: 10,
+                min_history: 30,
+                bootstrap_draws: 50,
+                bootstrap_seed: 7,
+                ..RollingConfig::default()
+            },
+        )
+        .unwrap();
+        let gated = rolling_origin(
+            &matches,
+            &[],
+            RollingConfig {
+                first_forecast_day: 90,
+                score_from_day: 100,
+                step_days: 10,
+                min_history: 30,
+                bootstrap_draws: 50,
+                bootstrap_seed: 7,
+                ..RollingConfig::default()
+            },
+        )
+        .unwrap();
+        assert!(gated.fixtures < full.fixtures);
+        assert!(gated.fixtures > 0);
+    }
+
+    #[test]
+    fn zero_fm_coefficient_reproduces_result_driven_forecast() {
+        let matches = league(0..120, 2, 1);
+        let mut priors = BTreeMap::new();
+        priors.insert("A".to_owned(), (1.5, -1.5));
+        priors.insert("B".to_owned(), (-1.5, 1.5));
+        let plain = rolling_origin(
+            &matches,
+            &[],
+            RollingConfig {
+                first_forecast_day: 90,
+                step_days: 30,
+                min_history: 30,
+                bootstrap_draws: 50,
+                bootstrap_seed: 7,
+                ..RollingConfig::default()
+            },
+        )
+        .unwrap();
+        let zeroed = rolling_origin(
+            &matches,
+            &[],
+            RollingConfig {
+                first_forecast_day: 90,
+                step_days: 30,
+                min_history: 30,
+                fm_coefficient: 0.0,
+                fm_priors: priors,
+                bootstrap_draws: 50,
+                bootstrap_seed: 7,
+                ..RollingConfig::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(plain, zeroed);
     }
 
     #[test]

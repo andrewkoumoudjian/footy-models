@@ -169,6 +169,19 @@ class UniversalBundleTests(unittest.TestCase):
             self.assertGreater(p["shots_per90"], 0)
             self.assertGreater(p["xg_per90"], 0)
 
+    def test_defensive_priors_follow_role_contract(self):
+        math = __import__("math")
+        for p in self.bundle["players"]:
+            self.assertEqual(len(p["pooled_tackle_features"]), 11)
+            self.assertTrue(all(map(math.isfinite, p["pooled_tackle_features"])))
+            self.assertGreater(p["tackle_baseline_per90"], 0)
+            self.assertLessEqual(p["tackle_baseline_per90"], 3.0)
+        keepers = [p["tackle_baseline_per90"] for p in self.bundle["players"]
+                   if p["is_goalkeeper"]]
+        outfield = [p["tackle_baseline_per90"] for p in self.bundle["players"]
+                    if not p["is_goalkeeper"]]
+        self.assertLess(max(keepers), min(outfield))
+
     def test_every_fixture_club_has_feasible_pool(self):
         for club in ("Arsenal", "Chelsea"):
             pool = [p for p in self.bundle["players"] if p["club"] == club]

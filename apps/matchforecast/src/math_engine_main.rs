@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 //! Standalone research CLI for the mathematical shot-to-goal match engine.
 use footy_match::{TeamGoalModel, TeamGoalsObservation};
-use footy_matchforecast::heads::load_heads_artifact_json;
+use footy_matchforecast::heads::{load_fm_prior_indices_json, load_heads_artifact_json};
 use footy_matchforecast::math_engine::{simulate, Candidate, MatchParameters};
 use serde_json::{json, Value};
 use std::{collections::BTreeMap, fs, path::Path};
@@ -52,8 +52,16 @@ fn optional_numeric(row: &Value, key: &str) -> Result<Option<f64>, String> {
 fn candidates(
     v: &[Value],
     heads: Option<&footy_matchforecast::heads::HeadsArtifact>,
-) -> Result<(Vec<Candidate>, BTreeMap<u64, (f64, bool)>), String> {
+) -> Result<
+    (
+        Vec<Candidate>,
+        BTreeMap<u64, (f64, bool)>,
+        BTreeMap<u64, (f64, bool)>,
+    ),
+    String,
+> {
     let mut priors = BTreeMap::new();
+    let mut tackles = BTreeMap::new();
     let mut out = Vec::with_capacity(v.len());
     for p in v.iter() {
         let id = required(p, "id")?.as_u64().ok_or("invalid player id")?;
@@ -103,6 +111,44 @@ fn candidates(
         if priors.insert(id, (effective, from_features.or(corrected).is_some())).is_some() {
             return Err(format!("duplicate player {id}"));
         }
+        // Defensive-event path: adopted tackles head only. The corrected
+        // per-90 rate is computed here; expected counts follow post-sim from
+        // simulated minutes (tackles never enter the score process).
+        let tackle_head = heads.as_ref().and_then(|heads| {
+            heads
+                .tackle_model
+                .as_ref()
+                .zip(heads.tackle_feature_names.as_ref())
+        });
+        let tackle = match (tackle_head, p.get("pooled_tackle_features")) {
+            (Some((model, names)), Some(features)) => {
+                let array = features.as_array().ok_or("pooled_tackle_features is not an array")?;
+                if array.len() != names.len() {
+                    return Err("pooled_tackle_features do not match tackles contract".into());
+                }
+                let mut vector = Vec::with_capacity(array.len());
+                for value in array {
+                    vector.push(value.as_f64().ok_or("non-numeric tackle feature")?);
+                }
+                let baseline = number(p, "tackle_baseline_per90")?;
+                let rate = model.correct(baseline, &vector).ok_or_else(|| {
+                    format!("tackle correction failed for player {id}")
+                })?;
+                if rate < 0.0 || rate > 15.0 || !rate.is_finite() {
+                    return Err(format!("tackle prior outside plausible range for player {id}"));
+                }
+                Some((rate, true))
+            }
+            (None, Some(_)) => {
+                return Err(
+                    "bundle carries pooled_tackle_features but the heads artifact has no adopted tackles head".into(),
+                )
+            }
+            (_, None) => None,
+        };
+        if tackles.insert(id, tackle.unwrap_or((0.0, false))).is_some() {
+            return Err(format!("duplicate tackle entry {id}"));
+        }
         out.push(Candidate {
             id,
             club: string(p, "club")?.to_owned(),
@@ -119,7 +165,7 @@ fn candidates(
             bench_appearance_probability: optional_numeric(p, "bench_appearance_probability")?,
         });
     }
-    Ok((out, priors))
+    Ok((out, priors, tackles))
 }
 
 /// Optional pooled-correction provenance block passed through to the output.
@@ -227,12 +273,24 @@ fn shot_anchor(matches: &[ObservedMatch], home: &str, away: &str) -> [f64; 2] {
     ]
 }
 
-fn args() -> Result<(String, String, MatchParameters, Option<String>), String> {
+fn args() -> Result<
+    (
+        String,
+        String,
+        MatchParameters,
+        Option<String>,
+        Option<String>,
+        f64,
+    ),
+    String,
+> {
     let mut argv = std::env::args().skip(1);
     let input=argv.next().ok_or("usage: footy-matchforecast-math INPUT.json OUTPUT.json [--paths N] [--seed N] [--red-per90 P] [--score-effect B] [--man-advantage B] [--fm-effect B]")?;
     let output = argv.next().ok_or("missing output JSON path")?;
     let mut p = MatchParameters::default();
     let mut heads: Option<String> = None;
+    let mut fm_priors: Option<String> = None;
+    let mut fm_coefficient = 0.0;
     while let Some(flag) = argv.next() {
         let value = argv
             .next()
@@ -263,14 +321,21 @@ fn args() -> Result<(String, String, MatchParameters, Option<String>), String> {
                     value.parse().map_err(|_| "invalid --max-subs")?
             }
             "--heads-artifact" => heads = Some(value),
+            "--fm-priors" => fm_priors = Some(value),
+            "--fm-coeff" => {
+                fm_coefficient = value.parse().map_err(|_| "invalid --fm-coeff")?;
+                if !(0.0..=0.5).contains(&fm_coefficient) {
+                    return Err("fm-coeff outside [0, 0.5]".into());
+                }
+            }
             _ => return Err(format!("unknown argument {flag}")),
         }
     }
-    Ok((input, output, p, heads))
+    Ok((input, output, p, heads, fm_priors, fm_coefficient))
 }
 
 fn run() -> Result<(), String> {
-    let (input, output, params, heads_path) = args()?;
+    let (input, output, params, heads_path, fm_priors_path, fm_coefficient) = args()?;
     let data: Value = serde_json::from_slice(&fs::read(&input).map_err(|e| e.to_string())?)
         .map_err(|e| format!("parse {input}: {e}"))?;
     if string(&data, "schema")? != "math_shot_goal_v1" {
@@ -300,8 +365,18 @@ fn run() -> Result<(), String> {
                 .and_then(|text| load_heads_artifact_json(&text))
         })
         .transpose()?;
-    let (players, priors) = candidates(arr(&data, "players")?, heads.as_ref())?;
+    let (players, priors, tackle_rates) =
+        candidates(arr(&data, "players")?, heads.as_ref())?;
     let corrected_players = priors.values().filter(|(_, corrected)| *corrected).count();
+    let tackle_corrected = tackle_rates.values().filter(|(_, corrected)| *corrected).count();
+    let fm_prior_indices: BTreeMap<String, (f64, f64)> = match fm_priors_path.as_ref() {
+        None => BTreeMap::new(),
+        Some(path) => {
+            let text = fs::read_to_string(path)
+                .map_err(|error| format!("read {path}: {error}"))?;
+            load_fm_prior_indices_json(&text)?
+        }
+    };
     let mut unique = BTreeMap::new();
     for candidate in &players {
         if unique.insert(candidate.id, &candidate.club).is_some() {
@@ -340,7 +415,23 @@ fn run() -> Result<(), String> {
             .collect();
         let fitted = TeamGoalModel::fit(&epl, &e1, day)
             .ok_or_else(|| format!("cannot fit chronological team model for {home} vs {away}"))?;
-        let team_goals = fitted.forecast(home, away);
+        let (home_attack, home_defense) = fm_prior_indices
+            .get(home)
+            .copied()
+            .unwrap_or((0.0, 0.0));
+        let (away_attack, away_defense) = fm_prior_indices
+            .get(away)
+            .copied()
+            .unwrap_or((0.0, 0.0));
+        let team_goals = fitted.forecast_with_fm(
+            home,
+            away,
+            home_attack,
+            home_defense,
+            away_attack,
+            away_defense,
+            fm_coefficient,
+        );
         let goals = [team_goals.home_goals, team_goals.away_goals];
         let mut shots = shot_anchor(&prior, home, away);
         for side in 0..2 {
@@ -364,6 +455,11 @@ fn run() -> Result<(), String> {
             .iter()
             .map(|(id, counts)| {
                 let (prior_rate, corrected) = priors.get(id).copied().unwrap_or((0.0, false));
+                let expected_minutes = counts.seconds_played / (60.0 * result.paths as f64);
+                let (tackle_rate, tackle_corrected) =
+                    tackle_rates.get(id).copied().unwrap_or((0.0, false));
+                let expected_tackles = tackle_rate * expected_minutes / 90.0;
+                let p_1plus_tackle = 1.0 - (-expected_tackles).exp();
                 json!({
                     "id":id,"expected_shots":counts.shots as f64/result.paths as f64,
                     "expected_goals":counts.goals as f64/result.paths as f64,
@@ -372,9 +468,13 @@ fn run() -> Result<(), String> {
                     "p_goal":counts.goal_occurrences as f64/result.paths as f64,
                     "p_appearance":counts.appearances as f64/result.paths as f64,
                     "p_sub_on":counts.substitutions_on as f64/result.paths as f64,
-                    "expected_minutes":counts.seconds_played/(60.0*result.paths as f64),
+                    "expected_minutes":expected_minutes,
                     "prior_shots_per90":prior_rate,
                     "prior_corrected_by_pooled_model":corrected,
+                    "tackle_prior_per90":tackle_rate,
+                    "tackle_corrected_by_pooled_model":tackle_corrected,
+                    "expected_tackles":expected_tackles,
+                    "p_1plus_tackle":p_1plus_tackle,
                 })
             })
             .collect();
@@ -391,6 +491,9 @@ fn run() -> Result<(), String> {
             "date":string(fixture,"date")?,"home":home,"away":away,
             "fit_matches":prior.len(),"fit_championship_matches":e1.len(),
             "team_goal_anchor":goals,"team_shot_anchor":shots,
+            "fm_prior_adjusted": fm_coefficient > 0.0
+                && (fm_prior_indices.contains_key(home)
+                    || fm_prior_indices.contains_key(away)),
             "home_win":result.home_win,"draw":result.draw,"away_win":result.away_win,
             "expected_home_goals":result.expected_home_goals,"expected_away_goals":result.expected_away_goals,
             "expected_home_shots":result.expected_home_shots,"expected_away_shots":result.expected_away_shots,
@@ -422,6 +525,9 @@ fn run() -> Result<(), String> {
             "total_players":priors.len(),
             "artifact":correction_provenance(&data),
             "heads_artifact": heads_path.clone().unwrap_or_default(),
+            "tackle_corrected_players":tackle_corrected,
+            "fm_team_prior_coefficient":fm_coefficient,
+            "fm_team_priors": fm_priors_path.clone().unwrap_or_default(),
         },
         "parameters":{
             "red_probability_per90":params.red_card_probability_per90,
@@ -437,6 +543,8 @@ fn run() -> Result<(), String> {
             "role-neutral ten-outfield exact-cardinality sample is not a positionally calibrated XI",
             "zero tactical/FM attribute effects by default pending new independent OOS evidence",
             "pooled EPL+MLS shot-rate corrections apply only where the input carries a pre-match corrected_shots_per90; per-player prior provenance is recorded in player_forecasts",
+            "tackle forecasts use the adopted MLS-fitted tackles head transferred to EPL (unvalidated cross-league); recoveries/conversion/participation stay gated challengers",
+            "FM team-prior coefficient adjusts team Goal anchors only when --fm-priors is given (0.1 validated on post-vintage rolling OOS; default 0 preserves pure-results behavior)",
             "all probabilities are unvalidated simulation estimates; not betting odds",
         ],
         "fixtures":forecasts,
