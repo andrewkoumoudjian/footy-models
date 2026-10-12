@@ -50,6 +50,13 @@ from fit_pooled_epl_mls_shot_model import (  # noqa: E402
     poisson_loss,
 )
 
+POOLED_ATTRS = ("Finishing", "OffTheBall", "Dribbling", "Composure",
+                "Anticipation", "Passing")
+WIDE_ATTRS = (
+    "Finishing", "OffTheBall", "Dribbling", "FirstTouch", "Technique",
+    "Composure", "Anticipation", "Decisions", "Pace", "Acceleration",
+    "Stamina", "WorkRate", "Passing", "Vision", "Positioning", "Aggression",
+)
 CONVERSION_FEATURE_NAMES = tuple(n for n in POOLED_FEATURE_NAMES if n != "league_mls")
 PARTICIPATION_FEATURE_NAMES = CONVERSION_FEATURE_NAMES
 PENALTIES = (0.1, 1.0, 10.0, 100.0)
@@ -130,7 +137,8 @@ def load_crosswalk(path: Path) -> dict[tuple[str, str], str]:
     return out
 
 
-def fm_feature_block(fm: dict | None, dob: str, day: date) -> dict:
+def fm_feature_block(fm: dict | None, dob: str, day: date,
+                     attr_names: tuple = POOLED_ATTRS) -> dict:
     """Normalized FM block mirroring the MLS label construction.
 
     (age-25)/10, (ca-100)/100, (attr-10)/10; unverified -> 0.0 with
@@ -138,20 +146,21 @@ def fm_feature_block(fm: dict | None, dob: str, day: date) -> dict:
     where missing flags live in the wider candidate-set columns, not here).
     """
     if fm is None:
-        return {"age": 0.0, "ca": 0.0, "attrs": [0.0] * 6, "verified": 0.0}
+        return {"age": 0.0, "ca": 0.0, "attrs": [0.0] * len(attr_names),
+                "verified": 0.0}
     try:
         born = date.fromisoformat(dob)
         age = max(15.0, min(50.0, (day - born).days / 365.25))
     except ValueError:
-        return {"age": 0.0, "ca": 0.0, "attrs": [0.0] * 6, "verified": 0.0}
+        return {"age": 0.0, "ca": 0.0, "attrs": [0.0] * len(attr_names),
+                "verified": 0.0}
     ca_raw = fm.get("ca") or ""
     try:
         ca = float(ca_raw)
     except ValueError:
         ca = 0.0
     attrs = []
-    for name in ("Finishing", "OffTheBall", "Dribbling", "Composure",
-                 "Anticipation", "Passing"):
+    for name in attr_names:
         raw = fm.get(f"attr_{name}", "")
         try:
             value = float(raw)
