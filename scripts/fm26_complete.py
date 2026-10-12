@@ -168,7 +168,14 @@ def load_union(primary_path=COMPLETE, provenance_path=MEN, wanted_uids=None,
                             and first_row.get("dob") != second_row.get("dob"))
         kind_primary = (first_row or {}).get("kind", "unknown")
         kind_prov = (second_row or {}).get("kind", "unknown")
-        kind = kind_primary
+        # Primary kind wins, but a row present only in the other frame must
+        # keep that frame's explicit kind. The initial men DB was not
+        # complete: 97,717 UIDs exist in complete v6 but not in
+        # fm26_men_full_attrs (and the reverse pairing has none), so
+        # demoting such rows to `unknown` wrongly discarded their verified
+        # db blocks (seen as zero verified labels in the MLS label tests).
+        kind = kind_primary if kind_primary not in ("", "unknown") else (
+            kind_prov or "unknown")
         kind_conflict = bool(first_row and second_row and kind_primary and kind_prov
                              and kind_primary != kind_prov)
         attr_source = (second_row or {}).get("attr_source") or "unknown_no_men_provenance"
@@ -184,7 +191,10 @@ def load_union(primary_path=COMPLETE, provenance_path=MEN, wanted_uids=None,
         keys = {k.removeprefix("attr_") for row in (first_row, second_row) if row
                 for k in row if k.startswith("attr_") and k != "attr_source"}
         men_prov = (second_row or {}).get("attr_source") or ""
-        for field in keys:
+        # Deterministic serialized output: set iteration order varies by hash
+        # seed, which would reorder JSON attribute keys between identical
+        # runs and trip the immutable-snapshot equality guard.
+        for field in sorted(keys):
             left = _valid_attr((first_row or {}).get("attr_" + field))
             right = _valid_attr((second_row or {}).get("attr_" + field))
             if left is not None and right is not None and left != right:

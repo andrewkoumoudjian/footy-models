@@ -272,7 +272,10 @@ def write_csv(path, header, rows):
             value = row.get(key, "")
             if isinstance(value, float):
                 if math.isnan(value):
-                    cells.append("NaN")
+                    # Unobserved measurements are missing, never the NaN
+                    # float: the Rust observation reader treats blank cells
+                    # as genuinely unobserved and a NaN token as corruption.
+                    cells.append("")
                 else:
                     cells.append(repr(value))
             else:

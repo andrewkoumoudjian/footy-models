@@ -171,10 +171,12 @@ def rank_person(official,club,reep_id,record,linked_tm,tm_rows,native):
              (not best and native_quality>=3)))
     return {
         'reep_id':reep_id,'fm_uid':uid,
-        'reep_name':sorted(record['names'],key=lambda n:(-shared_name(official,n),len(n)))[0],
+        'reep_name':sorted(record['names'],key=lambda n:(-shared_name(official,n),len(n),n))[0],
         'alias_name_evidence_tier':alias_tier,'tm_name_evidence_tier':tm_name_tier,
         'score':score,'sufficient':sufficient,'tm_club_compatible':tm_club_ok,
         'tm_player_id':best[2] if best else None,
+        'tm_position':(best[3] or {}).get('position') if best else None,
+        'tm_sub_position':(best[3] or {}).get('sub_position') if best else None,
         'tm_name':best[3]['name'] if best else None,
         'tm_birth_date':tm_dob,'native_birth_date':native_dob,
         'native_name':native_row['name'] if native_row else None,
@@ -436,6 +438,7 @@ def read_sortitoutsi_corrob(roster_path,map_path,official_roster,local_fm):
                     'native_attr_source':native['attr_source'],'grade':0,
                     'source':'sortitoutsi_explicit_binary_UID_name_DOB',
                     'sortitoutsi_uid':si_id,
+                    'sortitoutsi_position':row.get('Position',''),
                 })
     return found
 
@@ -584,6 +587,12 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
         p['fm_name']=candidate.get('native_name')
         p['fm_kind']=candidate.get('native_kind')
         p['attr_source']=candidate.get('native_attr_source')
+        # Dated provider position evidence travels with the accepted identity;
+        # it never elevates attribute trust, only documents an outfield/GK role.
+        if candidate.get('sortitoutsi_position'):
+            p['sortitoutsi_position']=candidate['sortitoutsi_position']
+        if candidate.get('tm_position'):
+            p['transfermarkt_position']=candidate['tm_position']
         p['fm_native_record_trusted_for_this_player']=candidate.get('can_use_native_player_attributes',False)
         p['fm_player_record_verified']=bool(candidate.get('can_use_native_player_attributes'))
         if multi:

@@ -168,11 +168,38 @@ def ca_position_mixture(curves, ca, position_weights):
     return result
 
 
+def canonical_audit(audit):
+    """Normalize an identity source into the resolver-audit entry view.
+
+    Accepts either the standalone reep-first audit schema
+    (`reep_first_full_epl_identity_audit_v1`, entries keyed `new_fm_uid`/
+    `new_reep_id`) or the canonical roster CLI's per-player evidence ledger
+    (`players` entries with `accepted_candidate` {fm_uid, reep_id, ...}).
+    The canonical CLI is the production identity builder; this adapter only
+    reshapes its evidence, never relaxes attachment criteria.
+    Returns {club: [entry, ...]} with official_name/new_fm_uid/new_reep_id.
+    """
+    if audit.get("schema")=="reep_first_full_epl_identity_audit_v1":
+        return audit["clubs"]
+    players=audit.get("players")
+    if not isinstance(players,list) or not players:
+        raise ValueError("require Reep-first identity source")
+    if not all(isinstance(p.get("accepted_candidate"),(dict,type(None))) for p in players):
+        raise ValueError("require Reep-first identity source")
+    clubs={}
+    for person in players:
+        accepted=person.get("accepted_candidate")
+        entry={"official_name":person["official_name"],
+               "new_fm_uid":(str(accepted["fm_uid"]) if accepted and accepted.get("fm_uid") else None),
+               "new_reep_id":(accepted.get("reep_id") if accepted else None)}
+        clubs.setdefault(person["club"],[]).append(entry)
+    return clubs
+
+
 def generate(audit, curves, fm_source, si_roster, si_bridge, position_weights,
              complete_source=None):
-    if audit.get("schema")!="reep_first_full_epl_identity_audit_v1":
-        raise ValueError("require Reep-first identity source")
-    people=[p for group in audit["clubs"].values() for p in group]
+    clubs=canonical_audit(audit)
+    people=[p for group in clubs.values() for p in group]
     if len(people)!=1576:
         raise ValueError("not full 20-club registered universe")
     ids={str(p["new_fm_uid"]) for p in people if p.get("new_fm_uid")}
@@ -210,7 +237,7 @@ def generate(audit, curves, fm_source, si_roster, si_bridge, position_weights,
     prior={cls:cohort_prior(curves,cls,cohort) for cls in POSITION_CLASSES}
     results=[]
     counts=Counter()
-    for club,group in audit["clubs"].items():
+    for club,group in clubs.items():
         for entry in group:
             uid=str(entry["new_fm_uid"] or "")
             rows=known.get(uid,[])

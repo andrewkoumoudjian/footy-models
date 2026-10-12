@@ -52,6 +52,9 @@ def transform(roster,audit):
             p["fm_identity_accepted_as_candidate_only"]=bool(resolution["new_fm_uid"])
             p["fm_attr_source_reep_candidate"]=resolution["new_fm_attr_source"]
             p["fm_kind_reep_candidate"]=resolution["new_fm_kind"]
+            p["fm_binary_record_source_reep_candidate"]=resolution.get("new_fm_record_source")
+            p["multi_club_eligibility_unresolved"]=bool(
+                resolution.get("multi_club_eligibility_unresolved"))
             counter[p["identity_state"]]+=1
         block["matched_count"]=sum(bool(p["fm_uid"]) for p in original)
         # Preserve the original roster's schema: unmatched is a list, not
