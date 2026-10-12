@@ -11,7 +11,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from build_unified_prematch_bundle import (
     MENTAL, PSYCHOLOGY_TRAITS, SURGE_FEATURE_NAMES, build_bundle, chemistry,
     flatten_model_features, fm_features, form_window, load_provider_observations,
-    number, observed_roles, player_bundle_row, player_usage, psychology_vector,
+    number, observed_roles, player_bundle_row, player_usage, plausible_ability,
+    plausible_height, psychology_vector,
     rolling, value_primitive_features,
 )
 
@@ -170,6 +171,32 @@ class UnifiedPrematchTests(unittest.TestCase):
         self.assertIsNone(row["features"]["psych_professionalism"])
         self.assertFalse(row["observed_mask"]["fbref_xG_recent10_mean"])
         self.assertFalse(row["observed_mask"]["value_primitive_log_mv"])
+
+    def test_implausible_height_and_ability_are_missing_not_features(self):
+        self.assertIsNone(plausible_height("65354"))
+        self.assertIsNone(plausible_height("0"))
+        self.assertIsNone(plausible_height(""))
+        self.assertEqual(plausible_height("178"), 178.0)
+        self.assertIsNone(plausible_ability("0"))
+        self.assertIsNone(plausible_ability("999"))
+        self.assertEqual(plausible_ability("176"), 176.0)
+        record = {"uid": "44", "dob": "2007-07-03", "name": "Youth",
+                  "kind": "player", "attr_source": "db", "ca": 77.0, "pa": 77.0,
+                  "height_cm": 65354.0, "attributes": {"Determination": 13.0}}
+        fm = fm_features(record, "reep_to_local_fm_uid_nonplayer_kind_no_trusted_attributes")
+        # fm_features passes through validated heights via load path; direct
+        # record heights are re-validated when flattened into value primitives.
+        p = player_bundle_row("official_epl:abc", "Arsenal", "Youth", "EPL", self.cutoff,
+                              {"available": True, "identity_evidence": "x",
+                               "attribute_source": "database_block", "ca": 77.0, "pa": 77.0,
+                               "height_cm": 65354.0, "technical": {}, "mental": {},
+                               "observed_mental_mask": {}, "reconstructed_mental_mask": {}},
+                              {"fm26_uid_candidate": "44"}, "2007-07-03", [], [], [], [],
+                              identity_state="reep_tm_provisional")
+        from build_unified_prematch_bundle import team_sources
+        team = team_sources("Arsenal", [], [p], [], self.cutoff, {})
+        row = flatten_model_features(p, team)
+        self.assertIsNone(row["features"]["value_primitive_height_cm"])
 
     def test_duplicate_native_uid_is_quarantined_not_last_record_wins(self):
         import csv

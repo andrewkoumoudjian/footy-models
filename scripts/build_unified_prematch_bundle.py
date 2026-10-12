@@ -53,6 +53,31 @@ def hash_id(*parts):
     return hashlib.sha256("|".join(str(s).casefold() for s in parts).encode()).hexdigest()[:24]
 
 
+def plausible_height(value):
+    """FM height is cm; raw 65354-style sentinel values are missing, not tall."""
+    if value is None:
+        return None
+    try:
+        height = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(height) or not 140.0 <= height <= 220.0:
+        return None
+    return height
+
+
+def plausible_ability(value):
+    if value is None or value == "":
+        return None
+    try:
+        ability = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(ability) or not 1.0 <= ability <= 200.0:
+        return None
+    return ability
+
+
 def number(value):
     if value is None or value == "":
         return None
@@ -166,7 +191,7 @@ def load_sofa(directory, cutoff, allowed_matches=None):
     return players, teams, lineups, identities
 
 
-def load_fm(path, requested_identities, requested_uids):
+def load_fm(path, requested_identities, requested_uids, *, complete_fm_path=None):
     pairs = defaultdict(list)
     by_uid = {}
     ambiguous_uids = set()
@@ -178,8 +203,9 @@ def load_fm(path, requested_identities, requested_uids):
                 continue
             record = {"uid": uid, "name": row.get("name", ""), "dob": row.get("dob", ""),
                 "kind": row.get("kind", "unknown"), "attr_source": row.get("attr_source", "none"),
-                "ca": number(row.get("ca")), "pa": number(row.get("pa")),
-                "height_cm": number(row.get("height")),
+                "ca": plausible_ability(row.get("ca")), "pa": plausible_ability(row.get("pa")),
+                "height_cm": plausible_height(row.get("height")),
+                "binary_record_source":"men_full_attrs",
                 "attributes": {k.removeprefix("attr_"): number(v) for k, v in row.items()
                                if k.startswith("attr_")}}
             if key in requested_identities: pairs[key].append(record)
@@ -192,6 +218,34 @@ def load_fm(path, requested_identities, requested_uids):
                     by_uid.pop(uid, None)
                 elif uid not in ambiguous_uids:
                     by_uid[uid] = record
+    if complete_fm_path is not None:
+        # The gender-partitioned men extract omits 27 Reep-identified FM
+        # players who ARE present in the fuller binary frame. Recover these
+        # by exact typed FM UID, never by guessed names (names/DOB may be
+        # unavailable in the complete-v6 binary frame).
+        outstanding=requested_uids-set(by_uid)-ambiguous_uids
+        if outstanding:
+            duplicate_fallback=set()
+            with complete_fm_path.open(encoding="utf-8-sig",newline="") as handle:
+                for row in csv.DictReader(handle):
+                    uid=str(row.get("uid") or "")
+                    if uid not in outstanding:
+                        continue
+                    attributes={k.removeprefix("attr_"):number(v) for k,v in row.items()
+                                if k.startswith("attr_")}
+                    positive=sum(v is not None and 1<=v<=20 for v in attributes.values())
+                    record={"uid":uid,"name":row.get("name",""),"dob":row.get("dob",""),
+                            "kind":row.get("kind","unknown"),
+                            "attr_source":"db" if positive else "none",
+                            "ca":plausible_ability(row.get("ca")),"pa":plausible_ability(row.get("pa")),
+                            "height_cm":plausible_height(row.get("height")),
+                            "attributes":attributes,
+                            "binary_record_source":"complete_v6_uid_exact"}
+                    if uid in by_uid:
+                        duplicate_fallback.add(uid)
+                        by_uid.pop(uid,None)
+                    elif uid not in duplicate_fallback:
+                        by_uid[uid]=record
     return pairs, by_uid
 
 
@@ -247,6 +301,47 @@ def fm_features(record, identity_evidence, prior=None):
             "observed_mental_mask": {k: measured and v is not None and v > 0 for k, v in mental.items()},
             "reconstructed_mental_mask": {k: (estimated or reconstructed) and v is not None and v > 0
                                           for k,v in mental.items()}}
+
+
+def epl_native_attribute_admissible(official_name, native, identity_evidence=None):
+    """Do not feed attributes merely because Reep and FM publish the same UID.
+
+    The complete-v6 binary frame contains UIDs, CA and traits, but often no
+    name/DOB. Several Reep-linked UIDs also belong to entirely different
+    names in the gender-specific extraction. Identity discovery and trait
+    admissibility are independent gates. Returning False keeps the canonical
+    identity, but clears all individual FM attribute inputs.
+    """
+    if native is None:
+        return False
+    identity_evidence=identity_evidence or {}
+    if identity_evidence.get("fm_native_record_trusted_for_this_player") is False:
+        return False
+    try:
+        from resolve_epl_reep_first import source_name_support
+    except ModuleNotFoundError:
+        # The bundle may also be imported as scripts.build_unified_prematch_bundle
+        # by a test or another package, rather than executed as a CLI script.
+        from scripts.resolve_epl_reep_first import source_name_support
+    actual_name=native.get("name") or ""
+    if not actual_name:
+        return False
+    if not source_name_support(official_name,actual_name):
+        # Distinct provider-spelling variants (e.g., Phil/Philip or Ukrainian
+        # transliteration) can have different names yet the native player is
+        # independently verified. Allow only an explicit affirmative audit
+        # grounded in BOTH the native name AND a matching native/TM DOB.
+        audit=identity_evidence.get("identity_evidence") or {}
+        if not (
+            identity_evidence.get("fm_native_record_trusted_for_this_player") is True
+            and audit.get("native_dob_agrees_with_tm") is True
+            and (audit.get("native_name_evidence_tier") or 0)>=1
+        ):
+            return False
+    # An explicit audited native-name/DOB confirmation is stronger evidence.
+    # Name compatible + typed Reep ID is provisional; never mislabel it as
+    # issuer-verified official registration.
+    return True
 
 
 def load_provider_observations(path, cutoff, provider, provider_key):
@@ -384,7 +479,7 @@ def value_primitive_features(fm, dob, position, form, market_obs, cutoff):
             row["fm_pa_gap"] = row["fm_pa"] - row["fm_ca"]
         row["fm_attr_db"] = float(fm["attribute_source"] == "database_block")
         row["fm_attr_derived"] = float(fm["attribute_source"] == "reconstructed_distribution")
-        row["height_cm"] = fm.get("height_cm")
+        row["height_cm"] = plausible_height(fm.get("height_cm"))
         categories = {
             "technical": ("Technique", "FirstTouch", "Passing", "Dribbling"),
             "physical": ("Pace", "Acceleration", "Stamina", "Strength"),
@@ -511,7 +606,7 @@ def team_sources(club, team_rows, candidates, starts, cutoff, identity_alias):
 
 
 def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path=None,
-                 market_path=None, fm_attr_priors=None):
+                 market_path=None, fm_attr_priors=None, fm_complete_path=None):
     fm_vintage_allowed(cutoff)
     if league not in ("EPL", "MLS"):
         raise ValueError("only EPL and MLS supported")
@@ -520,6 +615,7 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
     if league == "EPL" and (set(roster["teams"]) != set(TEAM_ALIASES)
                             or roster.get("roster_scope") == "fixture_subset"):
         raise ValueError("EPL feature bundle requires the complete 20-club official registration; regenerate without --fixtures")
+    identity_versions=("reep_first_all_20_clubs_v1","canonical_reep_first_v2")
     if not reep.get("stamp") or "sofascore_reep_links_all" not in reep:
         raise ValueError("Reep audit must contain direct-bridge v4 identity contract")
     all_sofa_reep = {item["sofascore_id"]: item for item in reep["sofascore_reep_links_all"]}
@@ -539,10 +635,12 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
             latest = max((r["date"], r["match_id"]) for r in records)
             if pid not in most_recent_club or latest > most_recent_club[pid][0]:
                 most_recent_club[pid] = (latest, club)
-        candidate_ids = {(club, pid) for (club, pid), records in sofa_players.items()
-                         if most_recent_club[pid][1] == club and
-                         0 < (date.fromisoformat(cutoff) - date.fromisoformat(
-                             max(r["date"] for r in records))).days <= 120}
+        # Preserve every most-recent-club assignment, even when the latest
+        # observation is stale (>120d) or the player is injured/seldom-used.
+        # Recency is a dated feature (days_since_last_observed), never a
+        # roster-deletion rule. This restores all 30 MLS clubs.
+        candidate_ids = {(club, pid) for (club, pid) in sofa_players
+                         if most_recent_club[pid][1] == club}
         requested_uids = {str(link["fm_uids"][0]) for sid, link in linked_fm.items()
                           if link["local_fm_status"] in (
                               "linked_player_with_db_attributes_and_matching_dob",
@@ -553,7 +651,10 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
         candidate_ids = set()
         requested_uids = {str(p["fm_uid"]) for team in roster["teams"].values()
                           for p in team["players"] if p.get("fm_uid")}
-    _, local_fm = load_fm(fm_path, set(), requested_uids)
+    _, local_fm = load_fm(
+        fm_path,set(),requested_uids,
+        complete_fm_path=(fm_complete_path if league=="EPL" and
+                          roster.get("identity_rebuild") in identity_versions else None))
     fbref = load_provider_observations(fbref_path, cutoff, "fbref", "fbref_person_id")
     transfermarkt = load_provider_observations(market_path, cutoff, "transfermarkt", "transfermarkt_player_id")
 
@@ -561,7 +662,7 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
     quality = Counter()
     alias = {}
     if fm_attr_priors is not None:
-        if league!="EPL" or roster.get("identity_rebuild")!="reep_first_all_20_clubs_v1":
+        if league!="EPL" or roster.get("identity_rebuild") not in identity_versions:
             raise ValueError("conditional FM priors require Reep-first 20-club EPL identities")
         if fm_attr_priors.get("schema")!="fm26_missing_trait_conditional_priors_v1":
             raise ValueError("unknown/unsupported generated FM attribute prior source")
@@ -577,20 +678,35 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
         for club, team in roster["teams"].items():
             for p in team["players"]:
                 uid = str(p.get("fm_uid") or "")
-                reep_first = roster.get("identity_rebuild") == "reep_first_all_20_clubs_v1"
+                reep_first = roster.get("identity_rebuild") in identity_versions
                 bridge = None if reep_first else epl_links.get((club, p["official_name"], uid))
                 # A Reep/FM bridge verifies an FM ID, not a name-only official
                 # registration -> FM assignment. Keep the official namespace.
                 canonical = f"official_epl:{hash_id(roster['as_of'], club, p['official_name'])}"
                 record = local_fm.get(uid)
                 assert record is None or record["uid"] == uid
+                # A Reep FM provider ID can map to a *different native name*
+                # in this imperfect FM export. Keep the candidate UID for
+                # review, but NEVER feed another person's mental/CA traits
+                # into the match model. The guard is supplied only by the
+                # independent FM/Transfermarkt/DOB identity reconciliation.
+                native_trust = p.get("fm_native_record_trusted_for_this_player")
+                # Every EPL roster path—legacy provisional matching, the
+                # Reep-first audit, and later independent FM/TM recovery—
+                # must pass the same native-record/person corroboration gate.
+                # A missing explicit trust flag is NOT itself a positive
+                # identity/trait assertion.
+                native_admissible = epl_native_attribute_admissible(
+                    p["official_name"], record, p)
+                if not native_admissible:
+                    record = None
                 state = (
-                    p.get("identity_state", "unresolved_reep_search")
+                    p.get("identity_state") or p.get("identity_verification") or "unresolved_reep_search"
                     if reep_first else
                     (p.get("identity_verification") if record else "no_local_fm_record")
                     or "unverified_official_to_fm_name_join"
                 )
-                prior=priors_by_uid.get(uid)
+                prior=priors_by_uid.get(uid) if native_admissible else None
                 if prior and (
                     record is None or
                     prior["reep_id"]!=p.get("reep_id_candidate") or
@@ -600,6 +716,15 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
                 ):
                     raise ValueError("prior candidate does not match unique Reep FM identity")
                 feature = fm_features(record, state, prior=prior)
+                if reep_first:
+                    feature["candidate_fm_uid_held_separately"]=uid or None
+                    feature["native_trait_admission"]=(
+                        "name_corrob_native_id_provisional"
+                        if native_admissible else
+                        "unverified_or_conflicting_native_identity_traits_missing"
+                    )
+                if record is not None:
+                    feature["binary_record_source"]=record.get("binary_record_source")
                 # The native FM record may be linked to Reep by a typed ID,
                 # but the official league list contains names, not person
                 # DOB/provider IDs. Do not upgrade the official-roster join
@@ -607,12 +732,14 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
                 feature["identity_verified_for_real_player"] = False
                 if reep_first:
                     hinted = p.get("provider_ids_candidate") or {}
+                    person_evidence=p.get("identity_evidence") or {}
                     source_ids = {
-                        "reep_id_candidate": p.get("reep_id_candidate"),
+                        "reep_id_candidate": p.get("reep_id_candidate") or p.get("reep_id"),
                         "fm26_uid_candidate": uid or None,
                         "fbref_person_ids_candidate": hinted.get("fbref", []),
                         "sofascore_ids_candidate": hinted.get("sofascore", []),
-                        "transfermarkt_player_ids_candidate": hinted.get("transfermarkt", []),
+                        "transfermarkt_player_ids_candidate": hinted.get("transfermarkt", []) or
+                            ([str(person_evidence["tm_player_id"])] if person_evidence.get("tm_player_id") else []),
                         "official_to_reep_identity_issuer_verified": False,
                     }
                 else:
@@ -622,12 +749,17 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
                         "fbref_person_ids_candidate": bridge.get("fbref_person_ids", []) if bridge else [],
                         "transfermarkt_player_ids_candidate": bridge.get("transfermarkt_player_ids", []) if bridge else [],
                     }
-                dob = record["dob"] if record else None
+                dob = record["dob"] if record else (
+                    (p.get("identity_evidence") or {}).get("tm_birth_date")
+                    if p.get("identity_evidence") else None)
                 candidate = player_bundle_row(canonical, club, p["official_name"], "EPL", cutoff,
                                               feature, source_ids, dob, [], [], [], [],
                                               identity_state=state)
                 candidate["registration"] = p["registration"]
                 candidate["loaned_out"] = bool(p.get("loaned_out"))
+                if reep_first:
+                    candidate["multi_club_eligibility_unresolved"]=bool(
+                        p.get("multi_club_eligibility_unresolved"))
                 candidate["epl_fm_identity_evidence"] = p.get("transfermarkt_evidence") or {
                     "source": p.get("match_method"),
                     "verification": p.get("identity_verification")}
@@ -825,6 +957,8 @@ def main():
     parser.add_argument("--epl-roster", type=Path, default=ROOT / "data/identity/reep/epl_full_all_sources_v1.json")
     parser.add_argument("--sofascore-root", type=Path, default=ROOT / "data/sofascore_cfm")
     parser.add_argument("--fm-file", type=Path, default=Path("/home/drewclaw/fm26-data/fm26_men_full_attrs.csv"))
+    parser.add_argument("--fm-complete-file", type=Path,
+                        default=Path("/home/drewclaw/fm26-data/fm26_complete_v6.csv"))
     parser.add_argument("--fbref-observations", type=Path)
     parser.add_argument("--market-observations", type=Path)
     parser.add_argument("--fm-attr-priors", type=Path,
@@ -841,7 +975,7 @@ def main():
         bundle = build_bundle(args.league, args.cutoff, roster=roster, reep=reep,
                               sofa_root=args.sofascore_root, fm_path=args.fm_file,
                               fbref_path=args.fbref_observations, market_path=args.market_observations,
-                              fm_attr_priors=priors)
+                              fm_attr_priors=priors, fm_complete_path=args.fm_complete_file)
         if args.fm_attr_priors:
             bundle["generated_fm_traits_source_sha256"]=hashlib.sha256(
                 args.fm_attr_priors.read_bytes()).hexdigest()
