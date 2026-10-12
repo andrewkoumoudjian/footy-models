@@ -4,10 +4,14 @@
 mod calibration;
 mod player_participation;
 mod player_rate;
+mod pooled_correction;
+mod player_shot_count;
 mod stats;
 pub use calibration::*;
 pub use player_participation::*;
 pub use player_rate::*;
+pub use pooled_correction::*;
+pub use player_shot_count::*;
 pub use stats::*;
 
 use footy_core::{Confidence, EuroCents, Probability};

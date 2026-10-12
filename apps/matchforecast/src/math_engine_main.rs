@@ -48,26 +48,55 @@ fn optional_numeric(row: &Value, key: &str) -> Result<Option<f64>, String> {
         Some(_) => number(row, key).map(Some),
     }
 }
-fn candidates(v: &[Value]) -> Result<Vec<Candidate>, String> {
-    v.iter()
-        .map(|p| {
-            Ok(Candidate {
-                id: required(p, "id")?.as_u64().ok_or("invalid player id")?,
-                club: string(p, "club")?.to_owned(),
-                minutes_prior: number(p, "minutes_prior")?,
-                shots_per90: number(p, "shots_per90")?,
-                xg_per90: number(p, "xg_per90")?,
-                is_goalkeeper: required(p, "is_goalkeeper")?
-                    .as_bool()
-                    .ok_or("invalid goalkeeper flag")?,
-                fm_source: string(p, "fm_source")?.to_owned(),
-                fm_finishing: opt_numeric(p, "fm_finishing")?,
-                start_probability: optional_numeric(p, "start_probability")?,
-                expected_minutes_if_start: optional_numeric(p, "expected_minutes_if_start")?,
-                bench_appearance_probability: optional_numeric(p, "bench_appearance_probability")?,
-            })
-        })
-        .collect()
+fn candidates(v: &[Value]) -> Result<(Vec<Candidate>, BTreeMap<u64, (f64, bool)>), String> {
+    let mut priors = BTreeMap::new();
+    let mut out = Vec::with_capacity(v.len());
+    for p in v.iter() {
+        let id = required(p, "id")?.as_u64().ok_or("invalid player id")?;
+        let shots = number(p, "shots_per90")?;
+        // Optional pooled residual correction (see scripts/apply_pooled_correction.py).
+        // When present it must be a finite positive per-90 rate computed strictly
+        // pre-match; otherwise the engine keeps its research prior and records
+        // the player as uncorrected. Missing is missing, never silent zero.
+        let corrected = match p.get("corrected_shots_per90") {
+            None | Some(Value::Null) => None,
+            Some(_) => {
+                let rate = number(p, "corrected_shots_per90")?;
+                if rate <= 0.0 || rate > 12.0 {
+                    return Err("corrected_shots_per90 outside plausible per-90 range".into());
+                }
+                Some(rate)
+            }
+        };
+        let effective = corrected.unwrap_or(shots);
+        if priors.insert(id, (effective, corrected.is_some())).is_some() {
+            return Err(format!("duplicate player {id}"));
+        }
+        out.push(Candidate {
+            id,
+            club: string(p, "club")?.to_owned(),
+            minutes_prior: number(p, "minutes_prior")?,
+            shots_per90: effective,
+            xg_per90: number(p, "xg_per90")?,
+            is_goalkeeper: required(p, "is_goalkeeper")?
+                .as_bool()
+                .ok_or("invalid goalkeeper flag")?,
+            fm_source: string(p, "fm_source")?.to_owned(),
+            fm_finishing: opt_numeric(p, "fm_finishing")?,
+            start_probability: optional_numeric(p, "start_probability")?,
+            expected_minutes_if_start: optional_numeric(p, "expected_minutes_if_start")?,
+            bench_appearance_probability: optional_numeric(p, "bench_appearance_probability")?,
+        });
+    }
+    Ok((out, priors))
+}
+
+/// Optional pooled-correction provenance block passed through to the output.
+fn correction_provenance(data: &Value) -> Value {
+    match data.get("pooled_correction") {
+        None | Some(Value::Null) => serde_json::json!(null),
+        Some(block) => block.clone(),
+    }
 }
 
 #[derive(Clone)]
@@ -230,7 +259,8 @@ fn run() -> Result<(), String> {
     if observed.len() < 30 {
         return Err("insufficient historical matches".into());
     }
-    let players = candidates(arr(&data, "players")?)?;
+    let (players, priors) = candidates(arr(&data, "players")?)?;
+    let corrected_players = priors.values().filter(|(_, corrected)| *corrected).count();
     let mut unique = BTreeMap::new();
     for candidate in &players {
         if unique.insert(candidate.id, &candidate.club).is_some() {
@@ -292,6 +322,7 @@ fn run() -> Result<(), String> {
             .players
             .iter()
             .map(|(id, counts)| {
+                let (prior_rate, corrected) = priors.get(id).copied().unwrap_or((0.0, false));
                 json!({
                     "id":id,"expected_shots":counts.shots as f64/result.paths as f64,
                     "expected_goals":counts.goals as f64/result.paths as f64,
@@ -301,6 +332,8 @@ fn run() -> Result<(), String> {
                     "p_appearance":counts.appearances as f64/result.paths as f64,
                     "p_sub_on":counts.substitutions_on as f64/result.paths as f64,
                     "expected_minutes":counts.seconds_played/(60.0*result.paths as f64),
+                    "prior_shots_per90":prior_rate,
+                    "prior_corrected_by_pooled_model":corrected,
                 })
             })
             .collect();
@@ -338,7 +371,16 @@ fn run() -> Result<(), String> {
         "source_counts":required(&data,"fm_source_counts")?,
         "fm_record_kind_counts":data.get("fm_record_kind_counts"),
         "fm_trusted_attributes":data.get("fm_trusted_attributes"),
+        "feature_source_provenance":data.get("feature_source_provenance"),
+        "feature_cutoff_utc":data.get("feature_cutoff_utc"),
+        "fixture_kickoff_utc":data.get("fixture_kickoff_utc"),
         "paths":params.paths,"seed":params.seed,
+        "pooled_correction":{
+            "applied":corrected_players > 0,
+            "corrected_players":corrected_players,
+            "total_players":priors.len(),
+            "artifact":correction_provenance(&data),
+        },
         "parameters":{
             "red_probability_per90":params.red_card_probability_per90,
             "trailing_shot_log_effect":params.trailing_shot_log_effect,
@@ -352,6 +394,7 @@ fn run() -> Result<(), String> {
             "source player shot/xG rates are FM-derived research priors, not observed current season event rates",
             "role-neutral ten-outfield exact-cardinality sample is not a positionally calibrated XI",
             "zero tactical/FM attribute effects by default pending new independent OOS evidence",
+            "pooled EPL+MLS shot-rate corrections apply only where the input carries a pre-match corrected_shots_per90; per-player prior provenance is recorded in player_forecasts",
             "all probabilities are unvalidated simulation estimates; not betting odds",
         ],
         "fixtures":forecasts,

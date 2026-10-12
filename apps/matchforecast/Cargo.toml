@@ -36,6 +36,14 @@ path = "src/math_engine_main.rs"
 name = "footy-participation-eval"
 path = "src/main_participation_eval.rs"
 
+[[bin]]
+name = "footy-shot-rate-eval"
+path = "src/main_shot_rate_eval.rs"
+
+[[bin]]
+name = "footy-team-goals-oos"
+path = "src/main_team_goals_oos.rs"
+
 [dependencies]
 footy-core = { path = "../../crates/core" }
 footy-source-stats = { path = "../../crates/source-stats" }

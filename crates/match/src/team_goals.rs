@@ -162,6 +162,28 @@ fn poisson(mu: f64) -> [f64; 13] {
     p
 }
 
+/// Full independent-Poisson scoreline probability mass function on the 13x13
+/// grid used by [`score_distribution`]. Rows sum to one after normalization;
+/// the tail beyond 12 goals per side is folded into the grid proportionally.
+pub fn scoreline_pmf(home_mu: f64, away_mu: f64) -> [[f64; 13]; 13] {
+    let home = poisson(home_mu.clamp(0.15, 5.0));
+    let away = poisson(away_mu.clamp(0.15, 5.0));
+    let mut grid = [[0.0; 13]; 13];
+    let mut mass = 0.0;
+    for (i, row) in grid.iter_mut().enumerate() {
+        for (j, cell) in row.iter_mut().enumerate() {
+            *cell = home[i] * away[j];
+            mass += *cell;
+        }
+    }
+    for row in grid.iter_mut() {
+        for cell in row.iter_mut() {
+            *cell /= mass;
+        }
+    }
+    grid
+}
+
 pub fn score_distribution(home_mu: f64, away_mu: f64) -> GoalScoreForecast {
     let h=poisson(home_mu); let a=poisson(away_mu);
     let mut outcomes=[0.0;3];
@@ -201,5 +223,21 @@ mod tests {
         for i in 0..60 {games.push(TeamGoalsObservation{day:i,home:"A".into(),away:"B".into(),home_goals:2,away_goals:1});games.push(TeamGoalsObservation{day:i,home:"B".into(),away:"A".into(),home_goals:2,away_goals:1});}
         let x=TeamGoalModel::fit(&games,&[],60).unwrap().forecast("A","B");
         assert!(x.outcomes[0]>x.outcomes[2]);
+    }
+    #[test]
+    fn scoreline_pmf_is_consistent_with_outcomes() {
+        let grid = scoreline_pmf(1.8, 1.1);
+        let total: f64 = grid.iter().flatten().sum();
+        assert!((total - 1.0).abs() < 1e-12);
+        let x = score_distribution(1.8, 1.1);
+        let mut outcomes = [0.0; 3];
+        for (i, row) in grid.iter().enumerate() {
+            for (j, cell) in row.iter().enumerate() {
+                outcomes[if i > j { 0 } else if i == j { 1 } else { 2 }] += cell;
+            }
+        }
+        for k in 0..3 {
+            assert!((outcomes[k] - x.outcomes[k]).abs() < 1e-12);
+        }
     }
 }
