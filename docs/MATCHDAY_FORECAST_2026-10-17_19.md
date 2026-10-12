@@ -9,7 +9,7 @@ stated below; not betting odds.
 ```bash
 python3 scripts/forecast_matchday.py \
   --schedule espn_board_20261017.json espn_board_20261018.json espn_board_20261019.json \
-  --as-of 2026-10-12 --out-dir data/ml/matchday_20261017_19 \
+  --as-of 2026-10-12 --out-dir data/ml/matchday_20261017_19_v2 \
   --paths 2500 --seed 42
 ```
 
