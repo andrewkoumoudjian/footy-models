@@ -104,6 +104,8 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--fixtures',default='configs/pl_2026-10-11.json')
     ap.add_argument('--availability',default='configs/pl_availability_2026-10-11.json')
+    ap.add_argument('--observed-shot-priors',help='optional dated ESPN observed shot-rate priors JSON '
+                    'whose observed_window_exclusive_end equals the fixture as-of')
     ap.add_argument('--fm-file',help='raw FM26 men attributes CSV (full pipeline only)')
     ap.add_argument('--registration-url',help='official registered squad source for the season')
     ap.add_argument('--html-cache',help='optional season-specific cached official roster HTML')
@@ -181,7 +183,8 @@ def main():
         if opt.offline:match.append('--offline')
         run(match)
         run([python,script/'prepare_pl_player_inputs.py','--fixtures',opt.fixtures,
-             '--squads',roster,'--availability',opt.availability])
+             '--squads',roster,'--availability',opt.availability]+
+            (['--observed-shot-priors',opt.observed_shot_priors] if opt.observed_shot_priors else []))
         run(['cargo','run','--quiet','--release','-p','footy-matchforecast',
              '--bin','footy-matchforecast-pl','--','--paths',str(opt.paths),
              '--seed',str(opt.seed),'--as-of',str(cutoff+timedelta(days=1)),

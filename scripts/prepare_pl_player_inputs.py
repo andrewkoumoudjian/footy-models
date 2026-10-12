@@ -47,6 +47,38 @@ def position_group(raw):
     if any(p in pos for p in ('striker','forward','winger','attacker','attack')):return 'FWD'
     return 'UNKNOWN'
 
+FM_SI_POSITION_GROUP={'g':'GK','gk':'GK','dm':'MID','wb':'DEF','wbr':'DEF','wbl':'DEF',
+                      'st':'FWD','f':'FWD'}
+def fm_si_position_group(raw):
+    """Sortitoutsi FM26 Position strings are FM role codes: 'GK', 'D C, DM', 'AM/F'."""
+    for component in (raw or '').split(','):
+        token=component.strip().casefold().split(' ')[0]
+        if not token:continue
+        if token in FM_SI_POSITION_GROUP:return FM_SI_POSITION_GROUP[token]
+        if token[0]=='g':return 'GK'
+        if token[0]=='d':return 'DEF'
+        if token[0]=='m' or token[0]=='a':return 'MID'
+        if token[0]=='s':return 'FWD'
+    return 'UNKNOWN'
+
+TM_POSITION_GROUP={'goalkeeper':'GK','defender':'DEF','midfielder':'MID','attack':'FWD'}
+
+def documented_position(p):
+    """First available dated provider position evidence; never invented.
+
+    Priority: registered historical position, then the Sortitoutsi FM26 roster
+    role code joined through the verified SI->binary UID mapping, then the
+    Transfermarkt player position of the identity-corroborated TM row.
+    Returns (group, source_name); ('UNKNOWN','unknown') is honest missingness.
+    """
+    group=position_group(p.get('historical_position',''))
+    if group!='UNKNOWN':return group,'historical_2025_26'
+    group=fm_si_position_group(p.get('sortitoutsi_position',''))
+    if group!='UNKNOWN':return group,'sortitoutsi_fm26_roster'
+    group=TM_POSITION_GROUP.get((p.get('transfermarkt_position') or '').strip().casefold(),'UNKNOWN')
+    if group!='UNKNOWN':return group,'transfermarkt_players'
+    return 'UNKNOWN','unknown'
+
 def official_candidate_id(team, official_name):
     """Stable provisional identity within a club/season, NOT a person join."""
     season=CUTOFF.year if CUTOFF.month>=7 else CUTOFF.year-1
@@ -99,7 +131,7 @@ def write_results():
                    for k,v in measurements.items()}})
     return len(rows)
 
-def prepare_players():
+def prepare_players(observed_priors=None):
     fields=['player_id','name','team','minutes','first_listed_date','last_listed_date',
             'last_appearance_date','selection_listings','selection_appearances','selection_starts',
             'selection_minutes','selection_start_minutes','team_fixtures','shots_p90','xg_p90','xa_p90',
@@ -107,8 +139,21 @@ def prepare_players():
             'fm_marking','fm_consistency','fm_dirtiness','fm_kind','fm_attr_source',
             'fm_attributes_verified','identity_status','registered_club','membership_observed_as_of',
             'registration_type','position_group','position_source','exposure_kind',
-            'event_rate_kind','source_published_at']
+            'event_rate_kind','source_published_at','observed_espn_id','observed_appearances',
+            'observed_minutes','observed_shots']
     statuses={};outrows=[];candidate_rows=[]
+    observed_by_uid={}
+    if observed_priors is not None:
+        if observed_priors.get('schema')!='espn_observed_shot_priors_v1':
+            raise ValueError('incompatible observed-shot-priors schema')
+        if date.fromisoformat(observed_priors['observed_window_exclusive_end'])!=CUTOFF:
+            raise ValueError('observed-shot priors window must end exactly at the prediction cutoff')
+        for person in observed_priors['people']:
+            if person['fm_uid'] is None:continue
+            key=(person['club'],str(person['fm_uid']))
+            if key in observed_by_uid:
+                raise ValueError(f'duplicate observed prior for {key}')
+            observed_by_uid[key]=person
     for team,squad in SQUADS['teams'].items():
         excluded=set(AVAILABILITY['excluded_by_club'].get(team,[]))
         for p in squad['players']:
@@ -126,7 +171,10 @@ def prepare_players():
                 'attr_source':p.get('attr_source','unknown'),
                 'fm_attributes_verified':p.get('fm_attributes_verified',False),
                 'historical_position':p.get('historical_position',''),
-                'historical_position_group':position_group(p.get('historical_position','')),
+                'sortitoutsi_position':p.get('sortitoutsi_position',''),
+                'transfermarkt_position':p.get('transfermarkt_position',''),
+                'historical_position_group':documented_position(p)[0],
+                'position_source':documented_position(p)[1],
                 'start_observations':None,'minutes_observations':None,
                 'source_published_at':None})
         matched=[p for p in squad['players'] if p.get('fm_uid')
@@ -146,7 +194,6 @@ def prepare_players():
                       max(100.,(ca-85.)*17.) if ca is not None else 500.)
             if p['registration']=='u21':exposure *= 0.46
             exposure=max(50.,exposure)
-            pos=p.get('historical_position','')
             finishing=fl(attrs.get('Finishing'),10)
             passing=fl(attrs.get('Passing'),10)
             vision=fl(attrs.get('Vision'),10)
@@ -155,9 +202,13 @@ def prepare_players():
             dribbling=fl(attrs.get('Dribbling'),10)
             creativity=(passing+vision+technique+decisions)/4
             attacking=(finishing+fl(attrs.get('OffTheBall'),10)+fl(attrs.get('FirstTouch'),10))/3
-            role=position_group(pos)
-            if role=='GK' or (verified and role=='UNKNOWN' and
-                              fl(attrs.get('Reflexes'))>=12 and fl(attrs.get('Handling'))>=11):
+            role,position_source_name=documented_position(p)
+            # Verified-FM goalkeeper attributes still document a keeper when
+            # no provider position evidence exists; do not guess outfield roles.
+            if role=='UNKNOWN' and verified and (
+                    fl(attrs.get('Reflexes'))>=12 and fl(attrs.get('Handling'))>=11):
+                role='GK';position_source_name='verified_fm_goalkeeper_attributes'
+            if role=='GK':
                 shots=0.015;xg=0.005;xa=0.005;passes=20.;carries=.02
             else:
                 shots=max(.18,min(3.4,.75+.13*(attacking-10)+.045*(dribbling-10)))
@@ -167,13 +218,15 @@ def prepare_players():
                 carries=max(.2,min(5.,1.1+.16*(dribbling-10)))
             # No selection data is available for the 2026/27 PL season. The
             # participation model must use fallback, not fabricated starts.
+            observed=observed_by_uid.get((team,str(p['fm_uid']))) if p.get('fm_uid') else None
             outrows.append({'player_id':p['fm_uid'],
                 'name':p.get('fm_name') or p['official_name'],'team':team,
                 'minutes':round(exposure,3),'first_listed_date':'',
                 'last_listed_date':CUTOFF.isoformat(),'last_appearance_date':'',
                 'selection_listings':0,'selection_appearances':0,'selection_starts':0,
                 'selection_minutes':0,'selection_start_minutes':0,'team_fixtures':0,
-                'shots_p90':round(shots,4),'xg_p90':round(xg,4),'xa_p90':round(xa,4),
+                'shots_p90':round(observed['gamma_poisson_shots_per90'],4) if observed else round(shots,4),
+                'xg_p90':round(xg,4),'xa_p90':round(xa,4),
                 'passes_p90':round(passes,4),'prog_carries_p90':round(carries,4),
                 'fm_ca':ca if ca is not None else '',
                 'fm_finishing':finishing if verified else '',
@@ -187,10 +240,15 @@ def prepare_players():
                 'identity_status':'fm_player_record' if p.get('fm_player_record_verified') else 'unverified_record_kind',
                 'registered_club':team,'membership_observed_as_of':p.get('membership_observed_as_of',CUTOFF.isoformat()),
                 'registration_type':p['registration'],'position_group':role,
-                'position_source':'historical_2025_26' if role!='UNKNOWN' else 'unknown',
+                'position_source':position_source_name,
                 'exposure_kind':'prior_2025_26_minutes' if actual_prior else 'fm_heuristic' if verified else 'population_prior',
-                'event_rate_kind':'fm_heuristic_not_observed' if verified else 'population_prior_not_observed',
-                'source_published_at':''})
+                'event_rate_kind':('espn_observed_gamma_poisson_5_exposure_role_prior' if observed
+                                   else 'fm_heuristic_not_observed' if verified else 'population_prior_not_observed'),
+                'source_published_at':'',
+                'observed_espn_id':observed['espn_id'] if observed else '',
+                'observed_appearances':observed['observed_appearances'] if observed else '',
+                'observed_minutes':observed['observed_minutes'] if observed else '',
+                'observed_shots':observed['observed_shots'] if observed else ''})
         statuses[team]={'registered':squad['registered_count'],
             'fm_matched':len(matched),
             'matched_senior':sum(p['registration']=='registered' for p in matched),
@@ -210,7 +268,15 @@ def prepare_players():
         'players':candidate_rows},indent=2,ensure_ascii=False)+'\n')
     (OUT/'player_input_provenance.json').write_text(json.dumps({
         'snapshot_as_of':CUTOFF.isoformat(),'source':SQUADS['registration_source'],
-        'player_rate_inputs':'FM attribute-derived heuristics; NOT fitted on actual PL per-player events',
+        'player_rate_inputs':('mix of ESPN observed Gamma-Poisson shot-rate posteriors and FM attribute-derived heuristics'
+                              if observed_priors else 'FM attribute-derived heuristics; NOT fitted on actual PL per-player events'),
+        'observed_shot_priors':({
+            'source':observed_priors['espn_archive']['path'],
+            'source_sha256':observed_priors['espn_archive']['sha256'],
+            'window_exclusive_end':observed_priors['observed_window_exclusive_end'],
+            'people':observed_priors['people_count'],
+            'reconciliation':observed_priors['identity_reconciliation_counts']} if observed_priors
+            else 'not supplied; all player event rates remain unobserved heuristics'),
         'unverified_fm_records':'kept as candidates without FM ratings; population-prior event/exposure values carry high epistemic uncertainty',
         'missing_team_measurements':'blank numeric observations and explicit measured/missing flags; never substitute scored goals as observed xG',
         'full_candidate_roster':'official_candidate_roster.json includes unmatched names with provisional IDs; no FM attrs or observed selections imputed',
@@ -225,6 +291,8 @@ if __name__=='__main__':
     parser.add_argument('--fixtures',default='configs/pl_2026-10-11.json')
     parser.add_argument('--squads',help='UID-matched official roster JSON')
     parser.add_argument('--availability',help='dated availability exclusions JSON; required to avoid implicitly reusing old team news')
+    parser.add_argument('--observed-shot-priors',help='dated ESPN observed shot-rate priors JSON '
+                        '(window must end exactly at the fixture as-of)')
     parser.add_argument('--data-dir',default='data/pl')
     args=parser.parse_args()
     OUT=ROOT/args.data_dir
@@ -241,5 +309,12 @@ if __name__=='__main__':
     if AVAILABILITY.get('source_published','')[:10] > CUTOFF.isoformat():
         raise SystemExit('Availability source publication time follows forecast cutoff')
     OUT.mkdir(parents=True,exist_ok=True)
-    matches=write_results();players,s=prepare_players();print('matches',matches,'FM player rows',players)
+    observed_priors=None
+    if args.observed_shot_priors:
+        observed_priors=json.loads((ROOT/args.observed_shot_priors).read_text())
+    matches=write_results();players,s=prepare_players(observed_priors)
+    print('matches',matches,'FM player rows',players)
+    if observed_priors:
+        print('observed shot priors applied:',observed_priors['people_count'],'people from',
+              observed_priors['espn_archive']['path'],'window ends',observed_priors['observed_window_exclusive_end'])
     for team,x in s.items():print(team,x['fm_matched'],x['matched_senior'],'unmatched',len(x['fm_unmatched']))
