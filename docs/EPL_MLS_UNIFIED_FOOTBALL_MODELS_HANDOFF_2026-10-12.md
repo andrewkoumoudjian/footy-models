@@ -4,7 +4,18 @@
 
 > **TL;DR.** Build **one** rigorous, interpretable, well-calibrated football forecasting and simulation engine using **every legitimate, as-of-available primitive** already developed in the project: match events, players, ability, psychological attributes, tactics, fitness, cohesion, development, recruitment, market value and uncertainty. Cover **all 20 EPL teams and the entire available MLS league**, with the complete official squad candidate population, not the teams selected for one demo. **Reep + typed provider IDs first**; resolve people against the *full native FM26 binary exports* and independently verify DOB/name/club/Sortitoutsi evidence. Never treat an associated FM UID as sufficient proof that a native extracted ability/mental block belongs to the footballer. Reconstruct truly missing ratings **probabilistically with the existing code**, never as fake observed ratings. Train and test chronologically and adopt more complex methods only after independently measured OOS improvement. Complete, integrate and validate the pipeline, not just an audit or an ID patchlist.
 
-### Latest canonical execution update (2026-10-12, identity resolver fixed)
+#### Session addendum (2026-10-12, pipeline reproduction + production integration)
+
+Full-pipeline reproduction, four rerun-discovered fixes (RFC-4180 CSV
+parsing, resolver evidence determinism, FM-union kind preservation,
+historical NaN contract), dated ESPN observed Gamma-Poisson shot priors +
+provider positions integrated into the production EPL adapter, all
+chronological OOS gates re-run, and the Liverpool–City momentum ablation
+extended to 72 paths per variant (peaks are Monte Carlo + scheduled-sub
+artifacts). Reproduction table, evidence and remaining blockers:
+`docs/EPL_MLS_PIPELINE_REPRODUCTION_AND_INTEGRATION_2026-10-12.md`.
+
+## Latest canonical execution update (2026-10-12, identity resolver fixed)
 
 **Clean coverage regression closed.** The canonical, zero-name-guess Reep-first
 resolver now attaches **1,244** of the **1,576** official 2026/27 EPL
