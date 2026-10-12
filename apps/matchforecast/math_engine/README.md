@@ -1,5 +1,7 @@
 # Mathematical match-engine challenger
 
+Live observed-player source integration and end-to-end forecast contract: [ESPN_PIPELINE.md](ESPN_PIPELINE.md).
+
 Latest isolated participation research: [PARTICIPATION_RESEARCH.md](PARTICIPATION_RESEARCH.md), including the unchanged baseline, all ablations, input limits and reproduction commands.
 
 Research-only implementation isolated inside apps/matchforecast. Its Rust API is in ../src/math_engine/mod.rs and its executable is footy-matchforecast-math. It does not change the production second-resolved engine, archived pre-match predictions, existing backtests, or default matchforecast behavior.

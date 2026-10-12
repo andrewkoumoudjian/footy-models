@@ -187,6 +187,8 @@ TRAINING_FIELDS = [
     "source", "league", "date", "match_id", "team", "player_id", "position",
     "first_seen_date", "latest_history_date", "club_fixtures", "prior_listings",
     "prior_appearances", "prior_starts", "prior_minutes", "prior_start_minutes",
+    "prior_sub_appearances", "prior_sub_minutes", "prior_observed_shots",
+    "prior_shot_exposure_minutes", "prior_shot_appearances",
     "days_since_last_appearance", "days_since_last_listed", "appeared", "started",
     "minutes", "shots", "goals", "assists", "shot_observed", "event_exposure_minutes",
 ]
@@ -225,10 +227,10 @@ def build_panel(fixtures: list[Fixture], *, max_age_days: dict[str, int]) -> tup
                         "player_id": person.player_id, "name": person.name,
                         "position": person.position, "appeared": int(person.minutes > 0),
                         "started": int(person.started), "minutes": person.minutes,
-                        "shots": person.shots if person.shots is not None else "",
+                        "shots": person.shots if person.minutes > 0 and person.shots is not None else "",
                         "goals": person.goals if person.goals is not None else "",
                         "assists": person.assists if person.assists is not None else "",
-                        "shot_observed": int(person.shots is not None),
+                        "shot_observed": int(person.minutes > 0 and person.shots is not None),
                     })
                 for (source, league, club_pid), state in history.items():
                     if (source, league) != (fixture.source, fixture.league):
@@ -262,15 +264,20 @@ def build_panel(fixtures: list[Fixture], *, max_age_days: dict[str, int]) -> tup
                         "prior_starts": state["starts"],
                         "prior_minutes": round(state["minutes"], 3),
                         "prior_start_minutes": round(state["start_minutes"], 3),
+                        "prior_sub_appearances": state["sub_appearances"],
+                        "prior_sub_minutes": round(state["sub_minutes"], 3),
+                        "prior_observed_shots": state["observed_shots"],
+                        "prior_shot_exposure_minutes": round(state["shot_exposure_minutes"], 3),
+                        "prior_shot_appearances": state["shot_appearances"],
                         "days_since_last_appearance": (date.fromisoformat(day) - date.fromisoformat(appearance_anchor)).days,
                         "days_since_last_listed": age,
                         "appeared": appeared, "started": started,
                         "minutes": round(outcome.minutes if outcome else 0.0, 3),
-                        "shots": outcome.shots if outcome and outcome.shots is not None else "",
+                        "shots": outcome.shots if outcome and outcome.minutes > 0 and outcome.shots is not None else "",
                         "goals": outcome.goals if outcome and outcome.goals is not None else "",
                         "assists": outcome.assists if outcome and outcome.assists is not None else "",
-                        "shot_observed": int(bool(outcome and outcome.shots is not None)),
-                        "event_exposure_minutes": round(outcome.minutes, 3) if outcome and outcome.shots is not None else "",
+                        "shot_observed": int(bool(outcome and outcome.minutes > 0 and outcome.shots is not None)),
+                        "event_exposure_minutes": round(outcome.minutes, 3) if outcome and outcome.minutes > 0 and outcome.shots is not None else "",
                     })
                     max_feature_day = max(max_feature_day, history_date)
         # Only after all labels for the same calendar date are emitted can
@@ -287,6 +294,8 @@ def build_panel(fixtures: list[Fixture], *, max_age_days: dict[str, int]) -> tup
                         state = dict(first_fixture_index=fixtures_seen[key], first_listed=day,
                                      last_listed=day, last_appearance=None, listings=0,
                                      appearances=0, starts=0, minutes=0.0, start_minutes=0.0,
+                                     sub_appearances=0, sub_minutes=0.0, observed_shots=0,
+                                     shot_exposure_minutes=0.0, shot_appearances=0,
                                      position=person.position)
                         history[history_key] = state
                     state["listings"] += 1
@@ -299,6 +308,13 @@ def build_panel(fixtures: list[Fixture], *, max_age_days: dict[str, int]) -> tup
                         state["appearances"] += 1
                         state["minutes"] += person.minutes
                         state["last_appearance"] = day
+                        if person.shots is not None:
+                            state["observed_shots"] += person.shots
+                            state["shot_exposure_minutes"] += person.minutes
+                            state["shot_appearances"] += 1
+                        if not person.started:
+                            state["sub_appearances"] += 1
+                            state["sub_minutes"] += person.minutes
                     if person.started:
                         state["starts"] += 1
                         state["start_minutes"] += person.minutes

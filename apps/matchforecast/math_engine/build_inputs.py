@@ -75,8 +75,9 @@ def make_inputs(*, fm_file, player_file, history_file, fixtures_file,
     if squads_file is None:
         squads_file = ROOT / 'data/pl' / f'squads_{as_of}.json'
     roster_snapshot = json.loads(squads_file.read_text())
-    if roster_snapshot.get('as_of') != as_of:
-        raise ValueError('registered-squad snapshot date differs from prediction cutoff')
+    snapshot_day = date.fromisoformat(roster_snapshot.get('as_of', '1970-01-01'))
+    if snapshot_day > as_of_day or (as_of_day - snapshot_day).days > 7:
+        raise ValueError('registered-squad snapshot is future-dated or older than seven days')
     registered = {}
     for club, squad in roster_snapshot.get('teams', {}).items():
         for entry in squad.get('players', []):
@@ -254,6 +255,7 @@ def make_inputs(*, fm_file, player_file, history_file, fixtures_file,
             'shots': 'only raw HS/AS with verified date/team match, never result-only 12/11 placeholders',
             'promoted_clubs': 'Championship E1 match results supplied to existing TeamGoalModel',
             'fm_derived': 'only raw kind=player AND attr_source=db qualify as measured FM traits',
+            'registered_squad_as_of': roster_snapshot['as_of'],
             'positions': 'prior registered-squad historical_position first; strict observed-player GK profile fallback',
         },
         'fm_source_counts': source_counts, 'fm_record_kind_counts': fm_record_counts,
