@@ -281,6 +281,7 @@ fn args() -> Result<
         Option<String>,
         Option<String>,
         f64,
+        String,
     ),
     String,
 > {
@@ -291,6 +292,7 @@ fn args() -> Result<
     let mut heads: Option<String> = None;
     let mut fm_priors: Option<String> = None;
     let mut fm_coefficient = 0.0;
+    let mut competition = String::from("EPL");
     while let Some(flag) = argv.next() {
         let value = argv
             .next()
@@ -328,14 +330,20 @@ fn args() -> Result<
                     return Err("fm-coeff outside [0, 0.5]".into());
                 }
             }
+            "--competition-label" => {
+                if value != "EPL" && value != "UCL" {
+                    return Err("invalid --competition-label (EPL/UCL)".into());
+                }
+                competition = value;
+            }
             _ => return Err(format!("unknown argument {flag}")),
         }
     }
-    Ok((input, output, p, heads, fm_priors, fm_coefficient))
+    Ok((input, output, p, heads, fm_priors, fm_coefficient, competition))
 }
 
 fn run() -> Result<(), String> {
-    let (input, output, params, heads_path, fm_priors_path, fm_coefficient) = args()?;
+    let (input, output, params, heads_path, fm_priors_path, fm_coefficient, competition) = args()?;
     let data: Value = serde_json::from_slice(&fs::read(&input).map_err(|e| e.to_string())?)
         .map_err(|e| format!("parse {input}: {e}"))?;
     if string(&data, "schema")? != "math_shot_goal_v1" {
@@ -542,8 +550,12 @@ fn run() -> Result<(), String> {
             "source player shot/xG rates are FM-derived research priors, not observed current season event rates",
             "role-neutral ten-outfield exact-cardinality sample is not a positionally calibrated XI",
             "zero tactical/FM attribute effects by default pending new independent OOS evidence",
-            "pooled EPL+MLS shot-rate corrections apply only where the input carries a pre-match corrected_shots_per90; per-player prior provenance is recorded in player_forecasts",
-            "tackle forecasts use the adopted MLS-fitted tackles head transferred to EPL (unvalidated cross-league); recoveries/conversion/participation stay gated challengers",
+            &({ if competition == "UCL" {
+                "pooled UCL-fitted shot-rate corrections apply only where the input carries pooled_features and a --heads-artifact was given; per-player prior provenance is recorded in player_forecasts".to_owned()
+            } else {
+                "pooled EPL+MLS shot-rate corrections apply only where the input carries a pre-match corrected_shots_per90; per-player prior provenance is recorded in player_forecasts".to_owned()
+            }}),
+            &format!("tackle forecasts use the adopted MLS-fitted tackles head transferred to {competition} (unvalidated cross-league); recoveries/conversion/participation stay gated challengers"),
             "FM team-prior coefficient adjusts team Goal anchors only when --fm-priors is given (0.1 validated on post-vintage rolling OOS; default 0 preserves pure-results behavior)",
             "all probabilities are unvalidated simulation estimates; not betting odds",
         ],
