@@ -117,6 +117,23 @@ class UnifiedPrematchTests(unittest.TestCase):
         self.assertFalse(row["observed_mask"]["fbref_xG_recent10_mean"])
         self.assertFalse(row["observed_mask"]["value_primitive_log_mv"])
 
+    def test_duplicate_native_uid_is_quarantined_not_last_record_wins(self):
+        import csv
+        from build_unified_prematch_bundle import load_fm
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"fm.csv"
+            with path.open("w",newline="") as out:
+                writer=csv.DictWriter(out,fieldnames=("uid","name","dob","kind","attr_source","ca"))
+                writer.writeheader()
+                writer.writerows([
+                    {"uid":"42","name":"Player One","dob":"2000-01-01","kind":"player","attr_source":"db","ca":"120"},
+                    {"uid":"42","name":"Staff Two","dob":"1970-01-01","kind":"staff","attr_source":"db","ca":"145"},
+                    {"uid":"43","name":"Player Three","dob":"2001-01-01","kind":"player","attr_source":"db","ca":"80"},
+                ])
+            _,uids=load_fm(path,set(),{"42","43"})
+            self.assertNotIn("42",uids)
+            self.assertEqual(uids["43"]["name"],"Player Three")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -169,6 +169,7 @@ def load_sofa(directory, cutoff, allowed_matches=None):
 def load_fm(path, requested_identities, requested_uids):
     pairs = defaultdict(list)
     by_uid = {}
+    ambiguous_uids = set()
     with path.open(encoding="utf-8-sig", newline="") as handle:
         for row in csv.DictReader(handle):
             key = (norm(row.get("name", "")), row.get("dob", ""))
@@ -182,7 +183,15 @@ def load_fm(path, requested_identities, requested_uids):
                 "attributes": {k.removeprefix("attr_"): number(v) for k, v in row.items()
                                if k.startswith("attr_")}}
             if key in requested_identities: pairs[key].append(record)
-            if uid in requested_uids: by_uid[uid] = record
+            if uid in requested_uids:
+                if uid in by_uid:
+                    # The complete FM26 export contains a handful of native
+                    # UID collisions spanning distinct staff/player records.
+                    # NEVER resolve one by last-row wins or by highest CA.
+                    ambiguous_uids.add(uid)
+                    by_uid.pop(uid, None)
+                elif uid not in ambiguous_uids:
+                    by_uid[uid] = record
     return pairs, by_uid
 
 
