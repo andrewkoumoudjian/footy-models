@@ -9,6 +9,7 @@
 /data/**/*.pdf
 /data/**/*.html
 /data/ml/
+/data/identity/
 
 # Large generated Monte Carlo paths, Python bytecode
 /artifacts/**/*.tsv
