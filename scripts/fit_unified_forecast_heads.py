@@ -229,6 +229,7 @@ def epl_rows_v2(espn_path: Path, crosswalk: dict, fm_usable: dict) -> list[dict]
                 "player_id": f"espn:{p['espn_id']}",
                 "minutes": minutes, "shots": shots, "goals": goals,
                 "started": bool(p["started"]),
+                "past_minutes": past_minutes,
                 "baseline": prior * minutes / 90.0,
                 "asof_shots_per90": prior,
                 "conv_baseline": min(0.7, max(1e-4, conv_prior)),
