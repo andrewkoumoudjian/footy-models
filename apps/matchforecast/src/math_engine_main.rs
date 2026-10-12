@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 //! Standalone research CLI for the mathematical shot-to-goal match engine.
 use footy_match::{TeamGoalModel, TeamGoalsObservation};
+use footy_matchforecast::heads::load_heads_artifact_json;
 use footy_matchforecast::math_engine::{simulate, Candidate, MatchParameters};
 use serde_json::{json, Value};
 use std::{collections::BTreeMap, fs, path::Path};
@@ -48,7 +49,10 @@ fn optional_numeric(row: &Value, key: &str) -> Result<Option<f64>, String> {
         Some(_) => number(row, key).map(Some),
     }
 }
-fn candidates(v: &[Value]) -> Result<(Vec<Candidate>, BTreeMap<u64, (f64, bool)>), String> {
+fn candidates(
+    v: &[Value],
+    heads: Option<&footy_matchforecast::heads::HeadsArtifact>,
+) -> Result<(Vec<Candidate>, BTreeMap<u64, (f64, bool)>), String> {
     let mut priors = BTreeMap::new();
     let mut out = Vec::with_capacity(v.len());
     for p in v.iter() {
@@ -68,8 +72,35 @@ fn candidates(v: &[Value]) -> Result<(Vec<Candidate>, BTreeMap<u64, (f64, bool)>
                 Some(rate)
             }
         };
-        let effective = corrected.unwrap_or(shots);
-        if priors.insert(id, (effective, corrected.is_some())).is_some() {
+        // Universal-bundle path: in-engine residual over the as-of baseline in
+        // shots_per90, using the fitted heads artifact. Takes precedence over
+        // the offline adapter value when both are present.
+        let from_features = match (heads, p.get("pooled_features")) {
+            (Some(heads), Some(features)) => {
+                let array = features.as_array().ok_or("pooled_features is not an array")?;
+                if array.len() != heads.feature_names.len() {
+                    return Err("pooled_features do not match heads feature contract".into());
+                }
+                let mut vector = Vec::with_capacity(array.len());
+                for value in array {
+                    vector.push(value.as_f64().ok_or("non-numeric pooled feature")?);
+                }
+                Some(heads.model.correct(shots, &vector).ok_or_else(|| {
+                    format!("pooled correction failed for player {id}")
+                })?)
+            }
+            (None, Some(_)) => {
+                return Err(
+                    "bundle carries pooled_features but no --heads-artifact was given".into(),
+                )
+            }
+            (_, None) => None,
+        };
+        let effective = from_features.or(corrected).unwrap_or(shots);
+        if effective <= 0.0 || effective > 12.0 || !effective.is_finite() {
+            return Err(format!("effective shot prior outside plausible range for player {id}"));
+        }
+        if priors.insert(id, (effective, from_features.or(corrected).is_some())).is_some() {
             return Err(format!("duplicate player {id}"));
         }
         out.push(Candidate {
@@ -196,11 +227,12 @@ fn shot_anchor(matches: &[ObservedMatch], home: &str, away: &str) -> [f64; 2] {
     ]
 }
 
-fn args() -> Result<(String, String, MatchParameters), String> {
+fn args() -> Result<(String, String, MatchParameters, Option<String>), String> {
     let mut argv = std::env::args().skip(1);
     let input=argv.next().ok_or("usage: footy-matchforecast-math INPUT.json OUTPUT.json [--paths N] [--seed N] [--red-per90 P] [--score-effect B] [--man-advantage B] [--fm-effect B]")?;
     let output = argv.next().ok_or("missing output JSON path")?;
     let mut p = MatchParameters::default();
+    let mut heads: Option<String> = None;
     while let Some(flag) = argv.next() {
         let value = argv
             .next()
@@ -230,14 +262,15 @@ fn args() -> Result<(String, String, MatchParameters), String> {
                 p.maximum_substitutions_per_team =
                     value.parse().map_err(|_| "invalid --max-subs")?
             }
+            "--heads-artifact" => heads = Some(value),
             _ => return Err(format!("unknown argument {flag}")),
         }
     }
-    Ok((input, output, p))
+    Ok((input, output, p, heads))
 }
 
 fn run() -> Result<(), String> {
-    let (input, output, params) = args()?;
+    let (input, output, params, heads_path) = args()?;
     let data: Value = serde_json::from_slice(&fs::read(&input).map_err(|e| e.to_string())?)
         .map_err(|e| format!("parse {input}: {e}"))?;
     if string(&data, "schema")? != "math_shot_goal_v1" {
@@ -259,7 +292,15 @@ fn run() -> Result<(), String> {
     if observed.len() < 30 {
         return Err("insufficient historical matches".into());
     }
-    let (players, priors) = candidates(arr(&data, "players")?)?;
+    let heads = heads_path
+        .as_ref()
+        .map(|path| {
+            fs::read_to_string(path)
+                .map_err(|error| format!("read {path}: {error}"))
+                .and_then(|text| load_heads_artifact_json(&text))
+        })
+        .transpose()?;
+    let (players, priors) = candidates(arr(&data, "players")?, heads.as_ref())?;
     let corrected_players = priors.values().filter(|(_, corrected)| *corrected).count();
     let mut unique = BTreeMap::new();
     for candidate in &players {
@@ -380,6 +421,7 @@ fn run() -> Result<(), String> {
             "corrected_players":corrected_players,
             "total_players":priors.len(),
             "artifact":correction_provenance(&data),
+            "heads_artifact": heads_path.clone().unwrap_or_default(),
         },
         "parameters":{
             "red_probability_per90":params.red_card_probability_per90,
