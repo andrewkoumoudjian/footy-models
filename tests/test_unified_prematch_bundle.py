@@ -76,6 +76,60 @@ class UnifiedPrematchTests(unittest.TestCase):
         staff = fm_features(record, "reep_dob_verified")
         self.assertFalse(staff["available"])
 
+    def test_typed_reep_player_uid_rescues_actual_staff_kind_db_attribute_block(self):
+        # The FM extractor marks Kepa/Calafiori-style player records staff
+        # even though CA/PA and true binary DB trait blocks were stored.
+        # The typed Reep fm:player ID allows using that *recorded block*,
+        # but an ordinary name matcher or staff-only record does not.
+        traits={k:12.0 for k in (
+            "Anticipation","Decisions","Composure","Concentration",
+            "Leadership","Teamwork","WorkRate","Bravery","Finishing",
+            "Pace","Passing","Technique")}
+        record={"uid":"42","name":"Real Footballer","kind":"staff",
+                "attr_source":"db","ca":140.0,"pa":160.0,
+                "height_cm":181.0,"attributes":traits}
+        valid=fm_features(record,"reep_to_local_fm_uid_nonplayer_kind_no_trusted_attributes")
+        self.assertTrue(valid["available"])
+        self.assertEqual(valid["attribute_source"],"recovered_database_block_reep_fm_player_id")
+        self.assertEqual(valid["ca"],140.0)
+        self.assertTrue(valid["observed_mental_mask"]["Composure"])
+        self.assertFalse(valid["reconstructed_mental_mask"]["Composure"])
+        unknown=fm_features(record,"unverified_official_to_fm_name_join")
+        self.assertFalse(unknown["available"])
+        self.assertEqual(unknown["attribute_source"],"untrusted_record_kind")
+
+    def test_fm_conditional_priors_are_never_observed_ratings(self):
+        record={"uid":"43","kind":"staff","attr_source":"staff",
+                "ca":135.0,"pa":150.0,"height_cm":None,"attributes":{}}
+        reconstruction={
+            "conditioning":{"fm_uid":"43","ca":135,"position":None},
+            "traits":{
+                "Composure":{"mean":11.25,"std":3.4,"p10":7.0,"p90":15.6},
+                "Decisions":{"mean":12.2,"std":3.1,"p10":8.2,"p90":16.1},
+                "Pace":{"mean":12.3,"std":2.5,"p10":9.0,"p90":15.0},
+            },
+        }
+        feature=fm_features(record,"reep_to_local_fm_uid_nonplayer_kind_no_trusted_attributes",
+                            prior=reconstruction)
+        self.assertTrue(feature["available"])
+        self.assertEqual(feature["attribute_source"],"generated_conditional_prior")
+        self.assertEqual(feature["mental"]["Composure"],11.25)
+        self.assertFalse(feature["observed_mental_mask"]["Composure"])
+        self.assertTrue(feature["reconstructed_mental_mask"]["Composure"])
+        self.assertEqual(feature["attribute_uncertainty"]["Composure"]["std"],3.4)
+
+    def test_sparse_source_db_block_keeps_real_traits_but_zero_is_missing(self):
+        row={"uid":"44","kind":"staff","attr_source":"db","ca":83.0,"pa":110.0,
+             "height_cm":None,"attributes":{"Composure":11.0,"Decisions":0.0,
+                                            "Teamwork":0.0}}
+        feature=fm_features(row,"reep_to_local_fm_uid_nonplayer_kind_no_trusted_attributes")
+        self.assertEqual(feature["attribute_source"],
+                         "recovered_partial_database_block_reep_fm_player_id")
+        self.assertEqual(feature["mental"]["Composure"],11.0)
+        self.assertTrue(feature["observed_mental_mask"]["Composure"])
+        self.assertIsNone(feature["mental"]["Decisions"])
+        self.assertFalse(feature["observed_mental_mask"]["Decisions"])
+
     def test_exact_future_value_is_not_used_as_input(self):
         fm = fm_features(None, "none")
         state = player_bundle_row("sofascore:9", "Any Club", "Example", "MLS", self.cutoff,

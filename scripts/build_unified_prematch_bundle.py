@@ -195,26 +195,58 @@ def load_fm(path, requested_identities, requested_uids):
     return pairs, by_uid
 
 
-def fm_features(record, identity_evidence):
+def fm_features(record, identity_evidence, prior=None):
     if record is None:
         return {"available": False, "identity_evidence": identity_evidence,
                 "attribute_source": "missing", "ca": None, "pa": None, "height_cm": None,
                 "technical": {}, "mental": {},
                 "observed_mental_mask": {}, "reconstructed_mental_mask": {}}
     is_player = record["kind"] == "player"
-    measured = is_player and record["attr_source"] == "db"
+    # The FM extractor wrongly labeled some genuine Reep fm:player IDs as
+    # staff although they have a directly stored, complete DB attribute block.
+    # Only a *unique typed Reep player ID* can rescue a nonplayer kind, and
+    # only when its actual binary-derived block exists and is plausible.
+    typed_reep_player = identity_evidence.startswith(
+        "reep_to_local_fm_uid_nonplayer_kind_")
+    valid_block_count = sum(
+        1 for field in ("Anticipation","Decisions","Composure","Concentration",
+                       "Leadership","Teamwork","WorkRate","Bravery","Finishing",
+                       "Pace","Passing","Technique")
+        if record["attributes"].get(field) is not None and
+        1<=record["attributes"][field]<=20
+    )
+    recovered_db = (not is_player and typed_reep_player and
+                    record["attr_source"] == "db" and valid_block_count>=1)
+    measured = (is_player and record["attr_source"] == "db") or recovered_db
     estimated = is_player and record["attr_source"] == "derived"
-    attributes = record["attributes"] if measured or estimated else {}
-    mental = {field: attributes.get(field) for field in MENTAL}
-    return {"available": measured or estimated, "identity_evidence": identity_evidence,
+    reconstructed = bool(prior and not measured and not estimated)
+    attributes = record["attributes"] if measured or estimated else (
+        {k: v["mean"] for k,v in prior["traits"].items()} if reconstructed else {})
+    # Zero in the extracted per-player mental block often means unassigned or
+    # missing. Never model it as a genuinely observed 0 on FM's 1–20 scale.
+    mental = {field: (value if value is not None and value>0 else None)
+              for field in MENTAL for value in (attributes.get(field),)}
+    return {"available": measured or estimated or reconstructed,
+            "identity_evidence": identity_evidence,
             "fm_uid": record["uid"], "record_kind": record["kind"],
-            "attribute_source": "database_block" if measured else "reconstructed_distribution" if estimated else "untrusted_record_kind",
-            "ca": record["ca"] if is_player else None,
-            "pa": record.get("pa") if is_player else None,
-            "height_cm": record.get("height_cm") if is_player else None,
+            "attribute_source": ("recovered_partial_database_block_reep_fm_player_id"
+                                  if recovered_db and valid_block_count<9 else
+                                  "recovered_database_block_reep_fm_player_id" if recovered_db else
+                                  "database_block" if measured else
+                                  "reconstructed_distribution" if estimated else
+                                  "generated_conditional_prior" if reconstructed else
+                                  "untrusted_record_kind"),
+            "attribute_uncertainty":prior["traits"] if reconstructed else None,
+            "recovered_source_block_valid_count":valid_block_count if recovered_db else None,
+            "reconstruction_conditioning":prior["conditioning"] if reconstructed else None,
+            "ca": record["ca"] if (is_player or recovered_db) else
+                  prior["conditioning"]["ca"] if reconstructed else None,
+            "pa": record.get("pa") if is_player or recovered_db else None,
+            "height_cm": record.get("height_cm") if is_player or recovered_db else None,
             "mental": mental, "technical": {k: v for k, v in attributes.items() if k not in MENTAL},
             "observed_mental_mask": {k: measured and v is not None and v > 0 for k, v in mental.items()},
-            "reconstructed_mental_mask": {k: estimated and v is not None and v > 0 for k, v in mental.items()}}
+            "reconstructed_mental_mask": {k: (estimated or reconstructed) and v is not None and v > 0
+                                          for k,v in mental.items()}}
 
 
 def load_provider_observations(path, cutoff, provider, provider_key):
@@ -479,7 +511,7 @@ def team_sources(club, team_rows, candidates, starts, cutoff, identity_alias):
 
 
 def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path=None,
-                 market_path=None):
+                 market_path=None, fm_attr_priors=None):
     fm_vintage_allowed(cutoff)
     if league not in ("EPL", "MLS"):
         raise ValueError("only EPL and MLS supported")
@@ -528,23 +560,68 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
     candidates = defaultdict(list)
     quality = Counter()
     alias = {}
+    if fm_attr_priors is not None:
+        if league!="EPL" or roster.get("identity_rebuild")!="reep_first_all_20_clubs_v1":
+            raise ValueError("conditional FM priors require Reep-first 20-club EPL identities")
+        if fm_attr_priors.get("schema")!="fm26_missing_trait_conditional_priors_v1":
+            raise ValueError("unknown/unsupported generated FM attribute prior source")
+        priors_by_uid = {}
+        for item in fm_attr_priors["priors"]:
+            uid=str(item["fm_uid"])
+            if uid in priors_by_uid:
+                raise ValueError("duplicated generated FM trait identity")
+            priors_by_uid[uid]=item
+    else:
+        priors_by_uid={}
     if league == "EPL":
         for club, team in roster["teams"].items():
             for p in team["players"]:
                 uid = str(p.get("fm_uid") or "")
-                bridge = epl_links.get((club, p["official_name"], uid))
+                reep_first = roster.get("identity_rebuild") == "reep_first_all_20_clubs_v1"
+                bridge = None if reep_first else epl_links.get((club, p["official_name"], uid))
                 # A Reep/FM bridge verifies an FM ID, not a name-only official
                 # registration -> FM assignment. Keep the official namespace.
                 canonical = f"official_epl:{hash_id(roster['as_of'], club, p['official_name'])}"
                 record = local_fm.get(uid)
                 assert record is None or record["uid"] == uid
-                state = (p.get("identity_verification") if record else "no_local_fm_record") or "unverified_official_to_fm_name_join"
-                feature = fm_features(record, state)
+                state = (
+                    p.get("identity_state", "unresolved_reep_search")
+                    if reep_first else
+                    (p.get("identity_verification") if record else "no_local_fm_record")
+                    or "unverified_official_to_fm_name_join"
+                )
+                prior=priors_by_uid.get(uid)
+                if prior and (
+                    record is None or
+                    prior["reep_id"]!=p.get("reep_id_candidate") or
+                    prior["official_name"]!=p["official_name"] or
+                    prior["club"]!=club or
+                    prior["fm_uid"]!=uid
+                ):
+                    raise ValueError("prior candidate does not match unique Reep FM identity")
+                feature = fm_features(record, state, prior=prior)
+                # The native FM record may be linked to Reep by a typed ID,
+                # but the official league list contains names, not person
+                # DOB/provider IDs. Do not upgrade the official-roster join
+                # to verified-player status without separate corroboration.
                 feature["identity_verified_for_real_player"] = False
-                source_ids = {"reep_id_candidate": (p.get("reep_id") or bridge["reep_id"] if bridge else p.get("reep_id")),
-                              "fm26_uid_candidate": uid or None,
-                              "fbref_person_ids_candidate": bridge.get("fbref_person_ids", []) if bridge else [],
-                              "transfermarkt_player_ids_candidate": bridge.get("transfermarkt_player_ids", []) if bridge else []}
+                if reep_first:
+                    hinted = p.get("provider_ids_candidate") or {}
+                    source_ids = {
+                        "reep_id_candidate": p.get("reep_id_candidate"),
+                        "fm26_uid_candidate": uid or None,
+                        "fbref_person_ids_candidate": hinted.get("fbref", []),
+                        "sofascore_ids_candidate": hinted.get("sofascore", []),
+                        "transfermarkt_player_ids_candidate": hinted.get("transfermarkt", []),
+                        "official_to_reep_identity_issuer_verified": False,
+                    }
+                else:
+                    source_ids = {
+                        "reep_id_candidate": (p.get("reep_id") or bridge["reep_id"] if bridge else p.get("reep_id")),
+                        "fm26_uid_candidate": uid or None,
+                        "fbref_person_ids_candidate": bridge.get("fbref_person_ids", []) if bridge else [],
+                        "transfermarkt_player_ids_candidate": bridge.get("transfermarkt_player_ids", []) if bridge else [],
+                    }
                 dob = record["dob"] if record else None
                 candidate = player_bundle_row(canonical, club, p["official_name"], "EPL", cutoff,
                                               feature, source_ids, dob, [], [], [], [],
@@ -641,7 +718,8 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
             "team_count": len(result_teams), "player_count": sum(len(t["players"]) for t in result_teams.values()),
             "source_counts": {"fbref_rows_prior": sum(len(v) for v in fbref.values()),
                               "market_rows_prior": sum(len(v) for v in transfermarkt.values()),
-                              "sofascore_club_player_histories": len(sofa_players)},
+                              "sofascore_club_player_histories": len(sofa_players),
+                              "fm_generated_priors_count":len(priors_by_uid)},
             "teams": result_teams}
 
 
@@ -749,6 +827,8 @@ def main():
     parser.add_argument("--fm-file", type=Path, default=Path("/home/drewclaw/fm26-data/fm26_men_full_attrs.csv"))
     parser.add_argument("--fbref-observations", type=Path)
     parser.add_argument("--market-observations", type=Path)
+    parser.add_argument("--fm-attr-priors", type=Path,
+                        help="immutable FM26 conditional distribution priors keyed by unique Reep-to-FM ID")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
@@ -757,9 +837,17 @@ def main():
             raise ValueError("refusing to overwrite a prior model-input feature snapshot")
         reep = json.loads(args.reep_audit.read_text())
         roster = json.loads(args.epl_roster.read_text()) if args.league == "EPL" else None
+        priors=json.loads(args.fm_attr_priors.read_text()) if args.fm_attr_priors else None
         bundle = build_bundle(args.league, args.cutoff, roster=roster, reep=reep,
                               sofa_root=args.sofascore_root, fm_path=args.fm_file,
-                              fbref_path=args.fbref_observations, market_path=args.market_observations)
+                              fbref_path=args.fbref_observations, market_path=args.market_observations,
+                              fm_attr_priors=priors)
+        if args.fm_attr_priors:
+            bundle["generated_fm_traits_source_sha256"]=hashlib.sha256(
+                args.fm_attr_priors.read_bytes()).hexdigest()
+            bundle["generated_fm_traits_published_vintage_note"]=(
+                "FM26 empirical conditional priors compiled later from March-2026 "
+                "static raw attributes; research replay, not a prospective pre-release forecast.")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         content = json.dumps(bundle, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
         args.output.write_text(content, encoding="utf-8")
