@@ -23,15 +23,27 @@ Local current full-registration audit:
 | --- | ---: |
 | Official clubs | 20 |
 | Registered + U21 entries | 1,576 |
-| Provisional FM display/legal-name associations | 1,051 |
-| Remaining unassigned FM names | 525 |
-| Of those FM assignments, one Reep identity bridge | 757 |
+| Legacy FM display/legal-name associations | 1,051 |
+| Reep-first, native-name-guarded FM UIDs | **1,156** |
+| Remaining without attached FM UIDs | **420** |
+| **After FM/Sortitoutsi/Transfermarkt full identity recovery** | **1,162 attached** |
+| Still unmatched senior registrations / U21 | **46 / 368** |
+| Native player-kind `db` individual FM attributes | **552** |
 | Input numeric columns shared with MLS | 248 |
 
 These 1,576 are **registration candidates**, not a pre-match selected/fit
 matchday squad. Some U21 listings are explicitly on loan. The original 8-team
 demo is kept as historical evidence. Full EPL bundle creation now **fails**
-if passed an eight-team or otherwise incomplete roster. The current
+if passed an eight-team or otherwise incomplete roster. The corrected Reep-first
+resolver `scripts/resolve_epl_reep.py` searches canonical labels and aliases
+*before* FM attribute matching, checks native names, and quarantines false
+bridges. Its follow-up `scripts/reconcile_epl_fm_sources.py` scans all four FM
+exports and Sortitoutsi UID records for the remaining names, while
+`scripts/promote_epl_fm_tm_evidence.py` checks Reep's FM-to-Transfermarkt
+provider IDs against birthdate, native name and prior club. Six more names
+were recovered. A Reep link does not by itself prove an official registration's
+identity: the public register excludes DOB and the official roster has names
+but no provider IDs. The current
 2026/27 registration source is a September snapshot; it should be refreshed
 whenever the league posts a replacement (particularly the winter window).
 
@@ -72,13 +84,28 @@ date-published provider rows are ingested. No fabricated FPL/mental ratings.
 python3 scripts/match_premier_league_fm26.py --offline \
   --as-of 2026-10-11 --output data/pl/squads_2026-10-11_full.json
 
+uv run --no-project --with duckdb python scripts/resolve_epl_reep.py \
+  --roster data/pl/squads_2026-10-11_full.json \
+  --output data/identity/reep/epl_full_reep_first_v3.json
+
+python3 scripts/reconcile_epl_fm_sources.py \
+  --roster data/identity/reep/epl_full_reep_first_v3.json \
+  --report data/identity/reep/epl_unmatched_all_sources_v1.json \
+  --output data/identity/reep/epl_all_sources_review_v1.json
+
+uv run --no-project --with duckdb python scripts/promote_epl_fm_tm_evidence.py \
+  --roster data/identity/reep/epl_full_reep_first_v3.json \
+  --audit data/identity/reep/epl_unmatched_all_sources_v1.json \
+  --output data/identity/reep/epl_full_all_sources_v1.json \
+  --review data/identity/reep/epl_tm_recovery_review_v1.json
+
 uv run --no-project --with duckdb python scripts/audit_reep_crosswalk.py \
-  --squads data/pl/squads_2026-10-11_full.json \
-  --output data/identity/reep/coverage_full_2026_10_11.json
+  --squads data/identity/reep/epl_full_all_sources_v1.json \
+  --output data/identity/reep/coverage_full_all_sources_v1.json
 
 python3 scripts/build_unified_prematch_bundle.py \
   --league EPL --cutoff 2026-10-11 \
-  --output data/identity/reep/unified_epl_full_2026_10_11.json
+  --output data/identity/reep/unified_epl_all_sources_v1.json
 
 python3 scripts/build_unified_prematch_bundle.py \
   --league MLS --cutoff 2026-08-24 \

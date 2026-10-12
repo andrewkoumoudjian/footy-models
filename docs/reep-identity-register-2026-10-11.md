@@ -44,17 +44,56 @@ ambiguous name or guesses a player from CA.
 | EPL | Count |
 | --- | ---: |
 | Official registrations across **all 20 EPL clubs**, including U21 | **1,576** |
-| Previously assigned provisional FM UIDs | 1,051 |
-| Those FM UIDs with one Reep bridge | 757 |
-| Still unassigned an FM identity | 525 |
+| Legacy name-first provisional FM UIDs | 1,051 |
+| **Reep-first, native-name-checked FM UIDs** | **1,156** |
+| Still without an FM UID after guarded Reep pass | **420** |
+| After exhaustive local FM, Sortitoutsi and Transfermarkt identity recovery | **1,162 attached** |
+| Still unmatched, senior registrations / U21 | **46 / 368** |
+| Native player-kind DB-sourced attribute vectors among attached UIDs | **552** |
+| Player-kind reconstructed attribute vectors | 249 |
+| Attached UIDs with native staff-kind classification / missing native record | 324 / 37 |
 
-The **757 are a subset of 1,051**, not additional recovered identities. The
-remaining 525 name-only EPL registrations need a verified source person ID
-before Reep can increase their FM coverage. These counts supersede the old
-**eight-club demo subset** (600 registrations, 385 matches, 293 Reep links).
-The full 1,576 are retained in the candidate universe; none are deleted
-because of missing FM or provider history. FM-to-official mappings currently
-rely on names and are not promoted to verified real-player identities.
+The initial 757 were just Reep matches among the 1,051 previously guessed
+FM UIDs; they **did not** use Reep to discover missing people. The corrected
+`scripts/resolve_epl_reep.py` searches all Reep FM-player identity labels and
+aliases **first**, reads the native FM UID, checks given/family-name agreement
+against the FM export, rejects ambiguous Reep entities, and quarantines
+duplicate-club ownership. It catches otherwise missed Cody Gakpo, Bukayo
+Saka, Martin Ødegaard, Federico Chiesa, Jérémy Doku and more. Reep bridges
+also sometimes resolve FM UIDs **absent from our native export**; such rows
+have identity metadata but no measured individual FM attribute block.
+
+These numbers supersede the old **eight-club demo subset** (600 registrations,
+385 name matches, 293 Reep links). The full 1,576 remain as roster candidates.
+The 420 unassigned are not assumed absent from *all* FM editions: the local
+26.2 export, provider bridges and official-registration name surfaces are
+incomplete. The official source has no provider person ID or DOB, and Reep's
+public release does not expose DOB or career evidence; even a unique Reep
+name match is **provisional as an official-to-Reep identity** until externally
+corroborated. Never promote it as independently DOB-verified.
+
+### Exhaustive raw FM and Sortitoutsi follow-up
+
+`scripts/reconcile_epl_fm_sources.py` checked all remaining 420 names against
+**2,097,811 raw FM rows** in four native exports (including name variants and
+low-CA youth) and separately checked 10,541 Sortitoutsi roster entries plus
+10,541 mapped UID records. It found 90 with at least one plausible native-name
+candidate; 330 had no compatible name across those local sources. All candidate
+UIDs, DOB and source-specific IDs are recorded, including rejected collisions.
+
+`scripts/promote_epl_fm_tm_evidence.py` also checked the earlier FM-to-
+Transfermarkt joined dataset and Reep's typed FM-to-Transfermarkt crosswalk
+against real player name, date of birth, recorded club and native FM UID. It
+added **six** supported FM players: Mathias Jensen, Reece James, Jefferson
+Lerma, Ibrahim Sangaré, Trey Nyoni and Lewis Hall, and quarantined conflicting
+loan/cross-club identities. The new 1,162 includes those six and supersedes the
+1,156 Reep-only count. Official roster-to-person joins remain provisional
+without direct league UID/DOB evidence.
+
+The 552 genuine native player-kind `db` attribute blocks are the primary
+measurement population for FM technical and mental features. The 249 `derived`
+players require explicit uncertainty; **staff-kind is not verified player
+psychology data**, even if a Reep FM UID is present.
 
 | Local SofaScore match-history identities | Count |
 | --- | ---: |

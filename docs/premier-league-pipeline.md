@@ -9,10 +9,15 @@ This is a fully wired **data-processing and artifact pipeline**, **not** a claim
 **Full 2026/27 EPL roster (October 11, 2026):** The earlier eight-club,
 600-registration data snapshot was only the four-fixture demo, not complete
 Premier League coverage. The full official September 3 post-window source
-contains **20 clubs and 1,576 senior/U21 registrations**, of which 1,051 have
-provisional FM display-name matches and 757 of those FM IDs have a Reep link.
-The new league-wide input contract refuses partial official rosters and
-preserves all 525 unmatched registrations as candidates. The associated
+contains **20 clubs and 1,576 senior/U21 registrations**. The old name-only
+matcher attached 1,051 provisional FM UIDs; the new Reep-first matcher
+resolves 1,156 after native-name and cross-club consistency checks. Exhaustive
+raw FM/Sortitoutsi checks and independently dated Reep/Transfermarkt
+cross-identities recover six more, for **1,162 attached FM UIDs** and
+**46 unmatched senior registrations plus 368 U21**. Only 552 attached records
+have native player-kind, directly database-sourced attributes. The league-wide
+input contract refuses partial
+official rosters, and retains all candidates. The associated
 248-column unified EPL/MLS research feature schema is described in
 [the unified feature contract](unified-epl-mls-forecast-primitive-contract.md).
 It is not yet a deployed or validated replacement for the current simulator.

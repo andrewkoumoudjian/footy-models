@@ -108,10 +108,10 @@ def classify_player_bridge(item: dict, fm: dict[str, dict]) -> tuple[str, dict |
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--active", type=Path, default=ROOT / "data/identity/reep/active.json")
-    parser.add_argument("--squads", type=Path, default=ROOT / "data/pl/squads_2026-10-11_full.json")
+    parser.add_argument("--squads", type=Path, default=ROOT / "data/identity/reep/epl_full_all_sources_v1.json")
     parser.add_argument("--sofascore", type=Path, default=ROOT / "data/sofascore_cfm")
     parser.add_argument("--fm", type=Path, default=Path("/home/drewclaw/fm26-data/fm26_men_full_attrs.csv"))
-    parser.add_argument("--output", type=Path, default=ROOT / "data/identity/reep/coverage_full_2026_10_11.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "data/identity/reep/coverage_full_all_sources_v1.json")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("refusing to overwrite previous coverage audit; use a new output path")

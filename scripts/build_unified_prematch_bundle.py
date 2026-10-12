@@ -538,10 +538,10 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
                 canonical = f"official_epl:{hash_id(roster['as_of'], club, p['official_name'])}"
                 record = local_fm.get(uid)
                 assert record is None or record["uid"] == uid
-                state = "unverified_official_to_fm_name_join" if record else "no_verified_fm_identity"
+                state = (p.get("identity_verification") if record else "no_local_fm_record") or "unverified_official_to_fm_name_join"
                 feature = fm_features(record, state)
                 feature["identity_verified_for_real_player"] = False
-                source_ids = {"reep_id_candidate": bridge["reep_id"] if bridge else None,
+                source_ids = {"reep_id_candidate": (p.get("reep_id") or bridge["reep_id"] if bridge else p.get("reep_id")),
                               "fm26_uid_candidate": uid or None,
                               "fbref_person_ids_candidate": bridge.get("fbref_person_ids", []) if bridge else [],
                               "transfermarkt_player_ids_candidate": bridge.get("transfermarkt_player_ids", []) if bridge else []}
@@ -551,6 +551,9 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
                                               identity_state=state)
                 candidate["registration"] = p["registration"]
                 candidate["loaned_out"] = bool(p.get("loaned_out"))
+                candidate["epl_fm_identity_evidence"] = p.get("transfermarkt_evidence") or {
+                    "source": p.get("match_method"),
+                    "verification": p.get("identity_verification")}
                 candidates[club].append(candidate)
                 quality[state] += 1
     else:
@@ -740,8 +743,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--league", choices=("EPL", "MLS"), required=True)
     parser.add_argument("--cutoff", required=True, help="YYYY-MM-DD, local date, strictly after latest source observations")
-    parser.add_argument("--reep-audit", type=Path, default=ROOT / "data/identity/reep/coverage_full_2026_10_11.json")
-    parser.add_argument("--epl-roster", type=Path, default=ROOT / "data/pl/squads_2026-10-11_full.json")
+    parser.add_argument("--reep-audit", type=Path, default=ROOT / "data/identity/reep/coverage_full_all_sources_v1.json")
+    parser.add_argument("--epl-roster", type=Path, default=ROOT / "data/identity/reep/epl_full_all_sources_v1.json")
     parser.add_argument("--sofascore-root", type=Path, default=ROOT / "data/sofascore_cfm")
     parser.add_argument("--fm-file", type=Path, default=Path("/home/drewclaw/fm26-data/fm26_men_full_attrs.csv"))
     parser.add_argument("--fbref-observations", type=Path)

@@ -32,7 +32,13 @@ TEAM_ALIASES={
 }
 
 def norm(s):
-    s=unicodedata.normalize('NFKD',s or '').casefold()
+    # NFKD does not decompose letters such as Ø, Ł, Đ and Æ. Dropping these
+    # characters made Ødegaard, e.g., impossible to discover by surname.
+    s=(s or '').casefold().translate(str.maketrans({
+        'ø':'o','ł':'l','đ':'d','ð':'d','þ':'th','æ':'ae','œ':'oe',
+        'ß':'ss','ı':'i','ħ':'h','ŧ':'t','ŋ':'n',
+    }))
+    s=unicodedata.normalize('NFKD',s)
     s=''.join(ch for ch in s if not unicodedata.combining(ch))
     return ' '.join(re.findall(r'[a-z0-9]+',s))
 
