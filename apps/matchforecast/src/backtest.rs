@@ -7,6 +7,8 @@
 
 #[path = "form.rs"]
 mod form;
+#[path = "csv_fields.rs"]
+mod csv_fields;
 use footy_core::{AttributeId, ClubId, Confidence, Date, MatchId, MetricId, PlayerId, RoleId};
 use footy_forecast::{NextMatchParticipationModel, PlayerParticipationFeatures, StatFamily};
 use footy_match::{
@@ -52,15 +54,23 @@ fn read_csv(path: &str) -> Vec<Row> {
     let text = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("read {path}: {e}"));
     let mut lines = text.lines();
-    let header: Vec<String> = lines.next().expect("header").split(',').map(String::from).collect();
+    let header = csv_fields::parse_csv_fields(lines.next().expect("header"), path, 1)
+        .expect("empty CSV header");
     lines
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| {
-            header
-                .iter()
-                .zip(line.split(','))
-                .map(|(key, value)| (key.clone(), value.to_string()))
-                .collect()
+        .enumerate()
+        .filter(|(_, line)| !line.trim().is_empty())
+        .map(|(index, line)| {
+            let fields = csv_fields::parse_csv_fields(line, path, index + 2)
+                .expect("unterminated quoted CSV field");
+            if fields.len() != header.len() {
+                panic!(
+                    "CSV field-count mismatch in {path} line {}: {} fields, header has {}",
+                    index + 2,
+                    fields.len(),
+                    header.len()
+                );
+            }
+            header.iter().cloned().zip(fields).collect()
         })
         .collect()
 }

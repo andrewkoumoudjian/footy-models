@@ -8,6 +8,9 @@
 //! As-of discipline: series are precomputed per fixture by scripts/build_form_series.py,
 //! strictly before each fixture date.
 
+#[path = "csv_fields.rs"]
+mod csv_fields;
+
 use footy_forecast::{
     NextMatchParticipationModel, NextMatchPlayerRateModel, PlayerParticipationFeatures,
     PlayerParticipationTrainingExample, PlayerRateFeatures, PlayerRatePrediction,
@@ -262,12 +265,12 @@ pub fn fit_form_regime(series: &[f64]) -> Option<FormRegime> {
 /// Build player_id -> FormRegime from a form CSV (player-match rows, chronological).
 pub fn regimes_from_csv(text: &str) -> HashMap<u64, FormRegime> {
     let mut lines = text.lines();
-    let header: Vec<String> = lines
-        .next()
-        .unwrap_or_default()
-        .split(',')
-        .map(String::from)
-        .collect();
+    let header: Vec<String> = csv_fields::parse_csv_fields(
+        lines.next().unwrap_or_default(),
+        "form.csv",
+        1,
+    )
+    .unwrap_or_default();
     let idx = |name: &str| header.iter().position(|h| h == name).unwrap_or(usize::MAX);
 
     let (i_pid, i_min, i_shots, i_xg, i_xa, i_date) = (
@@ -284,7 +287,9 @@ pub fn regimes_from_csv(text: &str) -> HashMap<u64, FormRegime> {
         if line.trim().is_empty() {
             continue;
         }
-        let parts: Vec<&str> = line.split(',').collect();
+        let Some(parts) = csv_fields::parse_csv_fields(line, "form.csv", 0) else {
+            continue;
+        };
         if parts.len() <= i_date || parts.len() <= i_pid {
             continue;
         }
@@ -401,12 +406,12 @@ fn rate_features(history: &[RateObservation], metric: u16) -> Option<PlayerRateF
 /// target leakage even though all rows in the file precede the live fixture cutoff.
 pub fn learned_rate_forecasts_from_csv(text: &str) -> HashMap<(u64, u16), PlayerRatePrediction> {
     let mut lines = text.lines();
-    let header: Vec<String> = lines
-        .next()
-        .unwrap_or_default()
-        .split(',')
-        .map(String::from)
-        .collect();
+    let header: Vec<String> = csv_fields::parse_csv_fields(
+        lines.next().unwrap_or_default(),
+        "learned-rate.csv",
+        1,
+    )
+    .unwrap_or_default();
     let idx = |name: &str| header.iter().position(|value| value == name);
     let (Some(i_pid), Some(i_date), Some(i_min), Some(i_shots), Some(i_xg), Some(i_xa)) =
         (idx("player_id"), idx("date"), idx("minutes"), idx("shots"), idx("xg"), idx("xa"))
@@ -421,18 +426,21 @@ pub fn learned_rate_forecasts_from_csv(text: &str) -> HashMap<(u64, u16), Player
         if line.trim().is_empty() {
             continue;
         }
-        let parts: Vec<&str> = line.split(',').collect();
+        let parts = match csv_fields::parse_csv_fields(line, "learned-rate.csv", 0) {
+            Some(parts) => parts,
+            None => continue,
+        };
         let parse = |index: usize| -> f64 {
             parts.get(index).and_then(|value| value.parse::<f64>().ok()).unwrap_or(0.0)
         };
         let Some(player_id) = parts.get(i_pid).and_then(|value| value.parse::<u64>().ok()) else { continue; };
-        let Some(date) = parts.get(i_date) else { continue; };
+        let date = parts.get(i_date).cloned();
         let minutes = parse(i_min);
         if minutes < 15.0 {
             continue;
         }
         rows.push((
-            (*date).to_string(),
+            date.unwrap_or_default(),
             player_id,
             RateObservation {
                 minutes,

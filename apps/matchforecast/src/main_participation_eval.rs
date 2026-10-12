@@ -61,7 +61,8 @@ fn parse_records(path: &str) -> Result<Vec<Example>, String> {
         }
         let appeared = value("appeared")?;
         let started = value("started")?;
-        if !matches!(appeared, 0.0 | 1.0) || !matches!(started, 0.0 | 1.0) {
+        let is_binary = |v: f64| v == 0.0 || v == 1.0;
+        if !is_binary(appeared) || !is_binary(started) {
             return Err(format!("bad binary targets in {source}:{match_id}"));
         }
         let features = PlayerParticipationFeatures {
