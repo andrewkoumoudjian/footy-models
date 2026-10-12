@@ -278,6 +278,8 @@ fn run() -> Result<(), String> {
                     "id":id,"expected_shots":counts.shots as f64/result.paths as f64,
                     "expected_goals":counts.goals as f64/result.paths as f64,
                     "p_start":counts.starts as f64/result.paths as f64,
+                    "p_shot":counts.shot_occurrences as f64/result.paths as f64,
+                    "p_goal":counts.goal_occurrences as f64/result.paths as f64,
                 })
             })
             .collect();
@@ -311,6 +313,8 @@ fn run() -> Result<(), String> {
         "fm_effective":string(&data,"fm_effective")?,
         "data_sources":required(&data,"sources")?,
         "source_counts":required(&data,"fm_source_counts")?,
+        "fm_record_kind_counts":data.get("fm_record_kind_counts"),
+        "fm_trusted_attributes":data.get("fm_trusted_attributes"),
         "paths":params.paths,"seed":params.seed,
         "parameters":{
             "red_probability_per90":params.red_card_probability_per90,

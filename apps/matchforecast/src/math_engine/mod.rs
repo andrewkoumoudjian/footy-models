@@ -4,7 +4,7 @@
 //! This module deliberately does not modify the production second-resolved model.
 use footy_forecast::Rng64;
 use footy_match::draw_exact_lineup;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 const SECONDS: f64 = 5400.0;
 
@@ -67,6 +67,10 @@ pub struct PlayerCounts {
     pub shots: u64,
     pub goals: u64,
     pub starts: u32,
+    /// Complete paths with at least one shot, not a Poisson approximation.
+    pub shot_occurrences: u32,
+    /// Complete paths with at least one scored goal.
+    pub goal_occurrences: u32,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -281,6 +285,8 @@ pub fn simulate(
         ];
         let mut score = [0_u32; 2];
         let mut shot_count = [0_u32; 2];
+        let mut path_shooters = BTreeSet::new();
+        let mut path_scorers = BTreeSet::new();
         let mut reds = 0_u32;
         let mut t = 0.0_f64;
         let red_hazard = -(-p.red_card_probability_per90).ln_1p() / SECONDS;
@@ -324,6 +330,7 @@ pub fn simulate(
                     let chosen = sample_weighted(&weights, &mut rng);
                     let id = teams[side][lineup[chosen]].id;
                     result.players.entry(id).or_default().shots += 1;
+                    path_shooters.insert(id);
                     shot_count[side] += 1;
                     let window = ((t / 900.0) as usize).min(5);
                     if side == 0 {
@@ -334,6 +341,7 @@ pub fn simulate(
                     if rng.bernoulli(conversion[side][chosen]) {
                         score[side] += 1;
                         result.players.entry(id).or_default().goals += 1;
+                        path_scorers.insert(id);
                         if side == 0 {
                             result.home_window_goals[window] += 1;
                         } else {
@@ -368,6 +376,12 @@ pub fn simulate(
                 }
                 event -= red_intensities[side];
             }
+        }
+        for id in path_shooters {
+            result.players.entry(id).or_default().shot_occurrences += 1;
+        }
+        for id in path_scorers {
+            result.players.entry(id).or_default().goal_occurrences += 1;
         }
         match score[0].cmp(&score[1]) {
             std::cmp::Ordering::Greater => result.home_win += 1.0,
@@ -437,6 +451,12 @@ mod tests {
                 .sum::<u64>()
         );
         assert!(r.players.values().all(|x| x.goals <= x.shots));
+        assert!(r
+            .players
+            .values()
+            .all(|x| x.goal_occurrences <= x.shot_occurrences
+                && x.goal_occurrences as u64 <= x.goals
+                && x.shot_occurrences as u64 <= x.shots));
         assert!((r.expected_home_goals - 1.5).abs() < 0.09);
         assert!((r.expected_away_goals - 1.1).abs() < 0.09);
         assert!((r.expected_home_shots - 13.0).abs() < 0.2);

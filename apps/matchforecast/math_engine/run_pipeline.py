@@ -56,6 +56,8 @@ def validate(input_path, output_path, *, paths, default_effects):
     assert report['status'] == 'research_only_unvalidated'
     assert report['data_sources'] == data['sources']
     assert report['source_counts'] == data['fm_source_counts']
+    assert report['fm_record_kind_counts'] == data['fm_record_kind_counts']
+    assert report['fm_trusted_attributes'] == data['fm_trusted_attributes']
     assert report['paths'] == paths and len(report['fixtures']) == len(data['fixtures'])
     for filepath, expected_hash in data['sources'].items():
         if sha(filepath) != expected_hash:
@@ -76,6 +78,12 @@ def validate(input_path, output_path, *, paths, default_effects):
         assert abs(sum(p['expected_shots'] for p in fixture['player_forecasts'])
                    - fixture['expected_home_shots'] - fixture['expected_away_shots']) <= 1e-8
         assert all(p['expected_goals'] <= p['expected_shots'] for p in fixture['player_forecasts'])
+        assert all(
+            0 <= p['p_goal'] <= p['p_shot'] <= 1
+            and p['p_goal'] <= p['expected_goals']
+            and p['p_shot'] <= p['expected_shots']
+            and p['p_start'] >= p['p_goal']
+            for p in fixture['player_forecasts'])
         if default_effects and paths >= 256:
             reference = analytic_wdl(base)
             for estimate, expected in zip(

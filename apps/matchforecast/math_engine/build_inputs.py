@@ -44,7 +44,7 @@ def numeric(value, column, *, allow_missing=False):
 
 
 def make_inputs(*, fm_file, player_file, history_file, fixtures_file,
-                results_file, raw_dir, as_of, fm_effective):
+                results_file, raw_dir, as_of, fm_effective, squads_file=None):
     as_of_day = date.fromisoformat(as_of)
     if date.fromisoformat(fm_effective) > as_of_day:
         raise ValueError('FM vintage is after pre-match cutoff')
@@ -72,36 +72,75 @@ def make_inputs(*, fm_file, player_file, history_file, fixtures_file,
                 fm[uid] = row
     if set(fm) != wanted:
         raise ValueError(f'FM raw join coverage failed: missing {len(wanted - set(fm))} IDs')
+    if squads_file is None:
+        squads_file = ROOT / 'data/pl' / f'squads_{as_of}.json'
+    roster_snapshot = json.loads(squads_file.read_text())
+    if roster_snapshot.get('as_of') != as_of:
+        raise ValueError('registered-squad snapshot date differs from prediction cutoff')
+    registered = {}
+    for club, squad in roster_snapshot.get('teams', {}).items():
+        for entry in squad.get('players', []):
+            uid = entry.get('fm_uid')
+            if not uid:
+                continue
+            key = (str(uid), club)
+            if key in registered:
+                raise ValueError(f'duplicate registered FM identity within club: {key}')
+            registered[key] = entry
     source_counts = {}
+    fm_record_counts = {}
+    trusted_attributes = 0
     candidate_rows = []
     for player in players:
         uid = player['player_id']
         record = fm[uid]
         source = record['attr_source']
+        kind = record.get('kind', '').strip().lower()
+        if kind not in {'player', 'staff'}:
+            raise ValueError(f'unknown FM record kind {kind!r} for {uid}')
         if source not in {'db', 'derived', 'staff', 'none'}:
             raise ValueError(f'unknown FM attribute provenance {source!r}')
         source_counts[source] = source_counts.get(source, 0) + 1
+        pair = f'{kind}/{source}'
+        fm_record_counts[pair] = fm_record_counts.get(pair, 0) + 1
+        trusted = kind == 'player' and source == 'db'
+        trusted_attributes += int(trusted)
+        roster_entry = registered.get((uid, player['team']))
+        if roster_entry is None:
+            raise ValueError(f'player {uid} is missing from as-of registered club {player["team"]}')
         listed = player['last_listed_date'].strip()
         if listed and date.fromisoformat(listed) > as_of_day:
             raise ValueError(f'future roster observation for {uid}')
-        keeper = (
-            source == 'db'
-            and numeric(record.get('attr_Reflexes'), 'reflexes', allow_missing=True) is not None
-            and numeric(record.get('attr_Handling'), 'handling', allow_missing=True) is not None
-            and numeric(record['attr_Reflexes'], 'reflexes') >= 8
-            and numeric(record['attr_Handling'], 'handling') >= 8
+        # Verified historical position (from the dated registered-squad record)
+        # takes precedence over attribute inference. E.g., an outfield attacker
+        # may have 8+ Handling and Reflexes in this FM extraction.
+        position = (roster_entry.get('historical_position') or '').strip().lower()
+        if position and position not in {'goalkeeper', 'defender', 'midfield', 'attack'}:
+            raise ValueError(f'unsupported recorded position {position!r} for {uid}')
+        inferred_keeper = (
+            trusted and not position
+            and all(numeric(record.get('attr_' + field), field, allow_missing=True) is not None
+                    and numeric(record.get('attr_' + field), field) >= 11
+                    for field in ('Handling', 'Reflexes', 'AerialReach', 'OneOnOnes'))
         )
+        keeper = position == 'goalkeeper' or inferred_keeper
         candidate_rows.append({
             'id': int(uid), 'club': player['team'],
             'minutes_prior': numeric(player['minutes'], 'minutes'),
             'shots_per90': numeric(player['shots_p90'], 'shots_p90'),
             'xg_per90': numeric(player['xg_p90'], 'xg_p90'),
             'is_goalkeeper': bool(keeper),
-            'fm_source': source,
+            'position_source': 'prior_position' if position else (
+                'verified_fm_gk_profile' if inferred_keeper else 'unknown_outfield'),
+            'fm_kind': kind, 'raw_attr_source': source,
+            'fm_attribute_verified': trusted,
+            # The Rust engine only applies optional FM finishing adjustments to
+            # source=db. Never promote a staff/db row to a trusted player rating.
+            'fm_source': 'db' if trusted else f'unverified_{kind}_{source}',
             'fm_finishing': numeric(record.get('attr_Finishing'), 'FM finishing',
-                                    allow_missing=True) if source == 'db' else None,
+                                    allow_missing=True) if trusted else None,
             'fm_ca': numeric(record.get('ca'), 'FM current ability',
-                             allow_missing=True) if source == 'db' else None,
+                             allow_missing=True) if trusted else None,
         })
     fixtures = []
     for row in read_table(fixtures_file, '\t'):
@@ -199,16 +238,19 @@ def make_inputs(*, fm_file, player_file, history_file, fixtures_file,
         'schema': 'math_shot_goal_v1', 'as_of': as_of,
         'fm_effective': fm_effective,
         'sources': {str(p): sha256(p) for p in (fm_file, player_file, history_file,
-                                              results_file, fixtures_file, *raw_paths)},
+                                              results_file, fixtures_file, squads_file, *raw_paths)},
         'contracts': {
             'player_rates': 'FM26-derived research priors, NOT observed 2026-27 shots or xG',
             'roles': 'verified db goalkeeper heuristics, otherwise role-neutral outfield',
             'history': 'only observations dated on/before as_of; per-fixture strictly earlier',
             'shots': 'only raw HS/AS with verified date/team match, never result-only 12/11 placeholders',
             'promoted_clubs': 'Championship E1 match results supplied to existing TeamGoalModel',
-            'fm_derived': 'reconstructed/staff FM attributes excluded from attribute adjustments',
+            'fm_derived': 'only raw kind=player AND attr_source=db qualify as measured FM traits',
+            'positions': 'prior registered-squad historical_position first; strict observed-player GK profile fallback',
         },
-        'fm_source_counts': source_counts, 'missing_shot_matches': missing_shot_matches,
+        'fm_source_counts': source_counts, 'fm_record_kind_counts': fm_record_counts,
+        'fm_trusted_attributes': trusted_attributes,
+        'missing_shot_matches': missing_shot_matches,
         'history': history, 'championship': championship,
         'players': candidate_rows, 'fixtures': fixtures,
     }
@@ -224,10 +266,12 @@ def main():
     parser.add_argument('--raw-dir', type=Path, default=ROOT / 'data/pl/raw')
     parser.add_argument('--as-of', default='2026-10-10')
     parser.add_argument('--fm-effective', default='2026-03-01')
+    parser.add_argument('--squads', type=Path)
     parser.add_argument('--output', type=Path, default=ROOT / 'data/ml/math_engine/input.json')
     args = parser.parse_args()
     data = make_inputs(fm_file=args.fm, player_file=args.players, history_file=args.history,
                        results_file=args.results, fixtures_file=args.fixtures, raw_dir=args.raw_dir,
+                       squads_file=args.squads,
                        as_of=args.as_of, fm_effective=args.fm_effective)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.output.exists():
@@ -235,7 +279,7 @@ def main():
     args.output.write_text(json.dumps(data, sort_keys=True, separators=(',', ':')) + '\n')
     print(f"{args.output}: {len(data['players'])} players, {len(data['history'])} prior matches, "
           f"{len(data['championship'])} Championship games, "
-          f"{len(data['fixtures'])} fixtures, sources {data['fm_source_counts']}, "
+          f"{len(data['fixtures'])} fixtures, sources {data['fm_record_kind_counts']}, "
           f"missing observed shot counts for {data['missing_shot_matches']} history matches")
 
 

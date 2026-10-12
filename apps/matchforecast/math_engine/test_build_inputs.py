@@ -1,6 +1,7 @@
 """Offline contract tests for the isolated FM26 / historical input materializer."""
 import csv
 import importlib.util
+import json
 import tempfile
 import unittest
 from datetime import date, timedelta
@@ -28,6 +29,7 @@ class InputContracts(unittest.TestCase):
         self.history = root / 'history.csv'
         self.fixtures = root / 'fixtures.tsv'
         self.results = root / 'results.tsv'
+        self.squads = root / 'squads.json'
         self.raw = root / 'raw'
         self.raw.mkdir()
         self.fm_rows = []
@@ -37,9 +39,11 @@ class InputContracts(unittest.TestCase):
                 uid = offset + i
                 source = 'derived' if club == 'Home' and i == 2 else 'db'
                 self.fm_rows.append({
-                    'uid': uid, 'attr_source': source, 'attr_Reflexes': 16 if i == 0 else 0,
+                    'uid': uid, 'kind': 'player', 'attr_source': source,
+                    'attr_Reflexes': 16 if i == 0 else 0,
                     'attr_Handling': 15 if i == 0 else 0, 'attr_Finishing': 0 if i == 0 else 14,
-                    'ca': 100,
+                    'attr_OneOnOnes': 14 if i == 0 else 0,
+                    'attr_AerialReach': 14 if i == 0 else 0, 'ca': 100,
                 })
                 self.player_rows.append({
                     'player_id': uid, 'name': str(uid), 'team': club,
@@ -73,24 +77,37 @@ class InputContracts(unittest.TestCase):
         write_csv(self.results, ['day', 'division', 'home', 'away', 'home_goals', 'away_goals'],
                   [{'day': 20000, 'division': 'E1', 'home': 'Home', 'away': 'Away',
                     'home_goals': 1, 'away_goals': 0}], '\t')
+        self.squads.write_text(json.dumps({
+            'as_of': '2026-10-10',
+            'teams': {team: {'players': [
+                {'fm_uid': str(row['player_id']),
+                 'historical_position': 'Goalkeeper' if row['player_id'] % 100 == 0
+                 else 'Attack'}
+                for row in self.player_rows if row['team'] == team]}
+                for team in ('Home', 'Away')}
+        }))
 
     def build(self):
         return module.make_inputs(
             fm_file=self.fm, player_file=self.players, history_file=self.history,
             results_file=self.results, fixtures_file=self.fixtures, raw_dir=self.raw,
+            squads_file=self.squads,
             as_of='2026-10-10', fm_effective='2026-03-01')
 
     def test_exact_raw_fm_join_and_no_synthetic_features(self):
         result = self.build()
         self.assertEqual(len(result['players']), 22)
         self.assertEqual(result['fm_source_counts'], {'db': 21, 'derived': 1})
+        self.assertEqual(result['fm_record_kind_counts'],
+                         {'player/db': 21, 'player/derived': 1})
+        self.assertEqual(result['fm_trusted_attributes'], 21)
         self.assertIsNone(next(x for x in result['players'] if x['id'] == 102)['fm_finishing'])
         self.assertEqual(result['missing_shot_matches'], 1)
         self.assertIsNone(result['history'][0]['home_shots'])
         self.assertEqual(result['history'][1]['home_shots'], 14)
         self.assertEqual(result['history'][1]['away_shots'], 9)
         self.assertEqual(sum(p['is_goalkeeper'] for p in result['players']), 2)
-        self.assertEqual(len(result['sources']), 6)
+        self.assertEqual(len(result['sources']), 7)
         self.assertEqual(len(result['championship']), 1)
 
     def test_lookahead_prevented(self):
@@ -111,12 +128,39 @@ class InputContracts(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'disagree'):
             self.build()
 
+    def test_staff_db_is_never_trusted_or_given_fm_finishing(self):
+        self.fm_rows[2]['kind'] = 'staff'
+        self.fm_rows[2]['attr_source'] = 'db'
+        self.write()
+        row = next(x for x in self.build()['players'] if x['id'] == 102)
+        self.assertFalse(row['fm_attribute_verified'])
+        self.assertIsNone(row['fm_finishing'])
+        self.assertIsNone(row['fm_ca'])
+        self.assertEqual(row['fm_source'], 'unverified_staff_db')
+
+    def test_explicit_attack_position_overrides_goalkeeper_attributes(self):
+        self.fm_rows[2].update({
+            'attr_Reflexes': 17, 'attr_Handling': 17,
+            'attr_OneOnOnes': 17, 'attr_AerialReach': 17,
+        })
+        self.write()
+        row = next(x for x in self.build()['players'] if x['id'] == 102)
+        self.assertFalse(row['is_goalkeeper'])
+        self.assertEqual(row['position_source'], 'prior_position')
+
+    def test_registered_identity_is_required(self):
+        entry = json.loads(self.squads.read_text())
+        entry['teams']['Home']['players'][2]['fm_uid'] = '99999'
+        self.squads.write_text(json.dumps(entry))
+        with self.assertRaisesRegex(ValueError, 'registered club'):
+            self.build()
+
     def test_fm_vintage_must_precede_forecast(self):
         with self.assertRaisesRegex(ValueError, 'FM vintage'):
             module.make_inputs(
                 fm_file=self.fm, player_file=self.players, history_file=self.history,
                 results_file=self.results, fixtures_file=self.fixtures,
-                raw_dir=self.raw, as_of='2026-10-10',
+                raw_dir=self.raw, squads_file=self.squads, as_of='2026-10-10',
                 fm_effective='2026-11-01')
 
 
