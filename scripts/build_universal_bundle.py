@@ -45,6 +45,7 @@ from fit_unified_forecast_heads import (  # noqa: E402
     load_crosswalk,
     load_fm_union,
 )
+from fm_staff_rescue import load_rescue_map, rescue_candidate_uids  # noqa: E402
 
 ROLE_PRIORS = {"goalkeeper": 0.02, "defender": 0.40, "midfield": 0.90,
                "attack": 2.20, "unknown": 0.90}
@@ -228,7 +229,8 @@ def championship(path: Path, first_day: int) -> list[dict]:
 
 def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                  espn_paths: list[Path], crosswalk_path: Path,
-                 history_path: Path, results_path: Path) -> dict:
+                 history_path: Path, results_path: Path,
+                 ledger_path: Path | None = None) -> dict:
     squads_raw = json.loads(squads_path.read_text())
     snapshot_day = date.fromisoformat(squads_raw["as_of"])
     if snapshot_day > as_of:
@@ -252,11 +254,19 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
     wanted = {str(p.get("fm_uid")) for players in clubs.values()
               for p in players["players"]
               if p.get("fm_uid") and not p.get("loaned_out")}
-    fm_usable = load_fm_union(sorted(wanted | set(crosswalk.values())))
+    if ledger_path is None:
+        rescue = {}
+        fm_usable = load_fm_union(sorted(wanted | set(crosswalk.values())))
+    else:
+        rescue_candidates = rescue_candidate_uids(ledger_path)
+        fm_usable = load_fm_union(sorted(wanted | set(crosswalk.values())
+                                         | rescue_candidates))
+        rescue = load_rescue_map(ledger_path, fm_usable)
 
     players: list[dict] = []
     seen_ids: set[int] = set()
     counts = {"corrected_link": 0, "cold_start": 0, "fm_verified": 0,
+              "fm_rescued_staff": 0, "ledger_identity_heals": 0,
               "provisional_ids": 0, "ambiguous_skipped": 0}
     source_counts: dict[str, int] = {}
     kind_counts: dict[str, int] = {}
@@ -266,6 +276,17 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
             if entry.get("loaned_out"):
                 continue
             fm_uid = entry.get("fm_uid")
+            rescued_info = None
+            if ledger_path is not None:
+                rescued_info = rescue.get((club, entry["official_name"]))
+                if rescued_info is not None and fm_uid is None:
+                    # Squad lags the canonical ledger for this registration:
+                    # adopt the ledger's bridge-mediated FM uid (never a
+                    # name-guessed uid) with explicit heal provenance.
+                    fm_uid = rescued_info["fm_uid"]
+                elif (rescued_info is not None
+                        and str(fm_uid) != rescued_info["fm_uid"]):
+                    rescued_info = None
             pid = int(fm_uid) if fm_uid else provisional_id(club, entry["official_name"])
             if pid in seen_ids:
                 raise ValueError(f"duplicate player id {pid} ({entry['official_name']})")
@@ -284,10 +305,15 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
 
             fm = fm_usable.get(str(fm_uid)) if fm_uid else None
             squad_verified = bool(entry.get("fm_attributes_verified"))
-            usable = fm is not None and squad_verified
+            rescued = rescued_info is not None and fm is not None
+            usable = fm is not None and (squad_verified or rescued)
             if usable:
                 trusted += 1
                 counts["fm_verified"] += 1
+            if rescued:
+                counts["fm_rescued_staff"] += 1
+                if entry.get("fm_uid") is None:
+                    counts["ledger_identity_heals"] += 1
             source = "db" if usable else "unverified_missing"
             source_counts[source] = source_counts.get(source, 0) + 1
             kind_counts["player/db" if usable else "unverified"] = \
@@ -324,6 +350,7 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                 "fm_source": "db" if usable else "unverified_missing",
                 "fm_finishing": None, "fm_ca": None,
                 "fm_uid": fm_uid, "official_name": entry["official_name"],
+                "fm_rescued_staff": bool(rescued),
                 "start_probability": None,
                 "expected_minutes_if_start": None,
                 "bench_appearance_probability": None,
@@ -350,7 +377,9 @@ def build_bundle(*, squads_path: Path, fixtures: list[dict], as_of: date,
                             "role priors otherwise; xG is a neutral conversion proxy",
             "roles": "registered historical_position; unknown stays role-neutral",
             "history": "only observations strictly before as_of; no same-day results",
-            "fm_traits": "squad-verified AND union-usable rows only; rest masked",
+            "fm_traits": "squad-verified AND union-usable rows, plus "
+                           "ledger-directed staff-db rescue (Reep-bridged DOB, "
+                           "MLS-parity validity gate, tier>=2); rest masked",
             "identity": "FM uids are squad-asserted; missing uids get stable "
                         "provisional ids (top bit set), never guessed FM uids",
         },
@@ -386,6 +415,9 @@ def main():
         ROOT / "data/ml/math_engine/espn_pipeline_final_oct12/crosswalk.json")
     ap.add_argument("--history", type=Path, default=ROOT / "data/pl/asof_team_stats.csv")
     ap.add_argument("--results", type=Path, default=ROOT / "data/pl/results.tsv")
+    ap.add_argument("--ledger", type=Path, default=
+        ROOT / "data/identity/reep/epl_canonical_clean_v11_evidence.json",
+        help="canonical identity ledger; enables staff-db trait rescue only")
     ap.add_argument("--output", type=Path, required=True)
     a = ap.parse_args()
     if a.output.exists():
@@ -397,9 +429,10 @@ def main():
                 fixtures_from_schedule(a.schedule, squads_raw["teams"], as_of))
     bundle = build_bundle(squads_path=a.squads, fixtures=fixtures, as_of=as_of,
                           espn_paths=a.espn, crosswalk_path=a.crosswalk,
-                          history_path=a.history, results_path=a.results)
+                          history_path=a.history, results_path=a.results,
+                          ledger_path=a.ledger)
     inputs = [a.squads, a.history, a.results, *(a.schedule or []), *a.espn,
-              a.crosswalk]
+              a.crosswalk, a.ledger]
     bundle["sources"] = {str(p): sha256(p) for p in inputs}
     a.output.parent.mkdir(parents=True, exist_ok=True)
     a.output.write_text(json.dumps(bundle, sort_keys=True, separators=(",", ":")) + "\n")

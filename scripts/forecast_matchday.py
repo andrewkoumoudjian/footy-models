@@ -58,6 +58,8 @@ def main():
         ROOT / "data/ml/math_engine/espn_pipeline_final_oct12/crosswalk.json")
     ap.add_argument("--history", type=Path, default=ROOT / "data/pl/asof_team_stats.csv")
     ap.add_argument("--results", type=Path, default=ROOT / "data/pl/results.tsv")
+    ap.add_argument("--ledger", type=Path, default=
+        ROOT / "data/identity/reep/epl_canonical_clean_v11_evidence.json")
     ap.add_argument("--heads", type=Path,
                     default=ROOT / "data/ml/unified_forecast_heads_v1.json")
     ap.add_argument("--paths", type=int, default=2500)
@@ -72,7 +74,7 @@ def main():
         ap.error("positive path count required")
     as_of = date.fromisoformat(a.as_of)
     for path in [*a.schedule, a.squads, a.history, a.results, a.heads,
-                 *a.espn, a.crosswalk]:
+                 a.ledger, *a.espn, a.crosswalk]:
         if not path.exists():
             ap.error(f"missing input {path}")
     out.mkdir(parents=True)
@@ -88,9 +90,10 @@ def main():
     fixtures = fixtures_from_schedule(frozen_schedule, squads_raw["teams"], as_of)
     bundle = build_bundle(squads_path=a.squads, fixtures=fixtures, as_of=as_of,
                           espn_paths=a.espn, crosswalk_path=a.crosswalk,
-                          history_path=a.history, results_path=a.results)
+                          history_path=a.history, results_path=a.results,
+                          ledger_path=a.ledger)
     inputs = [a.squads, a.history, a.results, *frozen_schedule, *a.espn,
-              a.crosswalk]
+              a.crosswalk, a.ledger]
     bundle["sources"] = {str(p): sha(p) for p in inputs}
     bundle_path = out / "bundle.json"
     bundle_path.write_text(json.dumps(bundle, sort_keys=True, separators=(",", ":"))

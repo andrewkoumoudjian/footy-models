@@ -18,6 +18,7 @@ from build_universal_bundle import (
     provisional_id,
     role_of,
 )
+from fm_staff_rescue import load_rescue_map
 
 SQUADS = ROOT / "data/pl/squads_2026-10-11_full.json"
 ESPN = [ROOT / "data/ml/math_engine/espn_frozen_20261011.json",
@@ -25,6 +26,53 @@ ESPN = [ROOT / "data/ml/math_engine/espn_frozen_20261011.json",
 XWALK = ROOT / "data/ml/math_engine/espn_pipeline_final_oct12/crosswalk.json"
 HISTORY = ROOT / "data/pl/asof_team_stats.csv"
 RESULTS = ROOT / "data/pl/results.tsv"
+LEDGER = ROOT / "data/identity/reep/epl_canonical_clean_v11_evidence.json"
+
+
+def _ledger_entry(name, kind, source, dob, tier, uid="999"):
+    return {
+        "club": "Arsenal", "official_name": name,
+        "status": "candidate_uid_attached_attributes_quarantined",
+        "accepted_candidate": {
+            "fm_uid": uid, "native_kind": kind, "native_attr_source": source,
+            "native_dob_agrees_with_tm": dob,
+            "native_name_evidence_tier": tier,
+        },
+    }
+
+
+def _union_row(kind="staff", source="db", finishing="14", pace="12"):
+    return {"uid": "999", "kind": kind, "attr_source": source,
+            "attr_Finishing": finishing, "attr_Pace": pace}
+
+
+class StaffRescuePolicyTests(unittest.TestCase):
+    def rescue(self, entries, rows):
+        import tempfile
+        ledger = {"players": entries}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ledger.json"
+            path.write_text(json.dumps(ledger))
+            return load_rescue_map(path, rows)
+
+    def test_admits_bridge_corroroborated_staff_db_only(self):
+        out = self.rescue([_ledger_entry("A", "staff", "db", True, 4)],
+                          {"999": _union_row()})
+        self.assertIn(("Arsenal", "A"), out)
+        self.assertEqual(out[("Arsenal", "A")]["fm_uid"], "999")
+
+    def test_rejects_weak_name_conflict_derived_and_empty(self):
+        cases = [
+            _ledger_entry("T", "staff", "db", True, 1, uid="1"),
+            _ledger_entry("D", "staff", "db", False, 4, uid="2"),
+            _ledger_entry("V", "staff", "derived", True, 4, uid="3"),
+            _ledger_entry("E", "staff", "db", True, 4, uid="4"),
+            _ledger_entry("P", "player", "db", True, 4, uid="5"),
+        ]
+        rows = {"1": _union_row(), "2": _union_row(), "3": _union_row(),
+                "4": _union_row(finishing="", pace=""),
+                "5": _union_row(kind="player")}
+        self.assertEqual(self.rescue(cases, rows), {})
 
 
 def board(*events):
@@ -145,6 +193,24 @@ class UniversalBundleTests(unittest.TestCase):
             strange.write_text("date\thome\taway\n2026-10-17\tArsenal\tAtlantis\n")
             with self.assertRaises(ValueError):
                 fixtures_from_tsv(strange, self.squads, date(2026, 10, 12))
+
+    @unittest.skipUnless(LEDGER.exists(), "needs canonical identity ledger")
+    def test_ledger_rescue_materially_raises_verified_coverage(self):
+        fixtures = [{"date": "2026-10-17", "day": date(2026, 10, 17).toordinal(),
+                     "home": "Arsenal", "away": "Chelsea"}]
+        rescued_bundle = build_bundle(
+            squads_path=SQUADS, fixtures=fixtures, as_of=date(2026, 10, 12),
+            espn_paths=[p for p in ESPN if p.exists()], crosswalk_path=XWALK,
+            history_path=HISTORY, results_path=RESULTS, ledger_path=LEDGER)
+        cov = rescued_bundle["bundle_provenance"]["coverage"]
+        self.assertGreaterEqual(cov.get("fm_rescued_staff", 0), 100)
+        self.assertGreater(cov["fm_verified"], self.bundle["bundle_provenance"]
+                           ["coverage"]["fm_verified"])
+        for p in rescued_bundle["players"]:
+            if p.get("fm_rescued_staff"):
+                self.assertEqual(p["fm_source"], "db")
+                self.assertEqual(p["pooled_features"][-1], 1.0)
+                self.assertTrue(any(v != 0.0 for v in p["pooled_features"][1:-2]))
 
 
 if __name__ == "__main__":
