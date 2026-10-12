@@ -108,10 +108,10 @@ def classify_player_bridge(item: dict, fm: dict[str, dict]) -> tuple[str, dict |
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--active", type=Path, default=ROOT / "data/identity/reep/active.json")
-    parser.add_argument("--squads", type=Path, default=ROOT / "data/pl/squads_gate_2026-10-10.json")
+    parser.add_argument("--squads", type=Path, default=ROOT / "data/pl/squads_2026-10-11_full.json")
     parser.add_argument("--sofascore", type=Path, default=ROOT / "data/sofascore_cfm")
     parser.add_argument("--fm", type=Path, default=Path("/home/drewclaw/fm26-data/fm26_men_full_attrs.csv"))
-    parser.add_argument("--output", type=Path, default=ROOT / "data/identity/reep/coverage_v2.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "data/identity/reep/coverage_full_2026_10_11.json")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("refusing to overwrite previous coverage audit; use a new output path")
@@ -146,6 +146,17 @@ def main() -> None:
     for pid, identities in bridges["fbref"].items():
         for rid in identities:
             reep_to_fbref[rid].add(pid)
+    reep_to_tm = defaultdict(set)
+    for pid, identities in bridges["transfermarkt"].items():
+        for rid in identities:
+            reep_to_tm[rid].add(pid)
+    sofa_all = [
+        {"sofascore_id": sid, "reep_id": rid,
+         "fbref_person_ids": sorted(reep_to_fbref[rid]),
+         "transfermarkt_player_ids": sorted(reep_to_tm[rid]),
+         "fm_uids": sorted(reep_to_fm[rid])}
+        for sid, rid in sorted(sofamapped.items()) if rid
+    ]
     joined, conflicts = [], []
     for sid, reep in sofamapped.items():
         if reep is None:
@@ -199,10 +210,14 @@ def main() -> None:
         "sofascore_to_fm_ambiguous_entities": len(conflicts),
         "sofascore_fm_local_quality_status": dict(quality_counts),
         "sofascore_dob_conflicts": dob_conflicts,
+        "sofascore_reep_links_all": sofa_all,
         "sofascore_fm_links": joined,
         "sofascore_conflicts": conflicts,
         "epl_fm_reep_links": [{"club": club, "official_name": p["official_name"],
-                                "fm_uid": p["fm_uid"], "reep_id": reep}
+                                "fm_uid": p["fm_uid"], "reep_id": reep,
+                                "fbref_person_ids": sorted(reep_to_fbref[reep]),
+                                "transfermarkt_player_ids": sorted(reep_to_tm[reep]),
+                                "identity_caveat": "official_registration_to_FM_was_name_based"}
                                for club, p, reep in fm_mapped if reep],
         "limitations": [
             "An official EPL registration list has no provider person IDs; Reep cannot assign all 600 automatically",

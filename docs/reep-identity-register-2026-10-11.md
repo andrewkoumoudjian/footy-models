@@ -43,16 +43,18 @@ ambiguous name or guesses a player from CA.
 
 | EPL | Count |
 | --- | ---: |
-| Official registrations, including U21 | 600 |
-| Previously assigned FM UIDs | 385 |
-| Those FM UIDs with one Reep bridge | 293 |
-| Still unassigned an FM identity | 215 |
+| Official registrations across **all 20 EPL clubs**, including U21 | **1,576** |
+| Previously assigned provisional FM UIDs | 1,051 |
+| Those FM UIDs with one Reep bridge | 757 |
+| Still unassigned an FM identity | 525 |
 
-The **293 are a subset of 385**, not 293 additional people recovered from the
-unresolved EPL registrations. Those remaining 215 name-only EPL registrations
-need an actual provider ID or independently verified person identification
-before Reep can improve their FM coverage. The full 600 stay in the candidate
-universe; no unverified player is deleted.
+The **757 are a subset of 1,051**, not additional recovered identities. The
+remaining 525 name-only EPL registrations need a verified source person ID
+before Reep can increase their FM coverage. These counts supersede the old
+**eight-club demo subset** (600 registrations, 385 matches, 293 Reep links).
+The full 1,576 are retained in the candidate universe; none are deleted
+because of missing FM or provider history. FM-to-official mappings currently
+rely on names and are not promoted to verified real-player identities.
 
 | Local SofaScore match-history identities | Count |
 | --- | ---: |

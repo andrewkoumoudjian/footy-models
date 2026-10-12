@@ -6,6 +6,17 @@ A reproducible, dated pre-match snapshot that fetches historical match results; 
 
 This is a fully wired **data-processing and artifact pipeline**, **not** a claim that FM-derived Premier League goal/event rates have been statistically validated or trained on live per-player data. The team-goal benchmark and the player-resolved engine have different inputs and calibration. See [forecast code inventory](game-forecasting-inventory.md).
 
+**Full 2026/27 EPL roster (October 11, 2026):** The earlier eight-club,
+600-registration data snapshot was only the four-fixture demo, not complete
+Premier League coverage. The full official September 3 post-window source
+contains **20 clubs and 1,576 senior/U21 registrations**, of which 1,051 have
+provisional FM display-name matches and 757 of those FM IDs have a Reep link.
+The new league-wide input contract refuses partial official rosters and
+preserves all 525 unmatched registrations as candidates. The associated
+248-column unified EPL/MLS research feature schema is described in
+[the unified feature contract](unified-epl-mls-forecast-primitive-contract.md).
+It is not yet a deployed or validated replacement for the current simulator.
+
 **Historical player inputs (2026-10-11):** A separate, source-neutral dated
 lineup/event panel now combines the covered 2015/16 StatsBomb EPL and 2026
 SofaScore match sheets into provider-qualified, strictly previous-date

@@ -127,11 +127,11 @@ def run():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--offline',action='store_true')
     parser.add_argument('--fm-file',default=str(FM_FILE),help='path to FM26 full men attributes CSV')
-    parser.add_argument('--fixtures',help='fixture config; match only teams in these matches')
-    parser.add_argument('--as-of',default='2026-10-10',help='as-of YYYY-MM-DD')
+    parser.add_argument('--fixtures',help='optional fixture subset; omit to build all 20 EPL clubs')
+    parser.add_argument('--as-of',default='2026-10-11',help='as-of YYYY-MM-DD')
     parser.add_argument('--registration-url',default=SQUADS_URL)
     parser.add_argument('--html-cache',default='data/pl/raw/registered_pl_2026_27.html')
-    parser.add_argument('--output',default='data/pl/squads_2026-10-10.json')
+    parser.add_argument('--output',default='data/pl/squads_2026-10-11_full.json')
     a=parser.parse_args()
     cutoff=date.fromisoformat(a.as_of)
     if not date(2026,9,1)<=cutoff<date(2027,7,1) and a.registration_url==SQUADS_URL:
@@ -139,13 +139,15 @@ def run():
     clubs=TEAM_ALIASES.copy()
     if a.fixtures:
         config=json.loads((ROOT/a.fixtures).read_text())
-        if a.as_of=='2026-10-10' and config.get('as_of')!='2026-10-10':
-            raise ValueError('pass --as-of from fixture config (stale date mismatch)')
+        if config.get('as_of')!=a.as_of:
+            raise ValueError('fixture config as-of must equal requested official roster as-of')
         requested={name for f in config['fixtures'] for name in (f['home'],f['away'])}
         unsupported=requested-set(clubs)
         if unsupported:raise ValueError(f'unknown Premier League team aliases: {sorted(unsupported)}')
         clubs={k:v for k,v in clubs.items() if k in requested}
     roster=fetch_official(ROOT/a.html_cache,a.offline,clubs,a.registration_url)
+    if not a.fixtures and (len(clubs)!=20 or len(roster)!=20):
+        raise ValueError('full EPL registry must contain all 20 clubs; fixture sample is not league coverage')
     legacy={}
     with (ROOT/'data/fm_tm_joined.csv').open(encoding='utf-8-sig') as f:
         for row in csv.DictReader(f):
@@ -158,8 +160,10 @@ def run():
         for row in csv.DictReader(f):
             try: ca=float(row.get('ca') or 0.)
             except ValueError:continue
-            if ca<50 or not row.get('uid'):continue
-            if len(set(norm(row['name']).split()) & roster_tokens) < 2: continue
+            # Low-CA youth players are still real roster candidates. Never
+            # use CA thresholds as identity evidence or silently drop them.
+            if not row.get('uid'):continue
+            if not (set(norm(row['name']).split()) & roster_tokens):continue
             record={'uid':row['uid'],'name':row['name'],'ca':ca,'pa':float(row.get('pa') or 0),
                 'kind':(row.get('kind') or 'unknown').strip().lower(),
                 'attr_source':(row.get('attr_source') or 'unknown').strip().lower(),
@@ -169,7 +173,12 @@ def run():
             n=norm(row['name']);exact[n].append(record)
             for token in set(n.split()):
                 if len(token)>3:token_index[token].append(idx)
-    output={'as_of':str(cutoff),'registration_source':a.registration_url,'fm_source':'FM26 binary-derived complete men attributes','teams':{}}
+    output={'as_of':str(cutoff),'registration_source':a.registration_url,
+            'registration_source_published':'2026-09-03' if a.registration_url==SQUADS_URL else None,
+            'roster_scope':'fixture_subset' if a.fixtures else 'full_league',
+            'expected_club_count':len(clubs),
+            'fm_matching_note':'CA is not an identity filter; FM name matches are not verified provider IDs',
+            'fm_source':'FM26 binary-derived complete men attributes','teams':{}}
     for short,club in clubs.items():
         entries=[]
         seen=set()
