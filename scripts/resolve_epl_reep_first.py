@@ -16,6 +16,7 @@ import argparse
 from collections import Counter, defaultdict
 import csv
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 import hashlib
 import json
 from pathlib import Path
@@ -26,6 +27,7 @@ ROOT=Path(__file__).resolve().parents[1]
 ACTIVE=ROOT/"data/identity/reep/active.json"
 ROSTER=ROOT/"data/pl/squads_2026-10-11_full.json"
 FM=Path("/home/drewclaw/fm26-data/fm26_men_full_attrs.csv")
+COMPLETE=Path("/home/drewclaw/fm26-data/fm26_complete_v6.csv")
 
 
 def norm(value):
@@ -53,6 +55,28 @@ def official_keys(name):
     # A many-part legal surname is not automatically shortened into a
     # high-confidence identity; it only widens fallback candidate search.
     return strong,short
+
+
+def source_name_support(official, reep_name):
+    """Name corroboration *after* an independently typed Reep/FM UID join.
+
+    The official name is family-first, and Reep may omit middle names. A
+    surname and given name must both agree, or a near-spelling must agree
+    with otherwise substantial name overlap. This cannot certify identity.
+    """
+    official=re.sub(r"\s*\(Loan\).*","",official.replace("*",""),flags=re.I)
+    if "," not in official:
+        return False
+    family, given=official.split(",",1)
+    a=set(norm(family).split());b=norm(given).split()
+    candidate=norm(reep_name).split()
+    if not a or not b or not candidate:
+        return False
+    family_match=bool(a.intersection(candidate))
+    first_match=(b[0] in candidate or any(
+        SequenceMatcher(None,b[0],t).ratio()>=0.79 for t in candidate
+    ))
+    return family_match and first_match
 
 
 def redirects_map(conn):
@@ -137,7 +161,7 @@ def provider_bridges(conn,relevant):
     return bridges
 
 
-def read_fm_subset(path,ids):
+def read_fm_subset(path,ids,alternate_path=None):
     found=defaultdict(list)
     scanned=0
     with path.open(encoding="utf-8-sig",newline="") as file:
@@ -151,7 +175,33 @@ def read_fm_subset(path,ids):
                     "kind":row.get("kind",""),
                     "attr_source":row.get("attr_source",""),
                     "ca":row.get("ca",""),"pa":row.get("pa",""),
+                    "record_source":"men_full_attrs",
                 })
+    if alternate_path is not None:
+        # FM26 men+women+unknown binary frame has some major men's players
+        # absent from the gender-partitioned 'men' export. Search ONLY UIDs
+        # missing from the primary; never override a collision with v6 data.
+        absent={uid for uid in ids if uid not in found}
+        if absent:
+            with alternate_path.open(encoding="utf-8-sig",newline="") as file:
+                for row in csv.DictReader(file):
+                    uid=str(row.get("uid") or "").strip()
+                    if uid not in absent:
+                        continue
+                    valid=sum(
+                        bool(v and v.replace(".","",1).isdigit() and
+                             1<=float(v)<=20)
+                        for k,v in row.items() if k.startswith("attr_")
+                    )
+                    found[uid].append({
+                        "fm_uid":uid,"name":row.get("name",""),
+                        "dob":row.get("dob",""),
+                        "kind":row.get("kind",""),
+                        "attr_source":"db" if valid else "none",
+                        "ca":row.get("ca",""),"pa":row.get("pa",""),
+                        "record_source":"complete_v6_raw_attribute_block",
+                        "positive_attr_count":valid,
+                    })
     return found,scanned
 
 
@@ -202,11 +252,18 @@ def resolve(registrations, candidates, bridges, fm_records):
                 selected=None
                 state="ambiguous_reep_legal_name"
         elif alternatives:
+            corroborated=[p for p in alternatives if
+                          p["rank"]==2 and len(p["fm_uids"])==1
+                          and p["fm_uids"][0]==registration["old_fm_uid"]
+                          and len(fm_records.get(p["fm_uids"][0],[]))==1]
             eligible=[p for p in alternatives if
                       len(p["fm_uids"])==1
                       and len(fm_records.get(p["fm_uids"][0],[]))==1
                       and p["n_external_provider_namespaces"]>=2]
-            if len(alternatives)==1 and len(eligible)==1:
+            if len(corroborated)==1:
+                selected=corroborated[0]
+                state="reep_typed_fm_bridge_recovered_name_variant"
+            elif len(alternatives)==1 and len(eligible)==1:
                 selected=eligible[0]
                 state="unique_short_given_family_multi_provider_candidate"
             else:
@@ -245,6 +302,7 @@ def resolve(registrations, candidates, bridges, fm_records):
             "new_fm_uid":uid,
             "new_fm_kind":fm_data["kind"] if fm_data else None,
             "new_fm_attr_source":fm_data["attr_source"] if fm_data else None,
+            "new_fm_record_source":fm_data["record_source"] if fm_data else None,
             "new_fm_attributes_trusted":bool(fm_data and fm_data["kind"]=="player"
                                              and fm_data["attr_source"]=="db"),
             "new_fm_name":fm_data["name"] if fm_data else None,
@@ -272,6 +330,22 @@ def resolve(registrations, candidates, bridges, fm_records):
     for rid,people in by_reep.items():
         if len(people)<2:
             continue
+        same_fm={p["new_fm_uid"] for p in people}
+        surface={norm(re.sub(r"\s*\(Loan\).*","",p["official_name"].replace("*",""),flags=re.I))
+                 for p in people}
+        if len(same_fm)==1 and None not in same_fm and len(surface)==1 and len({
+                p["registration"] for p in people})<=2:
+            # Same footballer appears on parent club and loan club official
+            # lists. It is not evidence Reep has merged two different humans.
+            # Preserve both *registration rows* with one canonical person.
+            # The active-playing-club selector must separately gate their
+            # matchday eligibility.
+            for person in people:
+                audit[person["identity_state"]]-=1
+                audit["same_person_in_multiple_club_registrations"]+=1
+                person["identity_state"]="same_person_in_multiple_club_registrations"
+                person["multi_club_eligibility_unresolved"]=True
+            continue
         for player in people:
             audit[player["identity_state"]]-=1
             audit["cross_registration_reep_collision"]+=1
@@ -281,11 +355,12 @@ def resolve(registrations, candidates, bridges, fm_records):
             player["new_fm_uid"]=None
             player["new_fm_kind"]=None
             player["new_fm_attr_source"]=None
+            player["new_fm_record_source"]=None
             player["provider_ids"]={"sofascore":[],"fbref":[],"transfermarkt":[]}
     return by_club,dict(audit)
 
 
-def build(conn,roster,fm_path):
+def build(conn,roster,fm_path,alternate_path=None):
     registrations=[]
     for club,group in roster["teams"].items():
         for p in group["players"]:
@@ -299,10 +374,61 @@ def build(conn,roster,fm_path):
     if len(registrations)!=1576 or len(roster["teams"])!=20:
         raise ValueError("require entire verified twenty-club 1576-registration snapshot")
     candidates,scan_counts=candidates_from_reep(conn,registrations)
+    # Second pass: an existing name matcher may have an FM UID. Resolve that
+    # ID back into Reep's typed bridge register, instead of treating the
+    # original guessed UID as a confirmed identity. The Reep person label and
+    # aliases must separately support the official name.
+    old_ids={p["old_fm_uid"] for p in registrations if p["old_fm_uid"]}
+    from_ids=defaultdict(set)
+    if old_ids:
+        conn.execute("CREATE TEMP TABLE old_fm_candidates(id VARCHAR PRIMARY KEY)")
+        conn.executemany("INSERT INTO old_fm_candidates VALUES (?)",[(uid,) for uid in sorted(old_ids)])
+        redirects=redirects_map(conn)
+        for fm_id,rid in conn.execute(
+            "SELECT b.external_id,b.reep_id FROM bridges b "
+            "JOIN old_fm_candidates old ON b.external_id=old.id "
+            "WHERE b.provider='fm' AND b.namespace='player'"
+        ).fetchall():
+            from_ids[fm_id].add(canonical(rid,redirects))
+        potential={rid for rids in from_ids.values() for rid in rids}
+        if potential:
+            conn.execute("CREATE TEMP TABLE typed_old_candidates(reep_id VARCHAR PRIMARY KEY)")
+            conn.executemany("INSERT INTO typed_old_candidates VALUES (?)",[(x,) for x in sorted(potential)])
+            names=defaultdict(set)
+            for rid,name in conn.execute(
+                "SELECT e.reep_id,e.label FROM entities e "
+                "JOIN typed_old_candidates t USING (reep_id)"
+            ).fetchall():
+                if name:names[rid].add(name)
+            for rid,name in conn.execute(
+                "SELECT a.reep_id,a.alias FROM aliases a "
+                "JOIN typed_old_candidates t USING (reep_id)"
+            ).fetchall():
+                if name:names[rid].add(name)
+            for i,p in enumerate(registrations):
+                uid=p["old_fm_uid"]
+                if not uid:
+                    continue
+                choices=from_ids.get(uid,set())
+                if len(choices)!=1:
+                    continue
+                rid=next(iter(choices))
+                if rid in candidates[i]:
+                    continue
+                qualifying=[name for name in names[rid]
+                            if source_name_support(p["official_name"],name)]
+                if qualifying:
+                    candidates[i][rid]={
+                        "reep_id":rid,"rank":2,
+                        "method":"typed_fm_bridge_plus_independent_reep_name",
+                        "evidence_name":sorted(qualifying,key=len)[-1],
+                        "source_table":"fm_bridge_reverse_lookup",
+                    }
+                    scan_counts["secondary_provider_id_search"]+=1
     wanted={rid for options in candidates.values() for rid in options}
     edges=provider_bridges(conn,wanted)
     ids={x[0] for provider in edges.values() for x in provider.get("fm",())}
-    fm_records,scanned=read_fm_subset(fm_path,ids)
+    fm_records,scanned=read_fm_subset(fm_path,ids,alternate_path)
     by_club,status=resolve(registrations,candidates,edges,fm_records)
     return {
         "schema":"reep_first_full_epl_identity_audit_v1",
@@ -316,6 +442,9 @@ def build(conn,roster,fm_path):
             "original_name_guess_uids":sum(p["old_fm_uid"] is not None for p in registrations),
             "reep_candidate_entities":len(wanted),
             "local_fm_rows_scanned":scanned,
+            "binary_complete_v6_fallback_matches":sum(
+                bool(x["record_source"]=="complete_v6_raw_attribute_block")
+                for records in fm_records.values() for x in records),
             "reep_search_hits":dict(scan_counts),
             "resolution":status,
             "new_unique_fm_player_uid":sum(p["new_fm_uid"] is not None
@@ -339,6 +468,7 @@ def main():
     ap.add_argument("--active",type=Path,default=ACTIVE)
     ap.add_argument("--roster",type=Path,default=ROSTER)
     ap.add_argument("--fm",type=Path,default=FM)
+    ap.add_argument("--complete-fm",type=Path,default=COMPLETE)
     ap.add_argument("--output",type=Path,required=True)
     a=ap.parse_args()
     if a.output.exists():
@@ -346,7 +476,7 @@ def main():
     import duckdb
     active=json.loads(a.active.read_text())
     with duckdb.connect(active["path"],read_only=True) as db:
-        result=build(db,json.loads(a.roster.read_text()),a.fm)
+        result=build(db,json.loads(a.roster.read_text()),a.fm,a.complete_fm)
     result["reep_source_stamp"]=active["stamp"]
     result["reep_sha256"]=active["sha256"]
     a.output.parent.mkdir(parents=True,exist_ok=True)

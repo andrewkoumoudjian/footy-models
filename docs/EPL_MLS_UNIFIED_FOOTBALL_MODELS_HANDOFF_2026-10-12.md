@@ -4,17 +4,56 @@
 
 > **TL;DR.** Build **one** rigorous, interpretable, well-calibrated football forecasting and simulation engine using **every legitimate, as-of-available primitive** already developed in the project: match events, players, ability, psychological attributes, tactics, fitness, cohesion, development, recruitment, market value and uncertainty. Cover **all 20 EPL teams and the entire available MLS league**, with the complete official squad candidate population, not the teams selected for one demo. **Reep + typed provider IDs first**; resolve people against the *full native FM26 binary exports* and independently verify DOB/name/club/Sortitoutsi evidence. Never treat an associated FM UID as sufficient proof that a native extracted ability/mental block belongs to the footballer. Reconstruct truly missing ratings **probabilistically with the existing code**, never as fake observed ratings. Train and test chronologically and adopt more complex methods only after independently measured OOS improvement. Complete, integrate and validate the pipeline, not just an audit or an ID patchlist.
 
-### Latest canonical execution update (2026-10-12)
+### Latest canonical execution update (2026-10-12, identity resolver fixed)
 
-**Verified final clean-from-official v3 execution:** `data/identity/reep/epl_canonical_clean_v3.json`, with independent per-player ledger at `data/identity/reep/epl_canonical_clean_v3_evidence.json`, was regenerated after correcting normalized Nottingham Forest aliases. It has **all 20 EPL clubs, 1,576 official registrations**, **952 attached provisional FM UIDs**, **624 still unresolved (16 senior, 608 U21)**, and **425 associated FM UIDs with source-checked database player attributes**. The gender-agnostic FM26 complete-binary fallback was used and supplied 10,842 native FM UID rows missing in the men-only export, but that did not magically turn them into safely matched EPL players. The independent Reep typed-bridge audit `data/identity/reep/coverage_canonical_clean_v3.json` measured **874 of 952 attached FM UIDs** having a unique Reep bridge. The 248-column EPL research feature bundle regenerated successfully at `data/identity/reep/unified_epl_canonical_clean_v3.json`. **It is not trained or OOS-certified.** Six existing related Python suites comprising **40 focused tests passed** (canonical resolver 7, FM multi-source 6, Reep-first 7, full-roster 3, unified feature 13, Reep crosswalk 4).
+**Clean coverage regression closed.** The canonical, zero-name-guess Reep-first
+resolver now attaches **1,255** of the **1,576** official 2026/27 EPL
+registrations across **all 20 clubs**, up from the earlier clean-run **952** and
+above the older *incremental* research roster (**1,228**) — without copying any
+of its guessed UIDs. The gap was **resolver over-strictness**, not absent
+players. Four generalizable causes were fixed (unique Reep identity without
+Transfermarkt; name-evidence-first disambiguation; family-anchored native-name
+grading including 2-token names; loan-duplicate collision guard). Full write-up:
+`docs/EPL_FM26_IDENTITY_RESOLUTION_FIX_2026-10-12.md`.
 
-The 16 still-unresolved senior official entries in this exact v3 run are: Gabriel Dos Santos Magalhães (Arsenal); Leon Goretzka (Aston Villa); Juan Luis Sánchez Velasco (Bournemouth); Caelan Avenell and Mathias Jensen (Brentford); João Pedro Loureiro da Costa (Brighton); Reece James (Chelsea); Sander Berge (Fulham); Alan Browne (Sunderland); Charles Hughes and Nobel Mendy (Hull); Fraser Barnsley and Thierno Barry (Everton); Alisson Ramsés Becker (Liverpool); Allan Andrade Elias (Manchester City); and Ben Wilson (Coventry). These must be pursued by **fixing source-neutral candidate discovery** against the full FM binary, Sortitoutsi explicit binary UID bridges, Reep and independent TM/DOB/club evidence—not copying old provisional UID assignments.
+Verified final artifacts: `data/identity/reep/epl_canonical_clean_v9.json` and
+the per-player ledger `data/identity/reep/epl_canonical_clean_v9_evidence.json`.
 
-The **standard EPL roster CLI was actually run from the raw 20-club official registration HTML**, without consulting the previously name-matched/patched roster. Its first clean build, `data/identity/reep/epl_canonical_clean_v1.json`, attached **952 FM candidate UIDs among 1,576 registrations**. The independent second run, `data/identity/reep/epl_canonical_clean_v2.json`, additionally enabled the full gender-agnostic FM26 binary fallback and again attached **952**. Its summary records **10,842 fallback UID records absent from the men-only export**, **425 rows with consistent native player names+DOB**, two conflicting UID registrations, and 622 records without sufficient automatic identity evidence. The separate candidate evidence is at `data/identity/reep/epl_canonical_clean_v2_evidence.json`. The fallback supplies extra records but **does not establish 10,842 additional EPL player identities**. Do not substitute the older incrementally produced 1,228-UID result for this clean-run count.
+| Metric | Earlier clean (v3) | Fixed (v9) |
+| --- | ---: | ---: |
+| Official clubs / registrations | 20 / 1,576 | 20 / 1,576 |
+| Attached FM candidate identities | 952 | **1,255** |
+| Unresolved registrations | 624 | **321** |
+| Unresolved **senior** registrations | 16 | **4** |
+| Native player-kind `db` blocks admitted (name+DOB corroborated) | 425 | **442** |
+| Individual FM traits quarantined (identity only) | 527 | 813 |
 
-The normal match pipeline now calls Reep-first resolution through `scripts/match_premier_league_fm26.py` (no `best_match` call in its active path); `scripts/run_pl_pipeline.py` invokes `uv` with both `duckdb` and `beautifulsoup4`. The canonical resolver also has full-v6 lookup, Unicode/patronymic normalization, typed Sortitoutsi-to-binary UID lookup, prior-published Transfermarkt evidence, and an immutable per-player rejection ledger. **The clean-run coverage regression remains open, and the v2 final full-feature EPL bundle has not yet been independently reproduced or OOS validated.** Do not claim completion until the code/tests and new artifact are verified.
+**Unresolved is now classified** (`identity_resolution_state`): **295** are
+`absent_from_fm_and_reep_source_coverage` (no person in any of the 16 local FM
+exports and no Reep FM bridge — mostly the post-snapshot 2026 youth intake;
+spot-verified absent across every local CSV), **8** `ambiguous_reep_identity`,
+**7** `ambiguous_native_homonym`, **11** `reep_candidate_not_corroborated`. The
+four unresolved seniors are: Loureiro Da Costa (two `Joao Costa` tie), Ben
+Wilson (two `Ben Wilson` tie), Alisson Becker (UID 19058734 has no name/DOB in
+complete-v6 and is `Orlando Quintana` in `fm26_complete.csv` — a contested UID
+is never attached), and Allan Andrade Elias (absent from all exports).
 
-The working data directory also contains `data/identity/reep/unified_mls_2026_10_11_30club_v1.json`, a newer nominally 30-club MLS research artifact. Its source completeness, roster recency, training validity and model calibration **have not been verified in this canonical EPL run**; the older 27-club/664-candidate snapshot must not be represented as full MLS coverage, nor should the filename of the new artifact alone certify it.
+**Identity is not attribute confidence.** Of 1,255 attached identities only
+**442** carry a native player-kind `db` block with name **and** DOB
+corroborated; the other **813** hold the identity with all individual FM traits
+quarantined (`fm_native_record_trusted_for_this_player = false`). The
+regenerated 248-column bundle `data/identity/reep/unified_epl_canonical_clean_v9.json`
+has 20 teams / 1,576 players / 248 columns, `database_block` 442,
+`reconstructed_distribution` 69, `missing` 1,065. It is a **feature contract,
+not a trained or OOS-calibrated model**.
+
+The standard roster CLI is the only production identity builder and reproduces
+these results automatically (no hard-coded UID patchlist); `scripts/run_pl_pipeline.py`
+invokes it. Reep is pinned at `20261005T180536Z`, SHA256
+`f23fbce71e142dc76703a065bd14a820564222ca13a775e4b24e30bb648da8af`. The MLS
+30-club research bundle is still `data/identity/reep/unified_mls_2026_10_11_30club_v1.json`
+(791 SofaScore-observed players, **not** an official league roster); no official
+2026 MLS registration source has been ingested.
 
 ## 1. Non-negotiable user requirements (compiled from this conversation)
 
@@ -40,7 +79,7 @@ The working data directory also contains `data/identity/reep/unified_mls_2026_10
 - Original FM **name-first** matcher: **1,051 provisional UIDs** out of 1,576. A Reep audit of those guesses does *not* discover missing names. Avoid using it again as the production algorithm.
 - Subsequent multi-step, evidence-audited **Reep + raw-FM + TM** research: **1,162 candidate UIDs**, **414 unresolved** (**46 senior, 368 U21**), before the later recovery pass. From the 1,162 associated UIDs, only **552** were native **player-kind/db-sourced** individual trait blocks; 249 had reconstructed player attrs, 324 were classified staff and 37 lacked a record. *These numbers are a legacy research snapshot, not a guarantee of canonical clean-run coverage or true verified attribute count.*
 - A subsequent per-candidate Reep/TM pass over that provisional research snapshot attached **66 additional candidate FM UIDs**, leaving **348 unmatched including seven senior**. Four categories were distinguished: supported identity bridge; native player attributes that pass independent name+DOB evidence; attributes not admissible; and rejected collisions. Stored in `data/identity/reep/epl_remaining_resolved_v1.json` and `.../epl_remaining_resolution_ledger_v1.json`. **These results start from an older provisional roster and MUST NOT be mistaken for independent clean-run coverage.**
-- The **clean-from-official** canonical resolver, now invoked by the normal `scripts/match_premier_league_fm26.py`, initially produced **952 FM candidate IDs** (20 clubs) using only the men-specific FM export; this is more conservative than appending to the prior patched list and exposes a **coverage regression** to investigate. The full binary `fm26_complete_v6.csv` fallback has since been added to its code; rerun and verify before recording the final clean count. Do not claim 1,228 is the completed result unless a fresh independent run reproduces it.
+- The **clean-from-official** canonical resolver, now invoked by the normal `scripts/match_premier_league_fm26.py`, initially produced **952 FM candidate IDs** (20 clubs); the coverage regression versus the older 1,228 incremental roster has since been **fixed** (see the execution update above and `docs/EPL_FM26_IDENTITY_RESOLUTION_FIX_2026-10-12.md`), reaching **1,255 attached / 321 unresolved** with the four documented causes corrected in generalizable code. Do not append old patched UIDs; every attachment must be reproduced by the canonical CLI.
 - *Examples caught by the identity audit:* Cody Gakpo (expanded given names), Martin Ødegaard (Ø normalization), Đorđe Petrović (`Đ` transliteration and DOB), Iliman Ndiaye (`N'Diaye` apostrophe), Phil/Philip Foden, Rayan Cherki, Calvin Bassey, Reece James versus similarly named players, Mathias Jensen with duplicate names, Matheus Nunes with **contradictory native FM name**. The last must keep its identity evidence but **not borrow** another person's native mental attributes.
 - The roster article is a **registration snapshot**. `loaned_out` and dated eligibility data must be preserved; don't assume every registered person is eligible, fit, in the country, or in the actual XI.
 
@@ -167,7 +206,7 @@ If a command fails, **fix the underlying code** and rerun with a new versioned o
 
 ## 8. Priority implementation roadmap
 
-**P0 — Finish identity foundation (blocking).** Run the new command cleanly; verify it really reads the full v6 binary export; compare every missing senior person and all U21s against (1) Reep including Reep people *without* FM bridge, (2) full FM gender-agnostic exports and player/staff misclassification, (3) Sortitoutsi native binary map, (4) dated Transfermarkt ID/DOB/club evidence. Resolve seven senior leftovers from the previous incremental study (Gabriel Magalhães, Đorđe Petrović, Juan Luis Sánchez Velasco, João Pedro Loureiro da Costa, Allan Elias, Iliman Ndiaye, Ben Wilson) where supported, and distinguish absent FM records from different-person collisions. Do not copy their UIDs from older artifacts; reproducing each evidence chain must be a test. Improve clean from-scratch coverage without sacrificing safety. Make the regular EPL CLI the only production identity builder.
+**P0 — Finish identity foundation (blocking).** *Substantially complete for the EPL.* The canonical Reep-first CLI now reproduces **1,255 attached / 321 unresolved** (4 senior) from raw official registrations, up from 952, with the four over-strictness causes fixed in generalizable code and regression tests added (`docs/EPL_FM26_IDENTITY_RESOLUTION_FIX_2026-10-12.md`). Remaining: 295 are absent from all 16 local FM exports (post-snapshot 2026 youth) and 26 are genuine homonym/ambiguity cases — attach only with a newer FM snapshot or a dated club-corroborated provider ID, never by a name heuristic. Keep the regular EPL CLI the only production identity builder. **MLS is still open**: no official 30-club registration source has been ingested (only the 791-player SofaScore-observed universe).
 
 **P1 — Accurate true-vs-imputed FM primitive source.** Verify native named `db` blocks in men and complete-v6 against DOB and person evidence; detect row kind misclassification without automatically promoting staff attrs; code probabilistic reconstruction for correct-but-missing FM players. Integrate observed FM mental features, role vectors, age, CA/PA, uncertainty, lineup/squad mental aggregates and season membership in EPL and MLS. Reject future-vintage leakage.
 

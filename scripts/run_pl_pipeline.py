@@ -36,6 +36,7 @@ MODEL_SOURCE_FILES=(
     'apps/plforecast/Cargo.toml',
     'scripts/forecast_premier_league.py',
     'scripts/match_premier_league_fm26.py',
+    'scripts/fm26_complete.py',
     'scripts/recover_epl_remaining_identities.py',
     'scripts/resolve_epl_reep.py',
     'scripts/reconcile_epl_fm_sources.py',

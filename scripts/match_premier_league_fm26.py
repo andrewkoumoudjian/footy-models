@@ -139,7 +139,8 @@ def best_match(src, exact, token_index, records):
 def run():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--offline',action='store_true')
-    parser.add_argument('--fm-file',default=str(FM_FILE),help='path to FM26 full men attributes CSV')
+    parser.add_argument('--fm-file',default=str(FM_FILE),help='men-provenance sidecar (attr_source/height_source); complete-everyone primary comes from --fm-complete-file')
+    parser.add_argument('--fm-men-file',default=None,help='explicit men-provenance path (defaults to --fm-file when it points at a men extract, else the bundled men path)')
     parser.add_argument('--fixtures',help='optional fixture subset; omit to build all 20 EPL clubs')
     parser.add_argument('--as-of',default='2026-10-11',help='as-of YYYY-MM-DD')
     parser.add_argument('--registration-url',default=SQUADS_URL)
@@ -151,7 +152,7 @@ def run():
     parser.add_argument('--sortitoutsi-roster',default='/home/drewclaw/fm26-data/sortitoutsi_fm26_roster.csv')
     parser.add_argument('--sortitoutsi-map',default='/home/drewclaw/fm26-data/sortitoutsi_uid_map.csv')
     parser.add_argument('--fm-complete-file',default='/home/drewclaw/fm26-data/fm26_complete_v6.csv',
-                        help='full FM26 v6 binary export for UIDs absent from men-only export')
+                        help='complete-everyone FM26 primary: all genders/kinds, no CA pre-filter (unioned with men provenance)')
     a=parser.parse_args()
     cutoff=date.fromisoformat(a.as_of)
     if not date(2026,9,1)<=cutoff<date(2027,7,1) and a.registration_url==SQUADS_URL:
@@ -173,7 +174,7 @@ def run():
     official={'as_of':str(cutoff),'registration_source':a.registration_url,
               'registration_source_published':'2026-09-03' if a.registration_url==SQUADS_URL else None,
               'roster_scope':'full_league','expected_club_count':20,
-              'fm_source':'FM26 binary-derived men attributes','teams':{}}
+              'fm_source':'FM26 complete-everyone union (complete v6 primary + men provenance)','teams':{}}
     for club,club_name in TEAM_ALIASES.items():
         entries=[{'official_name':p['official_name'],'registration':p['registration'],
                   'registered_club':club,'membership_observed_as_of':str(cutoff),
@@ -182,8 +183,10 @@ def run():
         official['teams'][club]={'official_club':club_name,'registered_count':len(entries),
             'players':entries,'matched_count':0,'matched_25':0,'matched_u21':0,
             'unmatched':[p['official_name'] for p in entries]}
+    men_path=Path(a.fm_men_file) if a.fm_men_file else (
+        Path(a.fm_file) if Path(a.fm_file).name.startswith('fm26_men') else FM_FILE)
     output,ledger=resolve_official_roster(official,ROOT/a.reep_active,
-        Path(a.fm_file),ROOT/a.tm_players,Path(a.sortitoutsi_roster),Path(a.sortitoutsi_map),
+        men_path,ROOT/a.tm_players,Path(a.sortitoutsi_roster),Path(a.sortitoutsi_map),
         Path(a.fm_complete_file))
     if a.fixtures:
         output['teams']={club:output['teams'][club] for club in clubs}
@@ -193,8 +196,8 @@ def run():
     review=ROOT/a.identity_audit if a.identity_audit else outfile.with_name(outfile.stem+'_identity_evidence.json')
     serial=json.dumps(output,indent=2,ensure_ascii=False)+'\n'
     review_serial=json.dumps({'as_of':str(cutoff),
-        'resolver':'canonical_reep_first_v2',
-        'source_policy':'full-Reep and typed IDs first; no CA or name-only auto-ranking',
+        'resolver':'canonical_reep_first_v3',
+        'source_policy':'complete-everyone FM union primary, Reep and typed IDs first; no CA/kind/gender pre-filter, no name-only auto-ranking',
         'players':ledger},indent=2,ensure_ascii=False)+'\n'
     # Safe to repeat identical runs; never silently mutate an existing as-of
     # snapshot when source data or code changes. Use a new version in that case.

@@ -153,16 +153,19 @@ def rank_person(official,club,reep_id,record,linked_tm,tm_rows,native):
     # exclude individual attributes, not necessarily the Reep UID itself.
     score=4*alias_tier+2*tm_name_tier+3*int(tm_club_ok)+3*int(dob_matches)
     if alias_tier==0:return None
-    if alias_tier>=3 and best:
-        sufficient=True
-    elif alias_tier==4:
-        sufficient=True
-    elif alias_tier==2 and (tm_club_ok or dob_matches) and best:
-        sufficient=True
-    elif alias_tier==1 and tm_name_tier>=1 and tm_club_ok and dob_matches:
-        sufficient=True
-    else:
-        sufficient=False
+    # Identity sufficiency is deliberately broader than attribute admission.
+    # A full legal name (tier>=3), or a tier-2 given+family anchor with any
+    # independent corroboration, is a valid *provisional* identity. The
+    # unique tier-2-without-Transfermarkt case is promoted by the caller only
+    # when it is the single Reep candidate. Attributes stay gated separately
+    # by can_use_native_player_attributes.
+    sufficient=(
+        alias_tier>=3
+        or (alias_tier==2 and best is not None
+            and (tm_club_ok or dob_matches or tm_name_tier>=2))
+        or (alias_tier==1 and tm_name_tier>=2 and dob_matches)
+        or (alias_tier==1 and tm_name_tier>=1 and tm_club_ok and dob_matches)
+    )
     safe_native=bool(native_row and native_row['kind']=='player'
         and ((best and dob_matches and native_quality>=1) or
              (not best and native_quality>=3)))
@@ -183,6 +186,54 @@ def rank_person(official,club,reep_id,record,linked_tm,tm_rows,native):
     }
 
 
+def evidence_vector(candidate):
+    """Independent corroboration used only to break a *name-comparable* tie.
+
+    Ordered by how hard each signal is to fabricate: an agreeing Transfermarkt
+    DOB, then an agreeing current club, then a native player-kind record, then
+    the strength of the native name. This is deliberately NOT the primary
+    identity signal -- how well the Reep label matches the official
+    registration is (see choose_candidate).
+    """
+    return (int(candidate['native_dob_agrees_with_tm']),
+            int(candidate['tm_club_compatible']),
+            int(candidate['native_kind']=='player'),
+            candidate['native_name_evidence_tier'])
+
+
+def choose_candidate(selections):
+    """Accept only an identity that is uniquely best, never an arbitrary pick.
+
+    Name evidence is the primary signal: a full legal-name Reep match
+    (tier 4) must never be displaced by a weakly-named player-kind record
+    (Gomes da Silva vs a generic "Joao Silva"), and a staff-kind record must
+    not automatically lose to a player-kind record either. Only candidates
+    whose legal-name agreement is within one tier of the best compete; among
+    those, independent provider corroboration breaks the tie.
+    """
+    # A single, unambiguous Reep identity with exactly one typed FM bridge and
+    # a given+family name anchor is a valid provisional discovery even without
+    # Transfermarkt corroboration: Reep is the cross-provider identity
+    # authority, and the typed bridge is a source-issued person link rather
+    # than a name guess. Attributes remain gated separately.
+    if len(selections)==1 and selections[0]['alias_name_evidence_tier']>=2:
+        selections[0]['sufficient']=True
+        selections[0]['identity_source']='unique_reep_typed_fm_bridge'
+        return selections[0]
+    accepted=[x for x in selections if x['sufficient']]
+    if not accepted:return None
+    accepted.sort(key=lambda x:(-x['alias_name_evidence_tier'],x['reep_id']))
+    top_tier=accepted[0]['alias_name_evidence_tier']
+    band=[x for x in accepted if x['alias_name_evidence_tier']>=top_tier-1]
+    if len(band)==1:return band[0]
+    band.sort(key=lambda x:(evidence_vector(x),x['score']),reverse=True)
+    if evidence_vector(band[0])>evidence_vector(band[1]):
+        return band[0]
+    if band[0]['score']>=band[1]['score']+5:
+        return band[0]
+    return None
+
+
 def candidate_for_row(official,club,by_given,identities,tm_ids,tm_rows,native):
     given,family=components(official)
     rids=set()
@@ -198,54 +249,129 @@ def candidate_for_row(official,club,by_given,identities,tm_ids,tm_rows,native):
         selection=rank_person(official,club,rid,record,tm_ids.get(rid,set()),tm_rows,native)
         if selection:selections.append(selection)
     selections.sort(key=lambda x:(-x['score'],-x['alias_name_evidence_tier'],x['reep_id']))
-    accepted=[x for x in selections if x['sufficient']]
     # Unlike the old ranker, when competing identities are tied or close,
     # even a high-CA FM player is never chosen arbitrarily.
-    if accepted and (len(accepted)==1 or
-                     accepted[0]['score']>=accepted[1]['score']+5):
-        return accepted[0],selections
-    return None,selections
+    return choose_candidate(selections),selections
 
 
 def native_full_legal_fallback(person,review):
-    """Native FM exact full legal name only; never a 2-token near-match."""
-    eligible=[c for c in review if c.get('native_kind')=='player'
-              and c.get('native_dob') and c.get('grade')==0]
-    if len(eligible)!=1:return None
-    official_words=norm(official_name(person)).split()
-    if len(official_words)<3:return None
-    candidate=eligible[0]
-    if not candidate.get('uid'):return None
-    return {'fm_uid':candidate['uid'],'native_name':candidate.get('fm_name'),
-            'native_dob':candidate['native_dob'],'identity_source':'unique_native_full_legal_name',
-            'can_use_native_player_attributes':False,
-            'note':'no source-issued official UID; no independent DOB confirmation'}
+    """Tiered family-anchored native name match (exact, then subset).
 
-
-def build_full_native_name_index(path, official_roster):
-    """Scan every actual FM row for exact *whole legal name* evidence.
-
-    Does not require a preexisting Reep bridge or SI mapping; this matters
-    when a person is absent from Reep FM edges (e.g. Alisson Becker).
+    Grade 0 requires exactly equal token sets; grade 1 allows one set to be a
+    proper subset of the other with the same final (family) token, covering
+    expanded given names and multi-part family names. A homonym at a stronger
+    grade stops the search rather than loosening to a weaker grade. A single
+    unambiguous UID across the whole union is required and attributes stay
+    quarantined (the official list has no DOB).
     """
-    targets=defaultdict(list)
+    official_words=norm(official_name(person)).split()
+    if len(official_words)<2:return None
+    for grade,source,note in (
+        (0,'unique_native_full_legal_name',
+         'exact token-set name in the FM union; no independent DOB confirmation'),
+        (1,'unique_native_name_subset',
+         'family-anchored subset name in the FM union; no independent DOB confirmation')):
+        eligible=[c for c in review if c.get('grade')==grade]
+        uids={c['uid'] for c in eligible if c.get('uid')}
+        if not uids:continue
+        if len(uids)>1:return None
+        candidate=eligible[0]
+        return {'fm_uid':candidate['uid'],'native_name':candidate.get('fm_name'),
+                'native_dob':candidate.get('native_dob'),
+                'identity_source':source,
+                'can_use_native_player_attributes':False,'note':note}
+    return None
+
+
+def native_pair_fallback(person,review):
+    """Grade-2 native anchor: same first+last, conflicting middle tokens.
+
+    This is the weakest native evidence (e.g. official "Robinson, Thomas
+    Dean" vs native "Thomas Vincent Robinson"), so it additionally requires a
+    native DOB and exactly ONE UID across the whole FM union for that
+    (first, last) anchor. A homonym is never silently selected; attributes
+    stay quarantined because the official registration has no DOB.
+    """
+    eligible=[c for c in review if c.get('grade')==2 and c.get('native_dob')]
+    uids={c['uid'] for c in eligible if c.get('uid')}
+    if len(uids)!=1:return None
+    uid=next(iter(uids))
+    candidate=next(c for c in eligible if c['uid']==uid)
+    return {'fm_uid':uid,'native_name':candidate.get('fm_name'),
+            'native_dob':candidate['native_dob'],
+            'identity_source':'unique_native_name_expansion',
+            'can_use_native_player_attributes':False,
+            'note':'unique first+last anchor in the FM union; middle-name variation; no independent DOB'}
+
+
+def _name_grade(official_tokens, native_tokens):
+    """Family-anchored name-evidence grade for the native FM binary.
+
+    0 = the official and native token *sets* are exactly equal (strongest).
+    1 = one set is a proper subset of the other with the same final (family)
+        token, so expanded/contracted given names and multi-part family names
+        match (e.g. official "Wheeler-Henry, Joseph" vs native "Joseph Roy
+        Wheeler-Henry").
+    2 = same first and final tokens but a non-subset middle (e.g. a
+        conflicting middle name).
+    None = no family-anchored evidence. Weaker grades are only consulted when
+    no stronger grade yields a unique person, so a homonym at an exact name
+    can never be silently replaced by a looser match.
+    """
+    if len(official_tokens)<2 or len(native_tokens)<2:
+        return None
+    if official_tokens[-1]!=native_tokens[-1]:
+        return None
+    o=set(official_tokens); n=set(native_tokens)
+    if o==n:
+        return 0
+    if o<=n or n<=o:
+        return 1
+    if official_tokens[0]==native_tokens[0]:
+        return 2
+    return None
+
+
+def build_full_native_name_index(path, official_roster, complete_path=None):
+    """Family-anchored name index over the complete-everyone FM union.
+
+    Scans both frames with no CA/kind/gender pre-filter and records grade-0
+    (equal token sets), grade-1 (family-anchored subset) and grade-2 (same
+    first+last, conflicting middle) candidates keyed by (club, official_name).
+    A candidate still needs a globally unique native UID before it may become
+    an identity; see native_full_legal_fallback / native_pair_fallback.
+    """
+    official_targets=defaultdict(list)
     for club,block in official_roster['teams'].items():
         for person in block['players']:
-            legal=' '.join(sorted(norm(official_name(person['official_name'])).split()))
-            targets[legal].append((club,person['official_name']))
+            toks=norm(official_name(person['official_name'])).split()
+            if len(toks)<2:continue
+            official_targets[(toks[0],toks[-1])].append((club,person['official_name'],toks))
     by_person=defaultdict(list)
-    with path.open(encoding='utf-8-sig',newline='') as h:
-        for row in csv.DictReader(h):
-            name=row.get('name') or ''
-            legal=' '.join(sorted(norm(name).split()))
-            if legal not in targets or not row.get('uid'):
-                continue
-            for club,official in targets[legal]:
-                by_person[(club,official)].append({
-                    'uid':row['uid'],'fm_name':name,'native_kind':row.get('kind'),
-                    'native_dob':row.get('dob'),'native_attr_source':row.get('attr_source'),
-                    'grade':0,'source':'full_native_fm26_legal_name',
-                })
+    seen=set()
+    def consider(uid, name, kind, dob, attr_source, source):
+        toks=norm(name or '').split()
+        if len(toks)<2 or not uid:return
+        for club,official,official_toks in official_targets.get((toks[0],toks[-1]),()):
+            grade=_name_grade(official_toks,toks)
+            if grade is None:continue
+            key=(club,official,uid,grade)
+            if key in seen:continue
+            seen.add(key)
+            by_person[(club,official)].append({
+                'uid':uid,'fm_name':name,'native_kind':kind,
+                'native_dob':dob,'native_attr_source':attr_source,
+                'grade':grade,'source':source,
+            })
+    frames=[Path(path)]
+    if complete_path is not None and Path(complete_path)!=Path(path):
+        frames.append(Path(complete_path))
+    for frame in frames:
+        with frame.open(encoding='utf-8-sig',newline='') as h:
+            for row in csv.DictReader(h):
+                consider(row.get('uid'), row.get('name') or '', row.get('kind'),
+                         row.get('dob'), row.get('attr_source'),
+                         'full_native_fm26_union')
     return by_person
 
 
@@ -328,19 +454,47 @@ def resolve_official_roster(official_roster,active_path,fm_path,tm_path,
             for row in csv.DictReader(h):
                 if row.get('si_id') in si_names and row.get('binary_uid'):
                     wanted_fm.add(str(row['binary_uid']))
-    native=read_local_fm(fm_path,wanted_fm)
-    supplement=augment_native_from_complete_export(complete_fm_path,wanted_fm,native)
-    lookup=build_full_native_name_index(fm_path,official)
+    native_union_report=None
+    if True:
+        # Complete-everyone union primary (no CA/kind/gender pre-filter):
+        # every UID in either frame is admitted for discovery, including
+        # low-CA youth and staff-kind rows (miscategorized real players are
+        # rescued downstream by typed Reep ID + stored block, never dropped
+        # here). Kind/attr_source filtering happens at trait admission.
+        from fm26_complete import COMPLETE as UNION_DEFAULT, load_union
+        primary_path=Path(complete_fm_path) if complete_fm_path else None
+        if primary_path is None or not primary_path.exists():
+            primary_path=Path(fm_path)
+            if primary_path.name=='fm26_men_full_attrs.csv':
+                primary_path=UNION_DEFAULT
+        union,union_report=load_union(primary_path, fm_path, wanted_uids=wanted_fm)
+        native_union_report=union_report
+        native={}
+        for uid,record in union.items():
+            native[uid]=[{
+                'uid':uid,'name':record.get('name',''),'dob':record.get('dob',''),
+                'kind':record.get('kind',''),'attr_source':record.get('attr_source',''),
+                'ca':record.get('ca'),'pa':record.get('pa'),
+                'attributes':{k:v for k,v in (record.get('attributes') or {}).items()
+                              if v is not None},
+            }]
+        supplement={'fallback_available':True,
+                    'fallback_uid_matches':union_report.get('complete_only_uids',0),
+                    'union_uids':union_report.get('union_uids',0),
+                    'duplicate_uids_quarantined':union_report.get('duplicate_uids_quarantined',0),
+                    'per_field_conflicts':union_report.get('per_field_conflicts',0)}
+    lookup=build_full_native_name_index(fm_path,official,complete_fm_path)
     if si_roster_path and si_map_path:
         for key,entries in read_sortitoutsi_corrob(si_roster_path,si_map_path,
                                                     official,native).items():
             lookup[key].extend(entries)
     resolved,ledger=recover(official,lookup,by_given,identities,tm_ids,tm_rows,native)
-    resolved['identity_rebuild']='canonical_reep_first_v2'
-    resolved['identity_pipeline']='single_pass_reep_native_FM_SI_binary_UID_TM_DOB'
+    resolved['identity_rebuild']='canonical_reep_first_v3'
+    resolved['identity_pipeline']='single_pass_reep_native_FM_union_TM_DOB'
     resolved['reep_bridge_release_stamp']=active.get('stamp')
     resolved['reep_bridge_sha256']=active.get('sha256')
     resolved['full_binary_fm_fallback']=supplement
+    resolved['fm_union_report']=native_union_report
     return resolved,ledger
 
 
@@ -357,22 +511,48 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
             if p.get('fm_uid'):continue
             name=p['official_name']
             candidate,choices=candidate_for_row(name,club,by_given,identities,tm_ids,tm_rows,native)
-            fallback=False
             if candidate is None and not any(x['sufficient'] for x in choices):
-                fallback=native_full_legal_fallback(name,lookup.get((club,name),[]))
-                if fallback:candidate=fallback
+                # Reep/typed-provider discovery did not settle the person;
+                # fall back to the native FM binary itself. Exact whole legal
+                # name first, then a globally-unique first+last anchor for
+                # expanded/contracted given names. Both leave attributes
+                # quarantined because the official list has no DOB.
+                candidate=native_full_legal_fallback(name,lookup.get((club,name),[]))
+            if candidate is None and not any(x['sufficient'] for x in choices):
+                candidate=native_pair_fallback(name,lookup.get((club,name),[]))
             row={'club':club,'official_name':name,'registration':p['registration'],
                  'accepted_candidate':candidate,
                  'candidate_count':len(choices),'alternatives':choices[:12]}
+            if candidate is None:
+                # Record why the native binary itself did not settle the person:
+                # no name match at all, or several people sharing the name.
+                native_entries=lookup.get((club,name),[])
+                if native_entries:
+                    row['native_name_candidates']=[{
+                        'uid':e.get('uid'),'fm_name':e.get('fm_name'),
+                        'native_kind':e.get('native_kind'),
+                        'native_dob':e.get('native_dob'),'grade':e.get('grade'),
+                    } for e in native_entries[:8]]
             review.append(row)
             if candidate:pending.append((club,p,candidate,row))
     pending_owners=defaultdict(list)
     for club,p,candidate,row in pending:
-        pending_owners[candidate['fm_uid']].append((club,p['official_name']))
+        pending_owners[candidate['fm_uid']].append((club,p))
     counts=Counter()
+    preexisting={uid for uid,locations in owners.items() if locations}
+    def same_person_registration(entries):
+        # Only a parent/loan pair with an identical official name is treated as
+        # one footballer on two registration rows. Two different people who
+        # merely share a name at different clubs must stay quarantined.
+        names={norm(official_name(club_p['official_name'])) for _,club_p in entries}
+        if len(names)!=1:
+            return False
+        return any(club_p.get('loaned_out') for _,club_p in entries)
     for club,p,candidate,row in pending:
         uid=candidate['fm_uid']
-        if owners[uid] or len(pending_owners[uid])!=1:
+        co=pending_owners[uid]
+        multi=len(co)>1
+        if uid in preexisting or (multi and not same_person_registration(co)):
             row['status']='fm_uid_collides_across_registrations'
             counts[row['status']]+=1
             continue
@@ -384,6 +564,9 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
         p['attr_source']=candidate.get('native_attr_source')
         p['fm_native_record_trusted_for_this_player']=candidate.get('can_use_native_player_attributes',False)
         p['fm_player_record_verified']=bool(candidate.get('can_use_native_player_attributes'))
+        if multi:
+            p['same_person_multi_club_registration']=True
+            counts['same_person_in_multiple_club_registrations']+=1
         native_rows=native.get(uid,[])
         direct=(native_rows[0] if len(native_rows)==1 and
                 candidate.get('can_use_native_player_attributes') and
@@ -392,8 +575,20 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
                 native_rows[0]['name']==candidate.get('native_name') and
                 native_rows[0]['dob']==candidate.get('native_birth_date') else None)
         p['fm_attributes_verified']=direct is not None
-        p['identity_verification']='reep_tm_provisional' if candidate.get('reep_id') else 'native_exact_legal_provisional'
-        p['match_method']='reep_fm_tm_identity_first' if candidate.get('reep_id') else 'native_full_legal_fallback'
+        source=candidate.get('identity_source')
+        if candidate.get('reep_id'):
+            p['identity_verification']=('reep_typed_bridge_unique_provisional'
+                if source=='unique_reep_typed_fm_bridge' else 'reep_tm_provisional')
+            p['match_method']='reep_fm_tm_identity_first'
+        elif source=='unique_native_name_expansion':
+            p['identity_verification']='native_unique_name_expansion_provisional'
+            p['match_method']='native_unique_name_expansion_fallback'
+        elif source=='unique_native_name_subset':
+            p['identity_verification']='native_unique_name_subset_provisional'
+            p['match_method']='native_name_subset_fallback'
+        else:
+            p['identity_verification']='native_exact_legal_provisional'
+            p['match_method']='native_full_legal_fallback'
         p['identity_evidence']=candidate
         if direct:
             p['attributes']=dict(direct['attributes'])
@@ -403,6 +598,7 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
             p.pop('attributes',None);p.pop('ca',None);p.pop('pa',None)
         row['status']='candidate_uid_attached_attributes_quarantined'
         counts[row['status']]+=1
+        counts['attached_'+p['identity_verification']]+=1
         if direct:
             counts['with_name_and_dob_consistent_native_player']+=1
         owners[uid].append((club,p['official_name']))
@@ -410,10 +606,24 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
         if 'status' not in row:
             row['status']='not_confident_enough_for_automatic_UID_attachment'
             counts[row['status']]+=1
+    review_by_key={(r['club'],r['official_name']):r for r in review}
+    state_counts=Counter()
     for club,block in result['teams'].items():
         players=block['players']
         for p in players:
             if not p.get('fm_uid'):
+                row=review_by_key.get((club,p['official_name']),{})
+                reep_candidates=row.get('candidate_count',0)
+                native_candidates=row.get('native_name_candidates')
+                if reep_candidates and (row.get('alternatives') or []):
+                    state=('ambiguous_reep_identity'
+                           if reep_candidates>1 else 'reep_candidate_not_corroborated')
+                elif native_candidates:
+                    state='ambiguous_native_homonym'
+                else:
+                    state='absent_from_fm_and_reep_source_coverage'
+                p['identity_resolution_state']=state
+                state_counts[state]+=1
                 p['match_method']='unresolved_after_canonical_multi_source_search'
                 p['identity_verification']='unresolved_no_provider_id'
                 p['fm_player_record_verified']=False
@@ -424,6 +634,7 @@ def recover(roster,lookup,by_given,identities,tm_ids,tm_rows,native):
         block['matched_25']=sum(bool(p.get('fm_uid')) and p['registration']=='registered' for p in players)
         block['matched_u21']=sum(bool(p.get('fm_uid')) and p['registration']=='u21' for p in players)
         block['unmatched']=[p['official_name'] for p in players if not p.get('fm_uid')]
+    counts.update({'unresolved_'+k:v for k,v in state_counts.items()})
     result['remaining_identity_recovery_summary']=dict(counts)
     return result,review
 

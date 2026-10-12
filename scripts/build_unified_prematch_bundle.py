@@ -192,61 +192,35 @@ def load_sofa(directory, cutoff, allowed_matches=None):
 
 
 def load_fm(path, requested_identities, requested_uids, *, complete_fm_path=None):
-    pairs = defaultdict(list)
-    by_uid = {}
-    ambiguous_uids = set()
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        for row in csv.DictReader(handle):
-            key = (norm(row.get("name", "")), row.get("dob", ""))
-            uid = str(row.get("uid") or "")
-            if key not in requested_identities and uid not in requested_uids:
-                continue
-            record = {"uid": uid, "name": row.get("name", ""), "dob": row.get("dob", ""),
-                "kind": row.get("kind", "unknown"), "attr_source": row.get("attr_source", "none"),
-                "ca": plausible_ability(row.get("ca")), "pa": plausible_ability(row.get("pa")),
-                "height_cm": plausible_height(row.get("height")),
-                "binary_record_source":"men_full_attrs",
-                "attributes": {k.removeprefix("attr_"): number(v) for k, v in row.items()
-                               if k.startswith("attr_")}}
-            if key in requested_identities: pairs[key].append(record)
-            if uid in requested_uids:
-                if uid in by_uid:
-                    # The complete FM26 export contains a handful of native
-                    # UID collisions spanning distinct staff/player records.
-                    # NEVER resolve one by last-row wins or by highest CA.
-                    ambiguous_uids.add(uid)
-                    by_uid.pop(uid, None)
-                elif uid not in ambiguous_uids:
-                    by_uid[uid] = record
-    if complete_fm_path is not None:
-        # The gender-partitioned men extract omits 27 Reep-identified FM
-        # players who ARE present in the fuller binary frame. Recover these
-        # by exact typed FM UID, never by guessed names (names/DOB may be
-        # unavailable in the complete-v6 binary frame).
-        outstanding=requested_uids-set(by_uid)-ambiguous_uids
-        if outstanding:
-            duplicate_fallback=set()
-            with complete_fm_path.open(encoding="utf-8-sig",newline="") as handle:
-                for row in csv.DictReader(handle):
-                    uid=str(row.get("uid") or "")
-                    if uid not in outstanding:
-                        continue
-                    attributes={k.removeprefix("attr_"):number(v) for k,v in row.items()
-                                if k.startswith("attr_")}
-                    positive=sum(v is not None and 1<=v<=20 for v in attributes.values())
-                    record={"uid":uid,"name":row.get("name",""),"dob":row.get("dob",""),
-                            "kind":row.get("kind","unknown"),
-                            "attr_source":"db" if positive else "none",
-                            "ca":plausible_ability(row.get("ca")),"pa":plausible_ability(row.get("pa")),
-                            "height_cm":plausible_height(row.get("height")),
-                            "attributes":attributes,
-                            "binary_record_source":"complete_v6_uid_exact"}
-                    if uid in by_uid:
-                        duplicate_fallback.add(uid)
-                        by_uid.pop(uid,None)
-                    elif uid not in duplicate_fallback:
-                        by_uid[uid]=record
-    return pairs, by_uid
+    """Complete-everyone FM union, UID-keyed, no CA/kind/gender pre-filter.
+
+    `path` is the men-provenance sidecar, `complete_fm_path` (or default) is
+    the complete-everyone primary. When `complete_fm_path` is None the men
+    file doubles as primary (legacy it'll still quarantine dups, but WILL
+    miss complete-only people — pass the complete frame to solve everyone).
+    File order is never trusted; duplicate UIDs are quarantined, never
+    last-row-wins.
+    """
+    from fm26_complete import COMPLETE, load_union
+    primary = Path(complete_fm_path) if complete_fm_path is not None else Path(path)
+    provenance = Path(path)
+    # Union of both frames when they differ; single-frame union otherwise.
+    by_uid, _ = load_union(primary, provenance,
+                           wanted_uids=set(requested_uids) | set())
+    pairs: dict = defaultdict(list)
+    if requested_identities:
+        for uid, record in by_uid.items():
+            key = (norm(record.get("name", "")), record.get("dob", ""))
+            if key in requested_identities:
+                pairs[key].append(record)
+    # Narrow records to the bundle's historical shape (attributes keyed
+    # without prefix, plausibly-ranged CA/PA/height already enforced).
+    shaped = {}
+    for uid in requested_uids:
+        record = by_uid.get(str(uid))
+        if record is not None:
+            shaped[str(uid)] = record
+    return pairs, shaped
 
 
 def fm_features(record, identity_evidence, prior=None):
@@ -615,7 +589,7 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
     if league == "EPL" and (set(roster["teams"]) != set(TEAM_ALIASES)
                             or roster.get("roster_scope") == "fixture_subset"):
         raise ValueError("EPL feature bundle requires the complete 20-club official registration; regenerate without --fixtures")
-    identity_versions=("reep_first_all_20_clubs_v1","canonical_reep_first_v2")
+    identity_versions=("reep_first_all_20_clubs_v1","canonical_reep_first_v2","canonical_reep_first_v3")
     if not reep.get("stamp") or "sofascore_reep_links_all" not in reep:
         raise ValueError("Reep audit must contain direct-bridge v4 identity contract")
     all_sofa_reep = {item["sofascore_id"]: item for item in reep["sofascore_reep_links_all"]}
@@ -653,8 +627,7 @@ def build_bundle(league, cutoff, *, roster, reep, sofa_root, fm_path, fbref_path
                           for p in team["players"] if p.get("fm_uid")}
     _, local_fm = load_fm(
         fm_path,set(),requested_uids,
-        complete_fm_path=(fm_complete_path if league=="EPL" and
-                          roster.get("identity_rebuild") in identity_versions else None))
+        complete_fm_path=(fm_complete_path or None))
     fbref = load_provider_observations(fbref_path, cutoff, "fbref", "fbref_person_id")
     transfermarkt = load_provider_observations(market_path, cutoff, "transfermarkt", "transfermarkt_player_id")
 
