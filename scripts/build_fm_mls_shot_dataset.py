@@ -47,6 +47,14 @@ def sha256(path):
     return h.hexdigest()
 
 
+def _union_complete_path():
+    try:
+        from fm26_complete import COMPLETE
+    except ModuleNotFoundError:
+        from scripts.fm26_complete import COMPLETE
+    return COMPLETE
+
+
 def event_manifest(root):
     events = {}
     sources = [
@@ -72,18 +80,59 @@ def event_manifest(root):
     return events, sources
 
 
-def load_fm_index(path):
+def load_fm_index(path, complete_path=None):
+    """Complete-everyone (name, DOB) index with NO kind pre-filter.
+
+    Every named row in either frame is indexed, including staff-kind rows:
+    several real players are miscategorized as staff in the extracts. Kind
+    and attr_source are decided per-row AFTER lookup (player/db is observed;
+    staff/db with a valid block is rescued, flagged, and usable; derived or
+    unknown-provenance rows are never observed traits). Uniqueness of the
+    (name, DOB) key is still required — ambiguous keys stay unverified.
+    """
+    try:
+        from fm26_complete import COMPLETE as _DEFAULT_COMPLETE, load_union as _load_union
+    except ModuleNotFoundError:
+        from scripts.fm26_complete import COMPLETE as _DEFAULT_COMPLETE, load_union as _load_union
+    primary = Path(complete_path) if complete_path else _DEFAULT_COMPLETE
+    union, _ = _load_union(primary, Path(path))
     index = defaultdict(list)
-    with open(path, newline="") as handle:
-        for row in csv.DictReader(handle):
-            if row["kind"] != "player" or row["attr_source"] != "db":
-                continue  # derived player attributes are not observed FM database values
-            dob = row.get("dob", "")
-            name = normalize(row.get("name", ""))
-            if not name or not dob:
-                continue
-            index[(name, dob)].append(row)
+    for uid, record in union.items():
+        name = normalize(record.get("name", ""))
+        dob = record.get("dob", "")
+        if not name or not dob:
+            continue
+        index[(name, dob)].append({
+            **{f"attr_{field}": ("" if value is None else str(value))
+               for field, value in (record.get("attributes") or {}).items()},
+            # Explicit provenance keys come last so no trait-name collision
+            # (e.g. a provenance column starting with `attr_`) can overwrite.
+            "uid": uid, "name": record.get("name", ""), "dob": dob,
+            "kind": record.get("kind", ""), "attr_source": record.get("attr_source", ""),
+            "ca": ("" if record.get("ca") is None else str(record["ca"])),
+            "dob_provenance": record.get("attr_source_provenance", ""),
+        })
     return index
+
+
+def fm_row_usable(matches):
+    """Unique (name, DOB) linkage; staff-with-db-block rescued, rest filtered.
+
+    Returns (row, rescued_staff) or (None, False). Derived, unknown
+    provenance, and ambiguous keys are never observed FM traits.
+    """
+    if len(matches) != 1:
+        return None, False
+    row = matches[0]
+    if row.get("attr_source") == "db" and row.get("kind") == "player":
+        return row, False
+    if row.get("attr_source") == "db" and row.get("kind") == "staff":
+        valid = sum(1 for key, value in row.items() if key.startswith("attr_")
+                    and key != "attr_source"
+                    and value not in (None, "") and 1.0 <= float(value) <= 20.0)
+        if valid >= 1:
+            return row, True
+    return None, False
 
 
 def feature_vector(player, fm, role, previous_shots, previous_minutes, prior):
@@ -154,21 +203,24 @@ def make_dataset(fm_file, root, valid_from, train_end, valid_end, test_end):
                 if date < valid_from or date >= test_end:
                     continue
                 candidates = fm.get((normalize(person.get("name")), dob), [])
-                if len(candidates) != 1:
+                usable, rescued = fm_row_usable(candidates)
+                if usable is None:
                     counters["missing_or_ambiguous_fm"] += 1
                     continue
+                if rescued:
+                    counters["staff_kind_db_rescued"] += 1
                 matches_so_far, previous_minutes = appearance_history[player_id]
                 # Gamma-Poisson empirical Bayes prior, with 5 full-match exposures.
                 prior = (matches_so_far + 5.0 * SHOT_ROLE_PRIORS[role]) / (
                     previous_minutes / 90.0 + 5.0
                 )
                 example = {"kickoff": kickoff}
-                features = feature_vector(example, candidates[0], role, matches_so_far, previous_minutes, prior)
+                features = feature_vector(example, usable, role, matches_so_far, previous_minutes, prior)
                 split = ("train" if date < train_end else "validation"
                          if date < valid_end else "test")
                 samples.append({
                     "split": split, "date": date, "match_id": match_id,
-                    "player_id": player_id, "fm_uid": candidates[0]["uid"],
+                    "player_id": player_id, "fm_uid": usable["uid"],
                     "shots": shots, "minutes": float(minutes),
                     "prior_rate": prior, "features": features,
                 })
@@ -196,6 +248,7 @@ def make_dataset(fm_file, root, valid_from, train_end, valid_end, test_end):
         "split_counts": dict(by_split), "audit_counts": dict(counters),
         "raw_inputs": {
             "fm26_sha256": sha256(fm_file),
+            "fm26_complete_everyone_sha256": sha256(_union_complete_path()),
             **{file.name + "_sha256": sha256(file) for file in sources},
         },
     }

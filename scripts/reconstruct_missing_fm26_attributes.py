@@ -27,6 +27,7 @@ import random
 BASE=Path("/home/drewclaw/fm26-data")
 CURVES=BASE/"hf_upload/data/attr_generation_curves.json"
 FULL=BASE/"fm26_men_full_attrs.csv"
+COMPLETE=BASE/"fm26_complete_v6.csv"
 SI=BASE/"sortitoutsi_uid_map.csv"
 SI_ROSTER=BASE/"sortitoutsi_fm26_roster.csv"
 GK_ATTRIBUTES=frozenset((
@@ -167,14 +168,31 @@ def ca_position_mixture(curves, ca, position_weights):
     return result
 
 
-def generate(audit, curves, fm_source, si_roster, si_bridge, position_weights):
+def generate(audit, curves, fm_source, si_roster, si_bridge, position_weights,
+             complete_source=None):
     if audit.get("schema")!="reep_first_full_epl_identity_audit_v1":
         raise ValueError("require Reep-first identity source")
     people=[p for group in audit["clubs"].values() for p in group]
     if len(people)!=1576:
         raise ValueError("not full 20-club registered universe")
     ids={str(p["new_fm_uid"]) for p in people if p.get("new_fm_uid")}
-    known=records_for_uids(fm_source,ids)
+    # Complete-everyone union primary (no CA/kind/gender pre-filter):
+    # duplicate UIDs are quarantined by the loader (never last-row-wins);
+    # men provenance distinguishes db/derived/staff instead of synthesizing.
+    from fm26_complete import load_union as _load_union
+    _primary=complete_source or fm_source
+    _union,_report=_load_union(_primary, fm_source, wanted_uids=ids)
+    known={}
+    for uid in ids:
+        record=_union.get(uid)
+        if record is None:
+            continue
+        row={"ca":("" if record.get("ca") is None else str(record["ca"])),
+             "kind":record.get("kind",""),"attr_source":record.get("attr_source","")}
+        for field,value in (record.get("attributes") or {}).items():
+            row["attr_"+field]="" if value is None else str(value)
+        row["binary_record_source"]=record.get("binary_record_source")
+        known[uid]=[row]
     confirmed_role=collect_roles(ids,si_roster,si_bridge)
     # CA-based generation must only be used if the actual FM UID is present
     # exactly once. Unknown/ambiguous rows cannot donate ratings.
@@ -287,6 +305,7 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--identity",type=Path,required=True)
     ap.add_argument("--fm",type=Path,default=FULL)
+    ap.add_argument("--fm-complete",type=Path,default=COMPLETE)
     ap.add_argument("--curves",type=Path,default=CURVES)
     ap.add_argument("--si-roster",type=Path,default=SI_ROSTER)
     ap.add_argument("--si-map",type=Path,default=SI)
@@ -296,9 +315,10 @@ def main():
     if a.output.exists():
         ap.error("immutable attribute prior snapshot already exists")
     result=generate(json.loads(a.identity.read_text()),json.loads(a.curves.read_text()),
-                    a.fm,a.si_roster,a.si_map,json.loads(a.pos_pop.read_text()))
+                    a.fm,a.si_roster,a.si_map,json.loads(a.pos_pop.read_text()),
+                    complete_source=a.fm_complete)
     result["input_sha256"]={str(p):sha(p) for p in
-                             (a.identity,a.curves,a.fm,a.si_roster,a.si_map,a.pos_pop)}
+                             (a.identity,a.curves,a.fm,a.fm_complete,a.si_roster,a.si_map,a.pos_pop)}
     a.output.parent.mkdir(parents=True,exist_ok=True)
     a.output.write_text(json.dumps(result,sort_keys=True)+"\n")
     print(json.dumps({"counts":result["counts"],"cohort_CA_support":result["cohort_ca_support_counts"],

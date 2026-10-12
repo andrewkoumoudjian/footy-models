@@ -103,6 +103,24 @@ class CompleteUnionTests(unittest.TestCase):
             for uid in first:
                 self.assertEqual(first[uid]["attributes"], second[uid]["attributes"])
 
+    def test_provenance_column_never_enters_trait_union(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            primary = Path(tmp) / "complete.csv"
+            provenance = Path(tmp) / "men.csv"
+            write_csv(primary, [
+                dict(uid="40", name="Provenance Case", dob="2000-01-01", kind="player",
+                     ca="120", attr_Finishing="12"),
+            ])
+            write_csv(provenance, [
+                dict(uid="40", name="Provenance Case", dob="2000-01-01", kind="player",
+                     attr_source="db", ca="120", attr_Finishing="12"),
+            ])
+            by_uid, _ = load_union(primary, provenance)
+            self.assertNotIn("source", by_uid["40"]["attributes"])
+            self.assertEqual(by_uid["40"]["attr_source"], "db")
+            self.assertEqual(by_uid["40"]["attributes"]["Finishing"], 12.0)
+
     def test_implausible_height_is_missing(self):
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:
@@ -114,6 +132,51 @@ class CompleteUnionTests(unittest.TestCase):
                                         attr_source="db", ca="100", height="65354")])
             by_uid, _ = load_union(primary, provenance)
             self.assertIsNone(by_uid["30"]["height_cm"])
+
+
+class IndexEndToEndTests(unittest.TestCase):
+    def test_both_frames_index_row_carries_provenance(self):
+        import tempfile
+        from build_fm_mls_shot_dataset import fm_row_usable, load_fm_index, normalize
+        with tempfile.TemporaryDirectory() as tmp:
+            primary = Path(tmp) / "complete.csv"
+            provenance = Path(tmp) / "men.csv"
+            write_csv(primary, [
+                dict(uid="1", name="Luca Bombino", dob="2006-07-10", kind="player",
+                     ca="98", attr_Finishing="12"),
+            ])
+            write_csv(provenance, [
+                dict(uid="1", name="Luca Bombino", dob="2006-07-10", kind="player",
+                     attr_source="db", ca="98", attr_Finishing="12"),
+            ])
+            idx = load_fm_index(provenance, complete_path=primary)
+            rows = idx.get((normalize("Luca Bombino"), "2006-07-10"), [])
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["attr_source"], "db")
+            self.assertEqual(rows[0]["kind"], "player")
+            usable, rescued = fm_row_usable(rows)
+            self.assertIsNotNone(usable)
+            self.assertFalse(rescued)
+
+    def test_staff_db_row_rescued_complete_everyone(self):
+        import tempfile
+        from build_fm_mls_shot_dataset import fm_row_usable, load_fm_index, normalize
+        with tempfile.TemporaryDirectory() as tmp:
+            primary = Path(tmp) / "complete.csv"
+            provenance = Path(tmp) / "men.csv"
+            write_csv(primary, [
+                dict(uid="2", name="Miscat Staff", dob="1994-10-03", kind="staff",
+                     ca="150", attr_Finishing="9"),
+            ])
+            write_csv(provenance, [
+                dict(uid="2", name="Miscat Staff", dob="1994-10-03", kind="staff",
+                     attr_source="db", ca="150", attr_Finishing="9"),
+            ])
+            idx = load_fm_index(provenance, complete_path=primary)
+            rows = idx.get((normalize("Miscat Staff"), "1994-10-03"), [])
+            usable, rescued = fm_row_usable(rows)
+            self.assertIsNotNone(usable)
+            self.assertTrue(rescued)
 
 
 if __name__ == "__main__":

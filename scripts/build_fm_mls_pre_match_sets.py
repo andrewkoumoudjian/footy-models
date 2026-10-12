@@ -14,7 +14,7 @@ from pathlib import Path
 
 from build_fm_mls_shot_dataset import (
     ATTRS, FEATURE_NAMES, ROLES, SHOT_ROLE_PRIORS,
-    feature_vector, load_fm_index, normalize, sha256,
+    _union_complete_path, feature_vector, load_fm_index, normalize, sha256,
 )
 
 EXTRA_FEATURE_NAMES = ("is_home", "last_seen_log_days", "fm_verified")
@@ -60,15 +60,17 @@ def age_feature(dob, kickoff):
 
 
 def candidate_features(player, fm_index, kickoff, is_home):
+    from build_fm_mls_shot_dataset import fm_row_usable
     role = player["role"]
     past_shots = player["shots"]
     past_minutes = player["minutes"]
     prior = (past_shots + 5.0 * SHOT_ROLE_PRIORS[role]) / (past_minutes / 90.0 + 5.0)
     matches = fm_index.get((normalize(player["name"]), player["dob"]), ())
-    verified = len(matches) == 1
+    usable, _ = fm_row_usable(matches)
+    verified = usable is not None
     if verified:
         features = feature_vector(
-            {"kickoff": kickoff}, matches[0], role,
+            {"kickoff": kickoff}, usable, role,
             past_shots, past_minutes, prior,
         )
     else:
@@ -198,6 +200,8 @@ def build_sets(fm_file, root, valid_from="2026-04-01", train_end="2026-06-01",
         },
         "input_provenance": {
             "fm26_sha256": sha256(fm_file),
+            "fm26_complete_everyone_sha256": sha256(_union_complete_path()),
+            "fm_index": "complete-everyone union (name,DOB), no kind pre-filter; staff-with-db-block rescued",
             **{file.name + "_sha256": sha256(file) for file in files},
         },
         "feature_names": SET_FEATURE_NAMES,

@@ -1,5 +1,71 @@
 # Pooled EPL+MLS shot-rate model + full-league bundles — 2026-10-12
 
+> **Addendum — complete-everyone FM26 union (same day).** The men-only
+> extract is a strict UID subset of the complete v6 frame (0 men UIDs absent
+> from complete; 97,720 complete UIDs absent from men; 16 men + 23 complete
+> duplicate UIDs quarantined). Neither file alone is complete: complete
+> leaves attributes empty where men has values (~61% of intersecting rows),
+> and ships no `attr_source` column. New shared loader
+> `scripts/fm26_complete.py` unions both frames UID-keyed with no CA, kind,
+> or gender pre-filter (staff-kind rows preserved for typed-ID rescue;
+> duplicate UIDs quarantined, never last-row-wins; file order never trusted;
+> per-field conflicts recorded with men-provenance winning). All consumers
+> switched: canonical resolver (`canonical_reep_first_v3`), unified bundle
+> `load_fm`, attribute reconstruction, and the MLS (name,DOB) FM index
+> (staff-with-db-block rescued, derived/unknown never observed). Complete-only
+> rows carry `unknown_no_men_provenance` and stay trait-missing until
+> corroborated — identity is solved for everyone, traits never overstated.
+> Rerun outputs below are executed and audited; the men-primary baseline it
+> replaced is not shown.
+>
+> **Supersession note (same day, parallel track).** A parallel track has
+> since landed a graded-evidence resolver rewrite
+> (`docs/EPL_FM26_IDENTITY_RESOLUTION_FIX_2026-10-12.md`, HEAD `96a350f`)
+> that absorbs this union work and reaches **1244 attached / 332 unresolved
+> / 5 senior** (`epl_canonical_clean_v10.json`: Gabriel, João Pedro,
+> Alisson, Allan, Ben Wilson) with **442 native db blocks + 69
+> reconstructed** admitted in `unified_epl_canonical_clean_v10.json`
+> (20 teams × 1576 players × 248 cols, 0 bad heights). Those are the current
+> identity/bundle authorities; the v3-era 952 counts below are retained as
+> the audited intermediate that proved discovery is Reep-constrained. The
+> pooled v2 model below is roster-independent (ESPN + MLS labels) and stands.
+>
+> **Retained v3 intermediate (audited, superseded).**
+> `epl_canonical_clean_v3.json`: 20 clubs, 1576 rows, **952 FM candidates /
+> 624 unresolved / 16 senior unresolved** — identical matches to the men-only
+> v2 run. Identity discovery is Reep-constrained, not FM-missing-constrained:
+> the union audited 661,364 complete + 563,382 men rows, attached 12,079
+> complete-only native UIDs to the wanted universe, quarantined 0 duplicate
+> UIDs among wanted (23 globally), and flagged 306 conflicted fields across
+> 28 wanted UIDs (men-provenance values used, conflicts recorded). No
+> person is missed due to men-only filtering anymore; e.g. Alisson UID
+> 19058734 exists (complete-only player row, ca176) but carries no
+> name/DOB in either frame and no Reep bridge, so it stays unresolved with
+> null traits rather than borrowing another person's attributes.
+>
+> **Union bundles + refit pooled model (executed).**
+> EPL `unified_epl_2026_10_11_canonical_v4_union.json`: 20 teams, 1576
+> players, 248 cols — 425 db + 61 reconstructed + 1090 missing, 0 bad
+> heights. MLS `unified_mls_2026_10_11_30club_v2_union.json`: 30 teams, 791
+> players — 349 db + 11 reconstructed (identity counts unchanged: the union
+> adds identity coverage, never overstated traits).
+> MLS labels rebuilt on the union index (`fm26-mls-shots-union-v2`,
+> `fm26-mls-candidate-sets-union-v2`): train 547 / val 192 / test 222 joined
+> (were 377/155/163), **266 staff-kind db rows rescued**, missing/ambiguous
+> 1705 → 1439. Pooled refit `pooled_epl_mls_shot_model_v2_union.json`
+> (same 1085/276/2181 pooled rows; 266 rows upgraded from fallback zeros to
+> real FM attrs, `fm_verified` coeff 0.009 → 0.033): val 1.1638 → 1.1485
+> (Δ−0.0153), pooled test 1.2422 → 1.2370 (Δ−0.0051), MLS test Δ−0.0101, EPL
+> test Δ−0.0038. Small consistent gains in both leagues; research-only.
+>
+> **Loader bug caught and fixed during this work.** The men extract's
+> provenance column `attr_source` itself starts with `attr_`, leaked into the
+> trait union as field `"source"`, and the index builder's `f"attr_{field}"`
+> key overwrote real provenance with `''` — zero MLS samples (loud failure,
+> no silent corruption). Fixed centrally (provenance excluded from traits,
+> explicit keys ordered last) with regression tests; bundle/resolver outputs
+> never read the stray key and stand as built.
+
 **Status: research-only, executed locally, not calibrated for publishing.**
 Mathematical pathway only; no deep-ML training. All counts below were
 computed by running the listed commands on the development machine. No

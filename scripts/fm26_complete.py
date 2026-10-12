@@ -178,8 +178,11 @@ def load_union(primary_path=COMPLETE, provenance_path=MEN, wanted_uids=None,
         # recorded in per_field_conflicts, never silently resolved.
         attributes: dict[str, float | None] = {}
         conflicts: list[str] = []
+        # NOTE: the men extract's provenance column `attr_source` also starts
+        # with `attr_` but is NOT a 1-20 trait; it must never enter the trait
+        # union (its stripped name `source` would collide downstream).
         keys = {k.removeprefix("attr_") for row in (first_row, second_row) if row
-                for k in row if k.startswith("attr_")}
+                for k in row if k.startswith("attr_") and k != "attr_source"}
         men_prov = (second_row or {}).get("attr_source") or ""
         for field in keys:
             left = _valid_attr((first_row or {}).get("attr_" + field))
