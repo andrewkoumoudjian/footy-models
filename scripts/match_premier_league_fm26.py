@@ -85,12 +85,12 @@ def best_match(src, exact, token_index, records):
     if not n:return None,'unmatched',[]
     if n in exact:
         candidates=exact[n]
-        # Prefer actual player record with CA, not duplicated non-player FM record.
+        # An identical name is not an identity key. Never disambiguate a
+        # player/staff collision (or two players) with a higher FM CA rating.
         if len(candidates)==1:return candidates[0],'exact',[]
-        cand=sorted(candidates,key=lambda x:(-x['ca'],x['uid']))
-        if len(cand)>1 and cand[0]['ca'] == cand[1]['ca']:
-            return None,'ambiguous exact',[{'name':x['name'],'uid':x['uid']} for x in cand[:3]]
-        return cand[0],'exact',[]
+        cand=sorted(candidates,key=lambda x:x['uid'])
+        return None,'ambiguous exact',[{'name':x['name'],'uid':x['uid'],
+                                        'kind':x['kind'],'attr_source':x['attr_source']} for x in cand[:3]]
     parts=n.split(); first=parts[0];last=parts[-1]
     candidates=set(token_index[last]) if last in token_index else set()
     if len(parts)>1:
@@ -112,8 +112,10 @@ def best_match(src, exact, token_index, records):
         coverage=len(shared)/max(1,len(other_tokens))
         score=(1.0 if complete else 0.78*similarity+0.22*coverage)
         if (first_ok and len(shared)>=2 and score>=0.80):ranks.append((score,id))
-    ranks.sort(key=lambda x:(-x[0],-records[x[1]]['ca'],records[x[1]]['uid']))
-    suggestions=[{'name':records[i]['name'],'uid':records[i]['uid'],'similarity':round(v,4)} for v,i in ranks[:3]]
+    ranks.sort(key=lambda x:(-x[0],records[x[1]]['uid']))
+    suggestions=[{'name':records[i]['name'],'uid':records[i]['uid'],'similarity':round(v,4),
+                  'kind':records[i]['kind'],'attr_source':records[i]['attr_source']}
+                 for v,i in ranks[:3]]
     if not ranks:return None,'unmatched',suggestions
     if ranks[0][0]>=0.96 and (len(ranks)<2 or ranks[0][0]-ranks[1][0]>=0.12):
         return records[ranks[0][1]],'unique expanded-name',suggestions
@@ -159,6 +161,8 @@ def run():
             if ca<50 or not row.get('uid'):continue
             if len(set(norm(row['name']).split()) & roster_tokens) < 2: continue
             record={'uid':row['uid'],'name':row['name'],'ca':ca,'pa':float(row.get('pa') or 0),
+                'kind':(row.get('kind') or 'unknown').strip().lower(),
+                'attr_source':(row.get('attr_source') or 'unknown').strip().lower(),
                 'attrs':{k[5:]:float(v) for k,v in row.items() if k.startswith('attr_') and v and re.fullmatch(r'[0-9]+(?:\.[0-9]+)?',v)},
                 'tm': legacy.get(row['uid'],{})}
             idx=len(records);records.append(record)
@@ -171,14 +175,27 @@ def run():
         seen=set()
         for p in roster[club]:
             candidate,method,suggestions=best_match(p['match_name'],exact,token_index,records)
-            row={'official_name':p['official_name'],'registration':p['registration'],'match_method':method}
+            row={'official_name':p['official_name'],'registration':p['registration'],'match_method':method,
+                 'registered_club':short,'membership_observed_as_of':str(cutoff),
+                 'loaned_out':bool(re.search(r'\(loan\)',p['official_name'],re.I))}
             if candidate:
                 if candidate['uid'] in seen:
                     row['match_method']='duplicate: unassigned'
                 else:
                     seen.add(candidate['uid'])
-                    row.update({'fm_uid':candidate['uid'],'fm_name':candidate['name'],'ca':candidate['ca'],
-                                'pa':candidate['pa'],'attributes':candidate['attrs']})
+                    # A UID/name match does not verify that the extracted record
+                    # is a player or that reconstructed attributes were observed.
+                    # Keep the registration candidate, but never upgrade staff or
+                    # derived FM ratings to verified footballer measurements.
+                    trusted=(candidate['kind']=='player' and candidate['attr_source']=='db')
+                    row.update({'fm_uid':candidate['uid'],'fm_name':candidate['name'],
+                                'fm_kind':candidate['kind'],'attr_source':candidate['attr_source'],
+                                'fm_player_record_verified':candidate['kind']=='player',
+                                'fm_attributes_verified':trusted,
+                                'ca':candidate['ca'] if trusted else None,
+                                'pa':candidate['pa'] if trusted else None,
+                                'attributes':candidate['attrs'] if trusted else {},
+                                'source_quality':'verified_db' if trusted else 'uncertain_identity_or_attributes'})
                     if candidate['tm']:
                         tm=candidate['tm']
                         row['historical_position']=tm.get('position','')

@@ -83,7 +83,10 @@ def snapshot_audit(src,dest):
             'fm_matched_registered':r['matched_25'],
             'fm_matched_u21':r['matched_u21'],
             'matched':[{'name':p['official_name'],'fm_name':p['fm_name'],'fm_uid':p['fm_uid'],
-                        'registration':p['registration'],'matching_method':p['match_method']}
+                        'registration':p['registration'],'matching_method':p['match_method'],
+                        'fm_kind':p.get('fm_kind','unknown'),
+                        'attr_source':p.get('attr_source','unknown'),
+                        'fm_attributes_verified':p.get('fm_attributes_verified',False)}
                        for p in r['players'] if p.get('fm_uid')],
             'unmatched':r['unmatched']}
     dest.write_text(json.dumps({'as_of':data['as_of'],'registration_source':data['registration_source'],
@@ -191,10 +194,12 @@ def main():
             snapshot_audit(ROOT/roster,artifact/'fm_matched_squads.json')
             local_sources={'team_results':ROOT/'data/pl/asof_team_stats.csv',
                'player_inputs':ROOT/'data/pl/player_fm_join.csv',
+               'official_candidate_roster':ROOT/'data/pl/official_candidate_roster.json',
+               'player_input_provenance':ROOT/'data/pl/player_input_provenance.json',
                'official_roster_match':ROOT/roster,'availability':ROOT/opt.availability,
                'baseline':ROOT/benchmark,'raw_fm26':Path(opt.fm_file)}
             hashes={key:digest(path) for key,path in local_sources.items()}
-            manifest={'as_of':str(cutoff),'fixtures':config['fixtures'],
+            manifest={'as_of':str(cutoff),'source_contract_version':2,'fixtures':config['fixtures'],
                 'paths_per_fixture':opt.paths,'seed':opt.seed,
                 'engine':'footy-match::simulate_second_resolved_dynamic_mental_match',
                 'model_code_sha256':model_fingerprint,

@@ -504,9 +504,20 @@ pub fn sample_lineup(input: &LineupProjectionInput, rng: &mut Rng64) -> Option<S
                 sampled_available.insert(candidate.player);
             }
         }
-        if sampled_available.len() >= 11 { break; }
+        // A sample containing eleven outfielders but no eligible goalkeeper is
+        // not a legal XI. Retry the conditional availability draw rather than
+        // manufacturing position coverage with a tiny positive smoothing weight.
+        if sampled_available.len() >= 11 && formation.slots.iter().all(|slot| {
+            input.candidates.iter().any(|candidate| {
+                sampled_available.contains(&candidate.player) && candidate.role_fit(slot.role) > 0.0
+            })
+        }) { break; }
     }
-    if sampled_available.len() < 11 { return None; }
+    if sampled_available.len() < 11 || formation.slots.iter().any(|slot| {
+        !input.candidates.iter().any(|candidate| {
+            sampled_available.contains(&candidate.player) && candidate.role_fit(slot.role) > 0.0
+        })
+    }) { return None; }
 
     if let Some(weights) = &input.parameters.exact_cardinality_log_weights {
         // Condition the fitted exact-XI law on this path's available players. The fitted
@@ -550,7 +561,10 @@ pub fn sample_lineup(input: &LineupProjectionInput, rng: &mut Rng64) -> Option<S
         if used_players.contains(&locked.player) { continue; }
         let candidate = *candidate_map.get(&locked.player)?;
         let index = weighted_index(
-            remaining_slots.iter().map(|slot| (candidate.role_fit(slot.role) + 0.01).powf(input.parameters.role_fit_power)),
+            remaining_slots.iter().map(|slot| {
+                let fit = candidate.role_fit(slot.role);
+                if fit <= 0.0 { 0.0 } else { (fit + 0.01).powf(input.parameters.role_fit_power) }
+            }),
             rng,
         )?;
         let slot = remaining_slots.remove(index);
@@ -680,6 +694,8 @@ fn selection_weight(
     ability_sigma: f64,
     parameters: &LineupSamplingParameters,
 ) -> f64 {
+    // A zero role fit marks a prohibited assignment, not an unlikely one.
+    if candidate.role_fit(role) <= 0.0 { return 0.0; }
     let start = candidate.start_probability.max(1e-6);
     let role_fit = (candidate.role_fit(role) + 0.01).powf(parameters.role_fit_power);
     let z = if ability_sigma > f64::EPSILON { (candidate.ability_index - ability_mean) / ability_sigma } else { 0.0 };
@@ -777,6 +793,27 @@ mod tests {
         let value = with_player_unavailable(&input(), PlayerId(1)).unwrap();
         let projection = project_lineup(&value, 200, 7).unwrap();
         assert_eq!(projection.players.iter().find(|value| value.player == PlayerId(1)).unwrap().start_probability, Probability::ZERO);
+    }
+
+    #[test]
+    fn goalkeeper_is_a_hard_role_constraint_not_a_smoothed_preference() {
+        let mut value = input();
+        for candidate in &mut value.candidates {
+            for fit in &mut candidate.role_fits {
+                fit.fit = if (candidate.player == PlayerId(1)) == (fit.role == RoleId(1)) {
+                    1.0
+                } else {
+                    0.0
+                };
+            }
+        }
+        for seed in 1..100 {
+            let sample = sample_lineup(&value, &mut Rng64::new(seed)).unwrap();
+            assert_eq!(sample.starters.iter().find(|starter| starter.slot == 0).unwrap().player, PlayerId(1));
+        }
+        // A missing keeper must produce an infeasible XI, not an outfielder in goal.
+        value.candidates[0].availability_probability = 0.0;
+        assert!(sample_lineup(&value, &mut Rng64::new(7)).is_none());
     }
 
     #[test]

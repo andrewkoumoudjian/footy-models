@@ -73,6 +73,10 @@ pub(crate) struct PlayerRow {
     pub(crate) fm_defending: Option<f64>,
     pub(crate) fm_consistency: Option<f64>,
     pub(crate) fm_dirtiness: Option<f64>,
+    /// Only populated by a source adapter with explicit dated positional evidence.
+    pub(crate) position_group: Option<String>,
+    /// `None` is legacy source data; `Some(false)` forbids trusting FM ratings.
+    pub(crate) fm_attributes_verified: Option<bool>,
 }
 
 pub(crate) type Row = HashMap<String, String>;
@@ -137,6 +141,24 @@ pub(crate) fn read_csv(path: &str) -> Vec<Row> {
 
 pub(crate) fn f(row: &Row, key: &str) -> f64 {
     row.get(key).and_then(|value| value.parse::<f64>().ok()).unwrap_or(0.0)
+}
+
+/// `None` means source-unobserved, never the numerical observation zero.
+/// Nonempty malformed measurements fail explicitly instead of poisoning EWMA.
+fn observed_measurement(row: &Row, key: &str) -> Option<f64> {
+    let raw = row.get(key).map(String::as_str).unwrap_or("");
+    if let Some(kind) = row.get(&format!("{key}_kind")) {
+        match kind.as_str() {
+            "missing" if raw.trim().is_empty() => return None,
+            "measured" if !raw.trim().is_empty() => {},
+            _ => panic!("inconsistent {key} observation kind: {kind:?} / {raw:?}"),
+        }
+    } else if raw.trim().is_empty() {
+        return None;
+    }
+    let value: f64 = raw.parse().unwrap_or_else(|_| panic!("invalid {key} observation: {raw:?}"));
+    assert!(value.is_finite() && value >= 0.0, "invalid {key} observation: {raw:?}");
+    Some(value)
 }
 
 pub(crate) fn date_from(text: &str) -> Date {
@@ -250,34 +272,35 @@ impl LeagueWindows {
                 sot_face_pm: 4.5,
             };
         }
-        let ewma = |pick: &dyn Fn(&Row) -> f64, prior: f64| -> f64 {
+        let ewma = |pick: &dyn Fn(&Row) -> Option<f64>, prior: f64| -> f64 {
             let mut numerator = 2.0 * prior;
             let mut denominator = 2.0;
             for row in rows {
                 let age_days = self.cutoff.days_since(date_from(&row["date"])).max(1) as f64;
                 let weight = (-std::f64::consts::LN_2 * age_days / 60.0).exp();
-                let value = pick(row);
-                if value.is_finite() && value >= 0.0 {
+                if let Some(value) = pick(row) {
                     numerator += weight * value;
                     denominator += weight;
                 }
             }
             numerator / denominator.max(f64::EPSILON)
         };
-        let gf_pm = ewma(&|row| if row["home"] == name { f(row, "home_goals") } else { f(row, "away_goals") }, 1.40);
-        let ga_pm = ewma(&|row| if row["home"] == name { f(row, "away_goals") } else { f(row, "home_goals") }, 1.40);
+        let gf_pm = ewma(&|row| if row["home"] == name { observed_measurement(row, "home_goals") } else { observed_measurement(row, "away_goals") }, 1.40);
+        let ga_pm = ewma(&|row| if row["home"] == name { observed_measurement(row, "away_goals") } else { observed_measurement(row, "home_goals") }, 1.40);
         // The team rows already contain both sides of each fixture; conceded xG is simply the
         // opponent's xG from that same row. The previous opponent-row reconstruction duplicated
         // work and obscured the sign convention used downstream.
-        let xga_pm = ewma(&|row| if row["home"] == name { f(row, "away_xg") } else { f(row, "home_xg") }, 1.40);
+        // Only measured xG contributes. Missing xG is marginalized to the
+        // league prior, rather than interpreting a blank as 0 or scored goals.
+        let xga_pm = ewma(&|row| if row["home"] == name { observed_measurement(row, "away_xg") } else { observed_measurement(row, "home_xg") }, 1.40);
         let shots_pm = ewma(&|row| {
-            if row["home"] == name { f(row, "home_shots") } else { f(row, "away_shots") }
+            if row["home"] == name { observed_measurement(row, "home_shots") } else { observed_measurement(row, "away_shots") }
         }, 12.0);
         let sot_pm = ewma(&|row| {
-            if row["home"] == name { f(row, "home_sot") } else { f(row, "away_sot") }
+            if row["home"] == name { observed_measurement(row, "home_sot") } else { observed_measurement(row, "away_sot") }
         }, 4.5);
         let sot_face_pm = ewma(&|row| {
-            if row["home"] == name { f(row, "away_sot") } else { f(row, "home_sot") }
+            if row["home"] == name { observed_measurement(row, "away_sot") } else { observed_measurement(row, "home_sot") }
         }, 4.5);
         TeamData {
             name: name.to_string(),
@@ -315,7 +338,10 @@ pub(crate) fn load_players_with_freshness(
             let last_appearance_date = row.get("last_appearance_date").and_then(|value| optional_date_from(value));
             let appearance_anchor = last_appearance_date.or(first_listed_date).or(last_listed_date);
             PlayerRow {
-                id: f(&row, "player_id") as u64,
+                // A player ID is an identity, not a floating-point quantity.
+                // Parsing it through f64 breaks provisional 64-bit IDs.
+                id: row.get("player_id").and_then(|id| id.parse::<u64>().ok())
+                    .expect("invalid or missing stable player_id"),
                 name: row.get("name").cloned().unwrap_or_default(),
                 team: row.get("team").cloned().unwrap_or_default(),
                 minutes: f(&row, "minutes"),
@@ -340,12 +366,23 @@ pub(crate) fn load_players_with_freshness(
                 fm_ca: row.get("fm_ca").and_then(|v| v.parse().ok()),
                 fm_finishing: row.get("fm_finishing").and_then(|v| v.parse().ok()),
                 fm_technique: row.get("fm_technique").and_then(|v| v.parse().ok()),
-                fm_defending: Some(
-                    0.5 * row.get("fm_marking").and_then(|v| v.parse::<f64>().ok()).unwrap_or(10.0)
-                        + 0.5 * row.get("fm_tackling").and_then(|v| v.parse::<f64>().ok()).unwrap_or(10.0),
-                ),
+                fm_defending: match (
+                    row.get("fm_marking").and_then(|v| v.parse::<f64>().ok()),
+                    row.get("fm_tackling").and_then(|v| v.parse::<f64>().ok()),
+                ) {
+                    (Some(marking), Some(tackling)) => Some((marking + tackling) / 2.0),
+                    (Some(measured), None) | (None, Some(measured)) => Some(measured),
+                    (None, None) => None,
+                },
                 fm_consistency: row.get("fm_consistency").and_then(|v| v.parse().ok()),
                 fm_dirtiness: row.get("fm_dirtiness").and_then(|v| v.parse().ok()),
+                position_group: row.get("position_group")
+                    .filter(|value| matches!(value.as_str(), "GK" | "DEF" | "MID" | "FWD" | "UNKNOWN"))
+                    .cloned(),
+                fm_attributes_verified: row.get("fm_attributes_verified").map(|value| {
+                    assert!(value == "true" || value == "false", "invalid FM attribute trust flag");
+                    value == "true"
+                }),
             }
         })
         .filter(|row| {
@@ -375,6 +412,43 @@ pub(crate) fn formation(id: u16) -> FormationTemplate {
     }
 }
 
+/// Dated-position inputs use actual football roles; keep the legacy synthetic
+/// template for historical experiments that have no trustworthy position data.
+pub(crate) fn positional_formation(id: u16) -> FormationTemplate {
+    let midfielders = if id == 442 { 4_u8 } else { 3_u8 };
+    FormationTemplate {
+        id,
+        slots: (0_u8..11).map(|slot| {
+            let (role, x, y) = if slot == 0 {
+                (1_u16, 0.06, 0.5)
+            } else if slot <= 4 {
+                (2, 0.25, f64::from(slot) / 5.0)
+            } else if slot <= 4 + midfielders {
+                (3, 0.53, f64::from(slot - 4) / (f64::from(midfielders) + 1.0))
+            } else {
+                let forwards = 10 - (4 + midfielders);
+                (4, 0.81, f64::from(slot - 4 - midfielders) / (f64::from(forwards) + 1.0))
+            };
+            TacticalSlot { slot, role: RoleId(role), x, y }
+        }).collect(),
+    }
+}
+
+fn positional_role_fits(group: &str) -> Vec<RoleFit> {
+    let weights = match group {
+        "GK" => [1.0, 0.0, 0.0, 0.0],
+        "DEF" => [0.0, 1.0, 0.18, 0.05],
+        "MID" => [0.0, 0.25, 1.0, 0.35],
+        "FWD" => [0.0, 0.08, 0.35, 1.0],
+        // Unknown outfield players are eligible for multiple roles, but an
+        // unknown position must not silently become a verified goalkeeper.
+        _ => [0.0, 0.65, 0.65, 0.65],
+    };
+    weights.into_iter().enumerate().map(|(index, fit)| RoleFit {
+        role: RoleId(index as u16 + 1), fit,
+    }).collect()
+}
+
 pub(crate) fn squad(
     players: &[PlayerRow],
     team_name: &str,
@@ -383,6 +457,13 @@ pub(crate) fn squad(
 ) -> Vec<LineupCandidate> {
     let mut mine: Vec<&PlayerRow> = players.iter().filter(|p| p.team == team_name).collect();
     mine.sort_by(|a, b| b.minutes.total_cmp(&a.minutes));
+    let has_positions = mine.iter().any(|p| p.position_group.is_some());
+    let goalkeeper_ids: Vec<_> = mine.iter()
+        .filter(|p| p.position_group.as_deref() == Some("GK"))
+        .map(|p| p.id).collect();
+    if has_positions {
+        assert!(!goalkeeper_ids.is_empty(), "{team_name}: no documented goalkeeper among eligible candidates");
+    }
     let max_minutes = mine.iter().map(|p| p.minutes).fold(1e-9, f64::max);
     let mut candidates: Vec<LineupCandidate> = mine
         .iter()
@@ -443,7 +524,11 @@ pub(crate) fn squad(
                 expected_minutes_if_start,
                 minutes_sigma,
                 substitute_probability: (appearance_probability - starter_probability).max(0.0),
-                role_fits: (1_u16..=11).map(|role| RoleFit { role: RoleId(role), fit: 1.0 }).collect(),
+                role_fits: if has_positions {
+                    positional_role_fits(p.position_group.as_deref().unwrap_or("UNKNOWN"))
+                } else {
+                    (1_u16..=11).map(|role| RoleFit { role: RoleId(role), fit: 1.0 }).collect()
+                },
             }
         })
         .collect();
@@ -454,9 +539,19 @@ pub(crate) fn squad(
             .total_cmp(&left_appearance)
             .then_with(|| right.start_probability.total_cmp(&left.start_probability))
     });
+    if has_positions && candidates.iter().take(18).all(|candidate| !goalkeeper_ids.contains(&candidate.player.0)) {
+        let index = candidates.iter().position(|candidate| goalkeeper_ids.contains(&candidate.player.0))
+            .expect("keeper disappeared from the candidate pool");
+        if index >= 18 { candidates.swap(17, index); }
+    }
     candidates.truncate(18);
-    // Pad to at least 14 candidates so lineup sampling always has bench depth.
-    while candidates.len() < 14 {
+    // Dated positional rosters must fail closed, not invent unnamed bench
+    // players to make an impossible squad look like a valid matchday roster.
+    if has_positions {
+        assert!(candidates.len() >= 14, "{team_name}: fewer than 14 eligible matchday candidates");
+    }
+    // Preserve the legacy unpositioned historical benchmark unchanged.
+    while !has_positions && candidates.len() < 14 {
         let index = candidates.len();
         candidates.push(LineupCandidate {
             player: PlayerId(u64::from(club.0) * 1000 + index as u64 + 800000),
@@ -467,7 +562,11 @@ pub(crate) fn squad(
             expected_minutes_if_start: 30.0,
             minutes_sigma: 12.0,
             substitute_probability: 0.5,
-            role_fits: (1_u16..=11).map(|role| RoleFit { role: RoleId(role), fit: 0.8 }).collect(),
+            role_fits: if has_positions {
+                positional_role_fits("UNKNOWN")
+            } else {
+                (1_u16..=11).map(|role| RoleFit { role: RoleId(role), fit: 0.8 }).collect()
+            },
         });
     }
     candidates
@@ -503,7 +602,11 @@ pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<Sp
         .filter(|p| p.team == team_name)
         .flat_map(|p| {
             let n_appearances = (p.minutes / 80.0).max(3.0);
-            let variance_factor = 1.0 + 8.0 / n_appearances;
+            // A verified FM measurement and an unverified/reconstructed record
+            // cannot carry the same epistemic precision. Legacy historical
+            // datasets have no FM-quality field and retain their old behavior.
+            let quality_scale = if p.fm_attributes_verified == Some(false) { 2.0 } else { 1.0 };
+            let variance_factor = (1.0 + 8.0 / n_appearances) * quality_scale;
             let shots = form::shrunk_player_rate(p.shots_p90, 1.25, p.minutes);
             let xg = form::shrunk_player_rate(p.xg_p90, 0.15, p.minutes);
             let xa = form::shrunk_player_rate(p.xa_p90, 0.12, p.minutes);
@@ -516,7 +619,7 @@ pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<Sp
                     family: StatFamily::Count,
                     mean_per90: shots.max(1e-3),
                     variance_per90: shots.max(1e-3) * variance_factor,
-                    epistemic_sigma: (shots.max(0.05) / n_appearances.sqrt()).min(0.20),
+                    epistemic_sigma: (shots.max(0.05) / n_appearances.sqrt()).min(0.20) * quality_scale,
                     reference_per90: 1.25, // league avg player shots per90
                     aggregate_matchup_sensitivity: 0.04,
                     attribute_matchup_sensitivity: 0.03,
@@ -530,7 +633,7 @@ pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<Sp
                     family: StatFamily::ContinuousNonNegative,
                     mean_per90: xg.max(1e-3),
                     variance_per90: xg.max(1e-3) * variance_factor * 1.5,
-                    epistemic_sigma: (xg.max(0.01) / n_appearances.sqrt()).min(0.06),
+                    epistemic_sigma: (xg.max(0.01) / n_appearances.sqrt()).min(0.06) * quality_scale,
                     reference_per90: 0.15,
                     aggregate_matchup_sensitivity: 0.04,
                     attribute_matchup_sensitivity: 0.03,
@@ -544,7 +647,7 @@ pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<Sp
                     family: StatFamily::ContinuousNonNegative,
                     mean_per90: xa.max(1e-3),
                     variance_per90: xa.max(1e-3) * variance_factor * 1.5,
-                    epistemic_sigma: (xa.max(0.01) / n_appearances.sqrt()).min(0.08),
+                    epistemic_sigma: (xa.max(0.01) / n_appearances.sqrt()).min(0.08) * quality_scale,
                     reference_per90: 0.12, // league avg player xA per90
                     aggregate_matchup_sensitivity: 0.04,
                     attribute_matchup_sensitivity: 0.03,
@@ -558,7 +661,7 @@ pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<Sp
                     family: StatFamily::Count,
                     mean_per90: passes.max(1.0),
                     variance_per90: passes.max(1.0) * variance_factor,
-                    epistemic_sigma: (passes.max(1.0) / n_appearances.sqrt()).min(3.0),
+                    epistemic_sigma: (passes.max(1.0) / n_appearances.sqrt()).min(3.0) * quality_scale,
                     reference_per90: 32.0,
                     aggregate_matchup_sensitivity: 0.02,
                     attribute_matchup_sensitivity: 0.02,
@@ -572,7 +675,7 @@ pub(crate) fn event_models_for(players: &[PlayerRow], team_name: &str) -> Vec<Sp
                     family: StatFamily::Count,
                     mean_per90: prog_carries.max(1e-3),
                     variance_per90: prog_carries.max(1e-3) * variance_factor,
-                    epistemic_sigma: (prog_carries.max(0.1) / n_appearances.sqrt()).min(1.0),
+                    epistemic_sigma: (prog_carries.max(0.1) / n_appearances.sqrt()).min(1.0) * quality_scale,
                     reference_per90: 1.5, // league avg player progressive carries per90
                     aggregate_matchup_sensitivity: 0.03,
                     attribute_matchup_sensitivity: 0.03,
@@ -749,11 +852,18 @@ fn build_input(
     participation_model: Option<&NextMatchParticipationModel>,
     form_path: Option<&str>,
 ) -> PrimitiveMatchSimulationInput {
+    let lineup_formation = |team: &str, id| {
+        if players.iter().any(|player| player.team == team && player.position_group.is_some()) {
+            positional_formation(id)
+        } else {
+            formation(id)
+        }
+    };
     let home_lineup = LineupProjectionInput {
         club: home.club,
         formations: vec![
-            FormationPrior { formation: formation(442), probability: 0.55 },
-            FormationPrior { formation: formation(433), probability: 0.45 },
+            FormationPrior { formation: lineup_formation(&home.name, 442), probability: 0.55 },
+            FormationPrior { formation: lineup_formation(&home.name, 433), probability: 0.45 },
         ],
         candidates: squad(players, &home.name, home.club, participation_model),
         locked_starters: Vec::new(),
@@ -762,8 +872,8 @@ fn build_input(
     let away_lineup = LineupProjectionInput {
         club: away.club,
         formations: vec![
-            FormationPrior { formation: formation(442), probability: 0.55 },
-            FormationPrior { formation: formation(433), probability: 0.45 },
+            FormationPrior { formation: lineup_formation(&away.name, 442), probability: 0.55 },
+            FormationPrior { formation: lineup_formation(&away.name, 433), probability: 0.45 },
         ],
         candidates: squad(players, &away.name, away.club, participation_model),
         locked_starters: Vec::new(),

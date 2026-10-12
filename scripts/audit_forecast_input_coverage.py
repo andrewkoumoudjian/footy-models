@@ -77,14 +77,34 @@ def audit(squads: Path, players: Path, team_rows: Path, fm: Path, raw_results: P
                     continue
                 from datetime import datetime
                 day = datetime.strptime(date, "%d/%m/%Y").date().isoformat()
-                if day > roster["as_of"]:
+                if day >= roster["as_of"]:
                     continue
                 n_complete_source_matches += 1
                 measured_xg += bool(row.get("HxG") and row.get("AxG"))
 
     source_dates = [row["date"] for row in matches]
+    has_quality_flags = "home_xg_kind" in matches[0] and "away_xg_kind" in matches[0]
+    if has_quality_flags:
+        source_measured = sum(
+            row["home_xg_kind"] == "measured" and row["away_xg_kind"] == "measured"
+            for row in matches
+        )
+        source_missing = sum(
+            row["home_xg_kind"] == "missing" or row["away_xg_kind"] == "missing"
+            for row in matches
+        )
+        if source_measured + source_missing != len(matches):
+            raise ValueError("mixed or unsupported xG observation kinds")
+        if any(
+            (row["home_xg_kind"] == "missing" and row["home_xg"])
+            or (row["away_xg_kind"] == "missing" and row["away_xg"])
+            for row in matches
+        ):
+            raise ValueError("xG measurement says missing but contains a numeric proxy")
+    else:
+        source_measured, source_missing = measured_xg, 0
     summary = {
-        "schema_version": 1,
+        "schema_version": 2 if has_quality_flags else 1,
         "forecast_input_as_of": roster["as_of"],
         "scope": "dated 8-club EPL forecast candidate set, not the full league",
         "registered_and_u21_listings": len(declared),
@@ -100,7 +120,9 @@ def audit(squads: Path, players: Path, team_rows: Path, fm: Path, raw_results: P
         "original_completed_E0_results": n_complete_source_matches,
         "additional_dated_results_not_in_cached_E0": len(matches) - n_complete_source_matches,
         "original_E0_results_with_both_measured_xg": measured_xg,
-        "team_history_xg_proxy_rows": len(matches) - measured_xg,
+        "team_history_xg_measured_rows": source_measured,
+        "team_history_xg_missing_rows": source_missing,
+        "team_history_xg_proxy_rows": 0 if has_quality_flags else len(matches) - measured_xg,
         "source_hashes": {
             "registered_squads": digest(squads),
             "generated_player_inputs": digest(players),
@@ -111,7 +133,8 @@ def audit(squads: Path, players: Path, team_rows: Path, fm: Path, raw_results: P
         "provenance_limitations": [
             "FM staff/derived records require independent person/role verification",
             "No player event/lineup observations enter current live player inputs",
-            "Source-missing xG was imputed from realized goals without a flag",
+            "Measured xG coverage is limited; missing xG must be marginalized by the forecasting adapter" if has_quality_flags
+            else "Legacy source-missing xG was imputed from realized goals without a flag",
             "Raw external source publish-time and past roster-availability are not audited here",
         ],
     }
