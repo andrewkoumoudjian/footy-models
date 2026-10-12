@@ -167,7 +167,8 @@ def prepare_players():
                 carries=max(.2,min(5.,1.1+.16*(dribbling-10)))
             # No selection data is available for the 2026/27 PL season. The
             # participation model must use fallback, not fabricated starts.
-            outrows.append({'player_id':p['fm_uid'],'name':p['fm_name'],'team':team,
+            outrows.append({'player_id':p['fm_uid'],
+                'name':p.get('fm_name') or p['official_name'],'team':team,
                 'minutes':round(exposure,3),'first_listed_date':'',
                 'last_listed_date':CUTOFF.isoformat(),'last_appearance_date':'',
                 'selection_listings':0,'selection_appearances':0,'selection_starts':0,

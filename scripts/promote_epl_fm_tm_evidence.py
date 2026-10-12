@@ -36,6 +36,7 @@ def club_matches(official, tm):
         'man city':'manchester city',
         'man united':'manchester united',
         'nott m forest':'nottingham forest',
+        'nottm forest':'nottingham forest',
         'spurs':'tottenham hotspur',
         'newcastle':'newcastle united',
         'hull':'hull city',

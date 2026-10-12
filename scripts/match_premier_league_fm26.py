@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Match pre-fixture EPL registered 2026/27 squads to original FM26 player identities.
+"""Official EPL registrations -> Reep-first typed FM identity discovery.
 
-Squad authority: Premier League's post-window registration article. FM authority:
-FM26 database exact name and UID. No club inference from stale Transfermarkt.
-Unique exact matches auto-accept; near-matches need high-confidence token and name
-agreement; unresolved rows remain unresolved. Data snapshot is an as-of roster
-source, not a confirmed starting XI or availability assessment.
+Run-time does NOT assign native FM UIDs by display-name similarity. The Reep
+identity register, cross-provider IDs, FM26 raw entries, and independent
+Sortitoutsi/TM DOB evidence are resolved by one canonical matching function.
+Weak evidence is retained as a review lead; only corroborated *player-specific*
+native attributes may enter model inputs. Squad membership != matchday XI.
 """
 import argparse
 import csv
@@ -35,9 +35,12 @@ def norm(s):
     # NFKD does not decompose letters such as Ø, Ł, Đ and Æ. Dropping these
     # characters made Ødegaard, e.g., impossible to discover by surname.
     s=(s or '').casefold().translate(str.maketrans({
-        'ø':'o','ł':'l','đ':'d','ð':'d','þ':'th','æ':'ae','œ':'oe',
+        'ø':'o','ł':'l','đ':'dj','ð':'d','þ':'th','æ':'ae','œ':'oe',
         'ß':'ss','ı':'i','ħ':'h','ŧ':'t','ŋ':'n',
     }))
+    # N'Diaye, O'Brien and similar patronymics are one surname token;
+    # dropping an apostrophe as a separator previously broke exact discovery.
+    s=re.sub(r"(?<=[a-z])['’](?=[a-z])",'',s)
     s=unicodedata.normalize('NFKD',s)
     s=''.join(ch for ch in s if not unicodedata.combining(ch))
     return ' '.join(re.findall(r'[a-z0-9]+',s))
@@ -87,6 +90,10 @@ def fetch_official(cache,offline=False,teams=None,url=SQUADS_URL):
     return roster
 
 def best_match(src, exact, token_index, records):
+    """Deprecated name-only scorer, retained for legacy falsification tests.
+
+    NEVER use to populate any current model roster. See run() below.
+    """
     n=norm(src)
     if not n:return None,'unmatched',[]
     if n in exact:
@@ -137,7 +144,14 @@ def run():
     parser.add_argument('--as-of',default='2026-10-11',help='as-of YYYY-MM-DD')
     parser.add_argument('--registration-url',default=SQUADS_URL)
     parser.add_argument('--html-cache',default='data/pl/raw/registered_pl_2026_27.html')
-    parser.add_argument('--output',default='data/pl/squads_2026-10-11_full.json')
+    parser.add_argument('--output',default='data/pl/squads_2026-10-11_canonical.json')
+    parser.add_argument('--identity-audit',help='optional full candidate/ambiguity review JSON')
+    parser.add_argument('--reep-active',default='data/identity/reep/active.json')
+    parser.add_argument('--tm-players',default='data/tm_players.csv')
+    parser.add_argument('--sortitoutsi-roster',default='/home/drewclaw/fm26-data/sortitoutsi_fm26_roster.csv')
+    parser.add_argument('--sortitoutsi-map',default='/home/drewclaw/fm26-data/sortitoutsi_uid_map.csv')
+    parser.add_argument('--fm-complete-file',default='/home/drewclaw/fm26-data/fm26_complete_v6.csv',
+                        help='full FM26 v6 binary export for UIDs absent from men-only export')
     a=parser.parse_args()
     cutoff=date.fromisoformat(a.as_of)
     if not date(2026,9,1)<=cutoff<date(2027,7,1) and a.registration_url==SQUADS_URL:
@@ -151,83 +165,53 @@ def run():
         unsupported=requested-set(clubs)
         if unsupported:raise ValueError(f'unknown Premier League team aliases: {sorted(unsupported)}')
         clubs={k:v for k,v in clubs.items() if k in requested}
-    roster=fetch_official(ROOT/a.html_cache,a.offline,clubs,a.registration_url)
-    if not a.fixtures and (len(clubs)!=20 or len(roster)!=20):
-        raise ValueError('full EPL registry must contain all 20 clubs; fixture sample is not league coverage')
-    legacy={}
-    with (ROOT/'data/fm_tm_joined.csv').open(encoding='utf-8-sig') as f:
-        for row in csv.DictReader(f):
-            if row.get('uid') and row.get('current_club_name'):
-                legacy[row['uid']]=row
-    roster_tokens = {part for squad in roster.values() for p in squad
-                     for part in norm(p['match_name']).split() if len(part) >= 4}
-    records=[];exact=defaultdict(list);token_index=defaultdict(list)
-    with Path(a.fm_file).open(encoding='utf-8-sig') as f:
-        for row in csv.DictReader(f):
-            try: ca=float(row.get('ca') or 0.)
-            except ValueError:continue
-            # Low-CA youth players are still real roster candidates. Never
-            # use CA thresholds as identity evidence or silently drop them.
-            if not row.get('uid'):continue
-            if not (set(norm(row['name']).split()) & roster_tokens):continue
-            record={'uid':row['uid'],'name':row['name'],'ca':ca,'pa':float(row.get('pa') or 0),
-                'kind':(row.get('kind') or 'unknown').strip().lower(),
-                'attr_source':(row.get('attr_source') or 'unknown').strip().lower(),
-                'attrs':{k[5:]:float(v) for k,v in row.items() if k.startswith('attr_') and v and re.fullmatch(r'[0-9]+(?:\.[0-9]+)?',v)},
-                'tm': legacy.get(row['uid'],{})}
-            idx=len(records);records.append(record)
-            n=norm(row['name']);exact[n].append(record)
-            for token in set(n.split()):
-                if len(token)>3:token_index[token].append(idx)
-    output={'as_of':str(cutoff),'registration_source':a.registration_url,
-            'registration_source_published':'2026-09-03' if a.registration_url==SQUADS_URL else None,
-            'roster_scope':'fixture_subset' if a.fixtures else 'full_league',
-            'expected_club_count':len(clubs),
-            'fm_matching_note':'CA is not an identity filter; FM name matches are not verified provider IDs',
-            'fm_source':'FM26 binary-derived complete men attributes','teams':{}}
-    for short,club in clubs.items():
-        entries=[]
-        seen=set()
-        for p in roster[club]:
-            candidate,method,suggestions=best_match(p['match_name'],exact,token_index,records)
-            row={'official_name':p['official_name'],'registration':p['registration'],'match_method':method,
-                 'registered_club':short,'membership_observed_as_of':str(cutoff),
-                 'loaned_out':bool(re.search(r'\(loan\)',p['official_name'],re.I))}
-            if candidate:
-                if candidate['uid'] in seen:
-                    row['match_method']='duplicate: unassigned'
-                else:
-                    seen.add(candidate['uid'])
-                    # A UID/name match does not verify that the extracted record
-                    # is a player or that reconstructed attributes were observed.
-                    # Keep the registration candidate, but never upgrade staff or
-                    # derived FM ratings to verified footballer measurements.
-                    trusted=(candidate['kind']=='player' and candidate['attr_source']=='db')
-                    row.update({'fm_uid':candidate['uid'],'fm_name':candidate['name'],
-                                'fm_kind':candidate['kind'],'attr_source':candidate['attr_source'],
-                                'fm_player_record_verified':candidate['kind']=='player',
-                                'fm_attributes_verified':trusted,
-                                'ca':candidate['ca'] if trusted else None,
-                                'pa':candidate['pa'] if trusted else None,
-                                'attributes':candidate['attrs'] if trusted else {},
-                                'source_quality':'verified_db' if trusted else 'uncertain_identity_or_attributes'})
-                    if candidate['tm']:
-                        tm=candidate['tm']
-                        row['historical_position']=tm.get('position','')
-                        row['historical_minutes_2526']=tm.get('mins_2526','')
-                        row['historical_apps_2526']=tm.get('apps_2526','')
-            if 'fm_uid' not in row and suggestions:row['suggestions']=suggestions
-            entries.append(row)
-        matched=[x for x in entries if 'fm_uid' in x]
-        counts=Counter(x['registration'] for x in matched)
-        unresolved=[x['official_name'] for x in entries if 'fm_uid' not in x]
-        output['teams'][short]={'official_club':club,'registered_count':len(entries),
-            'matched_count':len(matched),'matched_25':counts['registered'],'matched_u21':counts['u21'],
-            'unmatched':unresolved,'players':entries}
-        print(f'{short:20s} {len(matched):2d}/{len(entries):2d} matched; 25={counts["registered"]} U21={counts["u21"]} | unmatched {unresolved[:8]}')
+    # FULL LEAGUE first. Fixture-only matching obscured collisions across
+    # clubs and left the other twelve EPL teams invisible. Filter *after*
+    # resolving all official registrations.
+    registration=fetch_official(ROOT/a.html_cache,a.offline,None,a.registration_url)
+    from recover_epl_remaining_identities import resolve_official_roster
+    official={'as_of':str(cutoff),'registration_source':a.registration_url,
+              'registration_source_published':'2026-09-03' if a.registration_url==SQUADS_URL else None,
+              'roster_scope':'full_league','expected_club_count':20,
+              'fm_source':'FM26 binary-derived men attributes','teams':{}}
+    for club,club_name in TEAM_ALIASES.items():
+        entries=[{'official_name':p['official_name'],'registration':p['registration'],
+                  'registered_club':club,'membership_observed_as_of':str(cutoff),
+                  'loaned_out':bool(re.search(r'\(loan\)',p['official_name'],re.I))}
+                 for p in registration[club_name]]
+        official['teams'][club]={'official_club':club_name,'registered_count':len(entries),
+            'players':entries,'matched_count':0,'matched_25':0,'matched_u21':0,
+            'unmatched':[p['official_name'] for p in entries]}
+    output,ledger=resolve_official_roster(official,ROOT/a.reep_active,
+        Path(a.fm_file),ROOT/a.tm_players,Path(a.sortitoutsi_roster),Path(a.sortitoutsi_map),
+        Path(a.fm_complete_file))
+    if a.fixtures:
+        output['teams']={club:output['teams'][club] for club in clubs}
+        output['roster_scope']='fixture_subset'
+        output['expected_club_count']=len(clubs)
     outfile=ROOT/a.output
+    review=ROOT/a.identity_audit if a.identity_audit else outfile.with_name(outfile.stem+'_identity_evidence.json')
+    serial=json.dumps(output,indent=2,ensure_ascii=False)+'\n'
+    review_serial=json.dumps({'as_of':str(cutoff),
+        'resolver':'canonical_reep_first_v2',
+        'source_policy':'full-Reep and typed IDs first; no CA or name-only auto-ranking',
+        'players':ledger},indent=2,ensure_ascii=False)+'\n'
+    # Safe to repeat identical runs; never silently mutate an existing as-of
+    # snapshot when source data or code changes. Use a new version in that case.
+    if outfile.exists() or review.exists():
+        if (outfile.is_file() and review.is_file() and
+            outfile.read_text(encoding='utf-8')==serial and
+            review.read_text(encoding='utf-8')==review_serial):
+            print('UNCHANGED identical canonical roster and identity audit',outfile,review)
+            return
+        raise ValueError('prior canonical snapshot differs; choose a new versioned output name')
     outfile.parent.mkdir(parents=True,exist_ok=True)
-    outfile.write_text(json.dumps(output,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
-    print('WROTE',outfile)
+    review.parent.mkdir(parents=True,exist_ok=True)
+    outfile.write_text(serial,encoding='utf-8')
+    review.write_text(review_serial,encoding='utf-8')
+    for team,rows in output['teams'].items():
+        print(f'{team:20s} {rows["matched_count"]}/{rows["registered_count"]} FM candidate IDs; '
+              f'unresolved {len(rows["unmatched"])}')
+    print('WROTE',outfile,review)
 
 if __name__=='__main__':run()

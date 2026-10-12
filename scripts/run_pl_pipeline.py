@@ -36,6 +36,10 @@ MODEL_SOURCE_FILES=(
     'apps/plforecast/Cargo.toml',
     'scripts/forecast_premier_league.py',
     'scripts/match_premier_league_fm26.py',
+    'scripts/recover_epl_remaining_identities.py',
+    'scripts/resolve_epl_reep.py',
+    'scripts/reconcile_epl_fm_sources.py',
+    'scripts/promote_epl_fm_tm_evidence.py',
     'scripts/prepare_pl_player_inputs.py',
 )
 
@@ -82,15 +86,17 @@ def snapshot_audit(src,dest):
             'fm_matches':r['matched_count'],
             'fm_matched_registered':r['matched_25'],
             'fm_matched_u21':r['matched_u21'],
-            'matched':[{'name':p['official_name'],'fm_name':p['fm_name'],'fm_uid':p['fm_uid'],
+            'matched':[{'name':p['official_name'],'fm_name':p.get('fm_name'),'fm_uid':p['fm_uid'],
                         'registration':p['registration'],'matching_method':p['match_method'],
                         'fm_kind':p.get('fm_kind','unknown'),
                         'attr_source':p.get('attr_source','unknown'),
-                        'fm_attributes_verified':p.get('fm_attributes_verified',False)}
+                        'fm_attributes_verified':p.get('fm_attributes_verified',False),
+                        'identity_verification':p.get('identity_verification'),
+                        'native_fm_person_evidence':p.get('fm_native_record_trusted_for_this_player')}
                        for p in r['players'] if p.get('fm_uid')],
             'unmatched':r['unmatched']}
     dest.write_text(json.dumps({'as_of':data['as_of'],'registration_source':data['registration_source'],
-                                'model':'FM26 full attribute database name/UID mapping','teams':teams},
+                                'model':'Reep-first typed FM identity bridge + native/SI/TM evidence','teams':teams},
                                indent=2,ensure_ascii=False)+'\n')
 
 def main():
@@ -146,7 +152,7 @@ def main():
     source=snapshot/'player_paths.json'
     season_year=cutoff.year if cutoff.month>=7 else cutoff.year-1
     season_cache=opt.html_cache or f'data/pl/raw/registered_pl_{season_year}_{(season_year+1)%100:02d}.html'
-    roster=Path(f'data/pl/squads_{cutoff}.json')
+    roster=Path(f'data/pl/squads_{cutoff}_canonical_v2.json')
     benchmark=Path('data/pl/forecasts.json')
     script=Path('scripts')
     python=sys.executable
@@ -165,7 +171,10 @@ def main():
         train=[python,script/'forecast_premier_league.py','--fixtures',opt.fixtures,'--release']
         if opt.offline:train.append('--offline')
         run(train)
-        match=[python,script/'match_premier_league_fm26.py','--fixtures',opt.fixtures,
+        # The first-party canonical resolver requires DuckDB. Never fall back
+        # to the retired name-first FM matcher if a dependency is missing.
+        match=['uv','run','--no-project','--with','duckdb','--with','beautifulsoup4','python',
+               script/'match_premier_league_fm26.py','--fixtures',opt.fixtures,
                '--fm-file',opt.fm_file,'--as-of',str(cutoff),'--html-cache',season_cache,'--output',roster]
         if opt.registration_url:match+=['--registration-url',opt.registration_url]
         if opt.offline:match.append('--offline')
