@@ -304,6 +304,28 @@ def native_pair_fallback(person,review):
             'note':'unique first+last anchor in the FM union; middle-name variation; no independent DOB'}
 
 
+def _middles_near(official_tokens, native_tokens):
+    """True when the two names differ only by near-spelling middle tokens.
+
+    Used for the weakest native grade: a namesake with a genuinely different
+    middle name (Gabriel *Filipe Passos* Magalhães vs Gabriel *dos Santos*
+    Magalhães) must NOT match, while a spelling variant of the same middle
+    (Roderick/Rodrick, Christopher/Christoper) may.
+    """
+    o=list(official_tokens[1:-1]); n=list(native_tokens[1:-1])
+    if len(o)!=len(n):return False
+    used=[False]*len(n)
+    for a in o:
+        best=None;best_ratio=0.0
+        for i,b in enumerate(n):
+            if used[i]:continue
+            ratio=difflib.SequenceMatcher(None,a,b).ratio()
+            if ratio>best_ratio:best_ratio=ratio;best=i
+        if best is None or best_ratio<0.8:return False
+        used[best]=True
+    return True
+
+
 def _name_grade(official_tokens, native_tokens):
     """Family-anchored name-evidence grade for the native FM binary.
 
@@ -312,8 +334,8 @@ def _name_grade(official_tokens, native_tokens):
         token, so expanded/contracted given names and multi-part family names
         match (e.g. official "Wheeler-Henry, Joseph" vs native "Joseph Roy
         Wheeler-Henry").
-    2 = same first and final tokens but a non-subset middle (e.g. a
-        conflicting middle name).
+    2 = same first and final tokens with a *near-spelling* middle only (e.g.
+        Roderick/Rodrick). A genuinely different middle name is rejected.
     None = no family-anchored evidence. Weaker grades are only consulted when
     no stronger grade yields a unique person, so a homonym at an exact name
     can never be silently replaced by a looser match.
@@ -327,7 +349,7 @@ def _name_grade(official_tokens, native_tokens):
         return 0
     if o<=n or n<=o:
         return 1
-    if official_tokens[0]==native_tokens[0]:
+    if official_tokens[0]==native_tokens[0] and _middles_near(official_tokens,native_tokens):
         return 2
     return None
 

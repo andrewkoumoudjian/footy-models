@@ -208,9 +208,9 @@ class CanonicalIdentityPipelineTests(unittest.TestCase):
             self.assertEqual(got['fm_uid'],'2000140968')
             self.assertFalse(got['can_use_native_player_attributes'])
 
-    def test_native_index_records_subset_and_conflicting_middle_grades(self):
-        """King, Josiah Barack -> native 'Josiah King' is grade 1 (subset);
-        a conflicting middle name is grade 2; exact tokens are grade 0."""
+    def test_native_index_grades_and_rejects_namesakes(self):
+        """Exact = 0, subset = 1, near-spelling middle = 2, and a genuinely
+        different middle name (a namesake) must NOT match."""
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'fm.csv'
             with path.open('w',newline='') as h:
@@ -218,20 +218,32 @@ class CanonicalIdentityPipelineTests(unittest.TestCase):
                 w.writeheader()
                 w.writerow({'uid':'2000274223','name':'Josiah King',
                             'dob':'2001-04-21','kind':'staff','attr_source':'staff'})
-                w.writerow({'uid':'9','name':'Thomas Vincent Robinson',
+                w.writerow({'uid':'9','name':'John Roderick Daniel Dodds',
                             'dob':'2001-04-21','kind':'player','attr_source':'db'})
                 w.writerow({'uid':'8','name':'Caelan Avenell',
                             'dob':'2004-10-08','kind':'player','attr_source':'db'})
+                w.writerow({'uid':'7','name':'Gabriel Filipe Passos Magalhaes',
+                            'dob':'1997-12-19','kind':'player','attr_source':'db'})
             roster={'teams':{'Arsenal':{'players':[
-                registered('King, Josiah Barack'),registered('Robinson, Thomas Dean'),
-                registered('Avenell, Caelan*')]}}}
+                registered('King, Josiah Barack'),registered('Dodds, John Rodrick Daniel'),
+                registered('Avenell, Caelan*'),registered('Dos Santos Magalhaes, Gabriel')]}}}
             index=build_full_native_name_index(path,roster)
-            king=index[('Arsenal','King, Josiah Barack')]
-            self.assertTrue(any(e['grade']==1 for e in king))
-            rob=index[('Arsenal','Robinson, Thomas Dean')]
-            self.assertTrue(any(e['grade']==2 for e in rob))
-            aven=index[('Arsenal','Avenell, Caelan*')]
-            self.assertTrue(any(e['grade']==0 for e in aven))
+            self.assertTrue(any(e['grade']==1 for e in index[('Arsenal','King, Josiah Barack')]))
+            self.assertTrue(any(e['grade']==2 for e in index[('Arsenal','Dodds, John Rodrick Daniel')]))
+            self.assertTrue(any(e['grade']==0 for e in index[('Arsenal','Avenell, Caelan*')]))
+            self.assertFalse(index[('Arsenal','Dos Santos Magalhaes, Gabriel')],
+                             'a different-middle namesake must not match')
+
+    def test_namesake_with_different_middle_is_not_attached(self):
+        """Gabriel dos Santos Magalhaes must not resolve to Gabriel Filipe
+        Passos Magalhaes; a near-spelling middle still grades as 2."""
+        from recover_epl_remaining_identities import _name_grade
+        self.assertIsNone(_name_grade(
+            ('gabriel','dos','santos','magalhaes'),
+            ('gabriel','filipe','passos','magalhaes')))
+        self.assertEqual(_name_grade(
+            ('john','rodrick','daniel','dodds'),
+            ('john','roderick','daniel','dodds')),2)
 
     def test_native_pair_fallback_requires_global_uniqueness(self):
         entries=[{'uid':'1','fm_name':'Josiah King','native_kind':'staff',
