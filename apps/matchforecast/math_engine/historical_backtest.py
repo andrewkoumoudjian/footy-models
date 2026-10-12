@@ -78,6 +78,19 @@ def prepare_fixture(fixture, manifest, historical, source_dir, lineup_dir):
     observed, lineup_sources = historical_goalkeepers(manifest['fixtures'], lineup_dir, fixture['date'])
     pool = []
     raw_rows = {}
+    empirical_start_minutes = 0.0
+    observed_starts = 0.0
+    for row in candidate_rows:
+        if row['team'] in (fixture['home'],fixture['away']):
+            starts = nonnegative(row['selection_starts'])
+            start_minutes = nonnegative(row['selection_start_minutes'])
+            if start_minutes > 95.0 * max(starts, 0):
+                raise ValueError('historical start minute exposure exceeds recorded starts')
+            empirical_start_minutes += start_minutes
+            observed_starts += starts
+    if observed_starts <= 0:
+        raise ValueError('no previously observed start minutes')
+    league_mean_start = min(90.0, empirical_start_minutes / observed_starts)
     for row in candidate_rows:
         if row['team'] not in (fixture['home'], fixture['away']):
             continue
@@ -90,11 +103,19 @@ def prepare_fixture(fixture, manifest, historical, source_dir, lineup_dir):
         raw_rows[player_id] = row
         n = nonnegative(row['team_fixtures'])
         starts = nonnegative(row['selection_starts'])
+        appearances = nonnegative(row['selection_appearances'])
         if starts > n:
             raise ValueError('invalid historical starts > earlier fixtures')
+        if appearances < starts or appearances > n:
+            raise ValueError('appearance counts inconsistent with starts/team fixtures')
         # One common pseudo-start produces a conservative strictly earlier
         # playing-time prior. No target match minutes or XI can enter here.
         start_prior = (starts + 0.5) / (n + 1.0)
+        bench_prior = (appearances - starts + 0.5) / (n - starts + 1.0)
+        # Four pooled pseudo-starts give an explicit empirical-Bayes
+        # regularizer, rather than fitting a free hazard to one prior game.
+        start_minutes = nonnegative(row['selection_start_minutes'])
+        expected_if_start = (start_minutes + 4.0 * league_mean_start) / (starts + 4.0)
         pool.append({
             'id': player_id, 'club': row['team'], 'minutes_prior': 90 * start_prior,
             'shots_per90': nonnegative(row['shots_p90']),
@@ -102,6 +123,9 @@ def prepare_fixture(fixture, manifest, historical, source_dir, lineup_dir):
             'is_goalkeeper': player_id in observed[row['team']],
             'fm_source': 'historical_observed_only', 'fm_kind': 'historical',
             'fm_finishing': None, 'fm_ca': None,
+            'start_probability': start_prior,
+            'expected_minutes_if_start': min(90.0, expected_if_start),
+            'bench_appearance_probability': bench_prior,
         })
     for club in (fixture['home'], fixture['away']):
         own = [p for p in pool if p['club'] == club]
@@ -181,6 +205,11 @@ def fixture_scores(fixture, forecast, labels, prior_players):
         actual_goals = float(target.get('goals', 0) > 0)
         player_metrics['start_engine'].append((model['p_start'] - actual_started) ** 2)
         player_metrics['start_prior'].append((start_prior - actual_started) ** 2)
+        appearance_actual = float(bool(target.get('minutes', 0)))
+        player_metrics['appearance_engine'].append((model['p_appearance'] - appearance_actual) ** 2)
+        appearance_prior = (nonnegative(row['selection_appearances']) + 0.5) / (n + 1.0)
+        player_metrics['appearance_prior'].append((appearance_prior - appearance_actual) ** 2)
+        player_metrics['minutes_engine'].append(abs(model['expected_minutes'] - float(target.get('minutes',0.0))))
         player_metrics['shots_engine'].append(abs(model['expected_shots'] - actual_shots))
         player_metrics['shots_prior'].append(abs(shots_prior - actual_shots))
         # Same-path occurrences: goals after a shot are drawn once per path,
@@ -196,6 +225,15 @@ def fixture_scores(fixture, forecast, labels, prior_players):
         'start_coverable_players': len(prior_players),
         'actual_player_goals_not_in_prior_pool': uncovered_goals,
         'observed_player_goals': sum(int(p['goals']) for p in actual.values()),
+        'mean_simulated_home_substitutions': pred['mean_home_substitutions'],
+        'mean_simulated_away_substitutions': pred['mean_away_substitutions'],
+        # Only actual non-starter playing time constitutes a completed bench
+        # appearance; event-labelled substitution attempts are tracked apart.
+        'observed_completed_substitutions': sum(
+            1 for player in labels['players']
+            if not player.get('started', False) and float(player.get('minutes') or 0) > 0
+        ),
+        'observed_substitution_event_labels': len(labels.get('subs', [])),
     })
     return values
 
@@ -226,6 +264,8 @@ def main():
     ap.add_argument('--seed', type=int, default=42)
     ap.add_argument('--max-fixtures', type=int, default=25)
     ap.add_argument('--build', action='store_true')
+    ap.add_argument('--selection-marginals', action='store_true')
+    ap.add_argument('--max-subs', type=int, choices=range(0,6), default=0)
     args = ap.parse_args()
     if args.max_fixtures < 1 or args.paths < 1:
         ap.error('positive path and fixture counts required')
@@ -260,7 +300,9 @@ def main():
         forecast_path = out / 'forecasts' / f'{ident}.json'
         input_path.write_text(json.dumps(bundle, sort_keys=True) + '\n')
         subprocess.run([str(args.bin), str(input_path), str(forecast_path),
-                        '--paths', str(args.paths), '--seed', str(args.seed)],
+                        '--paths', str(args.paths), '--seed', str(args.seed),
+                        '--selection-marginals', str(args.selection_marginals).lower(),
+                        '--max-subs', str(args.max_subs)],
                        cwd=ROOT, check=True, capture_output=True, text=True)
         forecast = load(forecast_path)
         labels = load(args.source / 'labels' / f'{ident}.json')
@@ -276,12 +318,17 @@ def main():
         raise ValueError('no fixtures were evaluable with historical GK coverage')
     keys = ['wdl_mc_log_loss', 'wdl_poisson_log_loss', 'scoreline_poisson_log_loss',
             'start_engine', 'start_prior', 'shots_engine', 'shots_prior',
-            'goals_engine', 'goals_prior']
+            'goals_engine', 'goals_prior', 'appearance_engine','appearance_prior',
+            'minutes_engine','mean_simulated_home_substitutions',
+            'mean_simulated_away_substitutions','observed_completed_substitutions',
+            'observed_substitution_event_labels']
     means = {key: sum(row[key] for row in details) / len(details) for key in keys}
     ci = {}
     for a,b in [('wdl_mc_log_loss','wdl_poisson_log_loss'),
                 ('start_engine','start_prior'),('shots_engine','shots_prior'),
                 ('goals_engine','goals_prior')]:
+        ci[f'{a}_minus_{b}'] = paired_bootstrap(details,a,b)
+    for a,b in [('appearance_engine','appearance_prior')]:
         ci[f'{a}_minus_{b}'] = paired_bootstrap(details,a,b)
     report = {
         'status': 'exploratory_inspected_holdout_NOT_PROMOTABLE',
@@ -290,12 +337,14 @@ def main():
         'source_fixture_sha256': sha256(args.source / 'fixtures.json'),
         'source_labels_are_scoring_only': True,
         'paths_per_match':args.paths,'seed':args.seed,
+        'selection_marginals':args.selection_marginals,
+        'max_substitutions_per_team':args.max_subs,
         'fixtures_scored':len(details), 'skipped':skipped,
         'mean_losses':means, 'matchday_cluster_bootstrap_95_percent':ci,
         'caveats':[
             'The 2015/16 holdout was previously inspected; these results cannot promote new parameters.',
             'Goal marks are normalized to the independent Poisson anchor: WDL and exact score cannot be interpreted as a new structural model improvement.',
-            'Current challenger does not simulate substitutions or goals scored by substitute-only players; report pool coverage.',
+            'Substitutions are opt-in and calibrated from prior aggregate start durations; some future-only players remain outside the as-of pool.',
             'Player goal-occurrence Brier uses actual path-level scorer indicators; substitute-only scorers remain uncovered.',
             'Only two clubs have extensive event coverage in this 74-match subset; wider data are necessary.'
         ],

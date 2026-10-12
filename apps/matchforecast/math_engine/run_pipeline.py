@@ -82,7 +82,9 @@ def validate(input_path, output_path, *, paths, default_effects):
             0 <= p['p_goal'] <= p['p_shot'] <= 1
             and p['p_goal'] <= p['expected_goals']
             and p['p_shot'] <= p['expected_shots']
-            and p['p_start'] >= p['p_goal']
+            and p['p_appearance'] >= p['p_goal']
+            and p['p_appearance'] >= p['p_start']
+            and 0 <= p['expected_minutes'] <= 90 * p['p_appearance'] + 1e-8
             for p in fixture['player_forecasts'])
         if default_effects and paths >= 256:
             reference = analytic_wdl(base)
@@ -113,6 +115,8 @@ def main():
     ap.add_argument('--score-effect', type=float, default=0)
     ap.add_argument('--man-advantage', type=float, default=0)
     ap.add_argument('--fm-effect', type=float, default=0)
+    ap.add_argument('--selection-marginals', action='store_true')
+    ap.add_argument('--max-subs', type=int, choices=range(0,6), default=0)
     args = ap.parse_args()
     out = args.output_dir.resolve()
     if out.exists():
@@ -129,7 +133,9 @@ def main():
     sim = [str(MODEL), str(inputs), str(predictions), '--paths', str(args.paths),
            '--seed', str(args.seed), '--red-per90', str(args.red_per90),
            '--score-effect', str(args.score_effect), '--man-advantage', str(args.man_advantage),
-           '--fm-effect', str(args.fm_effect)]
+           '--fm-effect', str(args.fm_effect),
+           '--selection-marginals', str(args.selection_marginals).lower(),
+           '--max-subs', str(args.max_subs)]
     subprocess.run(sim, cwd=ROOT, check=True)
     effects_zero = args.red_per90 == args.score_effect == args.man_advantage == 0
     validation = validate(inputs, predictions, paths=args.paths, default_effects=effects_zero)

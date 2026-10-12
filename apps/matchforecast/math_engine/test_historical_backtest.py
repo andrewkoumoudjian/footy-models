@@ -52,9 +52,11 @@ class HistoricalContracts(unittest.TestCase):
         forecast = {'fixtures': [{
             'team_goal_anchor': [1.4, 1.1],
             'home_win': 0.44, 'draw': 0.27, 'away_win': 0.29,
+            'mean_home_substitutions':0.0,'mean_away_substitutions':0.0,
             'player_forecasts': [{
                 'id': 101, 'p_start': 1.0, 'expected_shots': 1.0,
                 'expected_goals': 0.4, 'p_goal': 0.4,
+                'p_appearance':1.0, 'expected_minutes':90.0,
             }],
         }]}
         labels = {'players': [{
@@ -64,7 +66,7 @@ class HistoricalContracts(unittest.TestCase):
         priors = {101: {
             'team_fixtures': '1', 'selection_starts': '1',
             'selection_minutes': '90', 'shots_p90': '1',
-            'goals_p90': '0.2',
+            'goals_p90': '0.2', 'selection_appearances': '1',
         }}
         result = history.fixture_scores(fixture, forecast, labels, priors)
         self.assertAlmostEqual(result['goals_engine'], 0.36, places=9)

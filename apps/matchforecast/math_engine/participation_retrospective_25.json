@@ -1,0 +1,135 @@
+{
+  "caveats": [
+    "The examined fixture set was reused and is heavily concentrated in two clubs; bootstrap intervals are descriptive, not independent hypothesis tests.",
+    "Candidate lineups and substitutions alter random-number consumption, so same fixture seeds are not common random-number matched events.",
+    "Output evaluation covers only previously known candidate players; future-only scorers remain missing.",
+    "No current 2026 Premier League selection history exists for out-of-sample rollout of the new options."
+  ],
+  "description": "Three research configurations on already inspected StatsBomb 2015/16 fixture sample",
+  "fixtures": 25,
+  "input_sha256": {
+    "baseline": "833b1de8a0c9bbd755296377d0408557b772f41217b99a37aad6ce3d271fa1a1",
+    "joint": "4ae927049966c89c854d97abb0938a0155d8b2082b943c18590df083aceb0756",
+    "substitutions": "4a1a7a236d165dda34696b3a0cb1efd70a0dc20d41256cf805c8ef80272807c0"
+  },
+  "model_binary_sha256": "38827248b936e3e848772bcfb15daade8923edc8603581ec2a609a19c9e07f57",
+  "path_seed": 42,
+  "paths_per_fixture": 2500,
+  "results": {
+    "selection_marginals_and_substitutions": {
+      "appearance_engine": {
+        "baseline_mean": 0.17523889342722337,
+        "challenger_mean": 0.16999915080957667,
+        "challenger_minus_baseline": -0.005239742617646696,
+        "matchday_bootstrap_95_interval": [
+          -0.009512195847660306,
+          -0.0007290363457437947
+        ]
+      },
+      "goals_engine": {
+        "baseline_mean": 0.03654673455700869,
+        "challenger_mean": 0.036545305764510164,
+        "challenger_minus_baseline": -1.428792498521618e-06,
+        "matchday_bootstrap_95_interval": [
+          -0.00048369576178180996,
+          0.0005579096869666335
+        ]
+      },
+      "mean_substitutions_per_team": 2.1059840000000003,
+      "minutes_engine": {
+        "baseline_mean": 27.15720893973752,
+        "challenger_mean": 24.319638755319826,
+        "challenger_minus_baseline": -2.8375701844176966,
+        "matchday_bootstrap_95_interval": [
+          -3.1547144085077217,
+          -2.541030208316176
+        ]
+      },
+      "shots_engine": {
+        "baseline_mean": 0.47629705552999413,
+        "challenger_mean": 0.46938991606869623,
+        "challenger_minus_baseline": -0.006907139461297882,
+        "matchday_bootstrap_95_interval": [
+          -0.012678303361483902,
+          -0.0010568229836495566
+        ]
+      },
+      "start_engine": {
+        "baseline_mean": 0.15983444757584048,
+        "challenger_mean": 0.15906951524720422,
+        "challenger_minus_baseline": -0.0007649323286362575,
+        "matchday_bootstrap_95_interval": [
+          -0.004699855799991548,
+          0.0030836938093412006
+        ]
+      },
+      "wdl_mc_log_loss": {
+        "baseline_mean": 0.9045294619220623,
+        "challenger_mean": 0.9136319286408091,
+        "challenger_minus_baseline": 0.009102466718746826,
+        "matchday_bootstrap_95_interval": [
+          -0.006991440078030451,
+          0.025302758644257538
+        ]
+      }
+    },
+    "substitutions_only": {
+      "appearance_engine": {
+        "baseline_mean": 0.17523889342722337,
+        "challenger_mean": 0.16948051795020244,
+        "challenger_minus_baseline": -0.005758375477020909,
+        "matchday_bootstrap_95_interval": [
+          -0.008789446616100418,
+          -0.003061135580684853
+        ]
+      },
+      "goals_engine": {
+        "baseline_mean": 0.03654673455700869,
+        "challenger_mean": 0.03666096892626248,
+        "challenger_minus_baseline": 0.00011423436925379213,
+        "matchday_bootstrap_95_interval": [
+          -2.4300939231243196e-05,
+          0.0002601282845380105
+        ]
+      },
+      "mean_substitutions_per_team": 2.1980560000000002,
+      "minutes_engine": {
+        "baseline_mean": 27.15720893973752,
+        "challenger_mean": 27.35904620515453,
+        "challenger_minus_baseline": 0.2018372654170092,
+        "matchday_bootstrap_95_interval": [
+          0.0785930071351882,
+          0.31264610906752716
+        ]
+      },
+      "shots_engine": {
+        "baseline_mean": 0.47629705552999413,
+        "challenger_mean": 0.4763035223033541,
+        "challenger_minus_baseline": 6.466773360045419e-06,
+        "matchday_bootstrap_95_interval": [
+          -0.002506489715593689,
+          0.002466494536307492
+        ]
+      },
+      "start_engine": {
+        "baseline_mean": 0.15983444757584048,
+        "challenger_mean": 0.16016462886732225,
+        "challenger_minus_baseline": 0.00033018129148175814,
+        "matchday_bootstrap_95_interval": [
+          -0.00010641540508294886,
+          0.0007656444619878478
+        ]
+      },
+      "wdl_mc_log_loss": {
+        "baseline_mean": 0.9045294619220623,
+        "challenger_mean": 0.8973984507159527,
+        "challenger_minus_baseline": -0.007131011206109665,
+        "matchday_bootstrap_95_interval": [
+          -0.022689493901848205,
+          0.009347831293237276
+        ]
+      }
+    }
+  },
+  "status": "retrospective_only_not_an_oos_promotion_gate"
+}

@@ -42,6 +42,12 @@ fn opt_numeric(row: &Value, key: &str) -> Result<Option<f64>, String> {
         number(row, key).map(Some)
     }
 }
+fn optional_numeric(row: &Value, key: &str) -> Result<Option<f64>, String> {
+    match row.get(key) {
+        None | Some(Value::Null) => Ok(None),
+        Some(_) => number(row, key).map(Some),
+    }
+}
 fn candidates(v: &[Value]) -> Result<Vec<Candidate>, String> {
     v.iter()
         .map(|p| {
@@ -56,6 +62,9 @@ fn candidates(v: &[Value]) -> Result<Vec<Candidate>, String> {
                     .ok_or("invalid goalkeeper flag")?,
                 fm_source: string(p, "fm_source")?.to_owned(),
                 fm_finishing: opt_numeric(p, "fm_finishing")?,
+                start_probability: optional_numeric(p, "start_probability")?,
+                expected_minutes_if_start: optional_numeric(p, "expected_minutes_if_start")?,
+                bench_appearance_probability: optional_numeric(p, "bench_appearance_probability")?,
             })
         })
         .collect()
@@ -183,6 +192,15 @@ fn args() -> Result<(String, String, MatchParameters), String> {
             "--fm-effect" => {
                 p.fm_finishing_log_effect = value.parse().map_err(|_| "invalid --fm-effect")?
             }
+            "--selection-marginals" => {
+                p.use_selection_marginals = value
+                    .parse()
+                    .map_err(|_| "invalid --selection-marginals (true/false)")?
+            }
+            "--max-subs" => {
+                p.maximum_substitutions_per_team =
+                    value.parse().map_err(|_| "invalid --max-subs")?
+            }
             _ => return Err(format!("unknown argument {flag}")),
         }
     }
@@ -280,6 +298,9 @@ fn run() -> Result<(), String> {
                     "p_start":counts.starts as f64/result.paths as f64,
                     "p_shot":counts.shot_occurrences as f64/result.paths as f64,
                     "p_goal":counts.goal_occurrences as f64/result.paths as f64,
+                    "p_appearance":counts.appearances as f64/result.paths as f64,
+                    "p_sub_on":counts.substitutions_on as f64/result.paths as f64,
+                    "expected_minutes":counts.seconds_played/(60.0*result.paths as f64),
                 })
             })
             .collect();
@@ -300,6 +321,8 @@ fn run() -> Result<(), String> {
             "expected_home_goals":result.expected_home_goals,"expected_away_goals":result.expected_away_goals,
             "expected_home_shots":result.expected_home_shots,"expected_away_shots":result.expected_away_shots,
             "mean_red_cards":result.mean_red_cards,
+            "mean_home_substitutions":result.mean_home_substitutions,
+            "mean_away_substitutions":result.mean_away_substitutions,
             "home_window_shots":result.home_window_shots,"away_window_shots":result.away_window_shots,
             "home_window_goals":result.home_window_goals,"away_window_goals":result.away_window_goals,
             "scorelines":score_rows,"player_forecasts":scorer_rows,
@@ -321,9 +344,11 @@ fn run() -> Result<(), String> {
             "trailing_shot_log_effect":params.trailing_shot_log_effect,
             "numerical_advantage_log_effect":params.numerical_advantage_log_effect,
             "fm_finishing_log_effect":params.fm_finishing_log_effect,
+            "use_selection_marginals":params.use_selection_marginals,
+            "maximum_substitutions_per_team":params.maximum_substitutions_per_team,
         },
         "limitations":[
-            "no completed substitutions or injuries; red cards optional, not independently outcome-calibrated",
+            "completed tactical substitutions are research-only, gated by measured historical participation and capped by rule-era; injuries unavailable",
             "source player shot/xG rates are FM-derived research priors, not observed current season event rates",
             "role-neutral ten-outfield exact-cardinality sample is not a positionally calibrated XI",
             "zero tactical/FM attribute effects by default pending new independent OOS evidence",

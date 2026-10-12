@@ -116,6 +116,17 @@ class InputContracts(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'future roster'):
             self.build()
 
+    def test_same_day_results_have_no_verified_publication_clock(self):
+        # A calendar-day as_of is not proof that all today's fixtures ended.
+        self.history_rows.append({
+            'date':'2026-10-10','home':'Home','away':'Away',
+            'home_goals':9,'away_goals':0,'home_shots':90,'away_shots':0,
+        })
+        self.write()
+        sample = self.build()
+        self.assertEqual(len(sample['history']),35)
+        self.assertTrue(all(row['home_goals']!=9 for row in sample['history']))
+
     def test_identity_ambiguity_prevented(self):
         self.player_rows[1]['player_id'] = self.player_rows[0]['player_id']
         self.write()
