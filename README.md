@@ -2,6 +2,8 @@
 
 Player-focused football modeling in Rust: FM26 attributes, historical player/team performance, lineup uncertainty, contextual interactions, a state-dependent one-second match simulator, and reproducible match forecasts.
 
+**Next engine architecture:** [FM24-informed full match engine — reconstruction and implementation plan](docs/fm24-engine-reconstruction.md). This approved direction replaces direct goal hazards **in a future challenger** with action-driven, FM-style Rust match simulation, full-trajectory Monte Carlo, and correlated rare-event paths. The currently published simulator and independently validated forecasting models remain unchanged until an explicit migration.
+
 ## Premier League — 11–12 October 2026
 
 **Player-driven match timelines: 15-minute attacking momentum, expected shots, event probabilities, and evolving score state.**
